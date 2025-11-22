@@ -1,0 +1,30 @@
+import { MapPin, ChevronDown, Bell, User } from "lucide-react";
+
+export const AppHeader = () => {
+  return (
+    <header className="h-14 bg-card border-b border-divider flex items-center justify-between px-5 sticky top-0 z-50">
+      {/* Left: Location */}
+      <div className="flex items-center gap-1.5">
+        <MapPin className="w-5 h-5 text-brand-green" />
+        <span className="text-sm font-medium text-foreground">Mumbai</span>
+        <ChevronDown className="w-4 h-4 text-text-secondary" />
+      </div>
+      
+      {/* Center: Logo */}
+      <h1 className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
+        FitKits
+      </h1>
+      
+      {/* Right: Notifications & Avatar */}
+      <div className="flex items-center gap-3">
+        <button className="relative">
+          <Bell className="w-5 h-5 text-text-secondary" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-danger rounded-full"></span>
+        </button>
+        <button className="w-10 h-10 rounded-full bg-brand-soft flex items-center justify-center">
+          <User className="w-5 h-5 text-brand-green" />
+        </button>
+      </div>
+    </header>
+  );
+};
