@@ -43,9 +43,6 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
       <div className="h-full flex items-center justify-around px-2">
         {navItems.map((item, index) => (
           <>
-            {mode !== "home" && index === 0 && (
-              <div className="h-10 w-px bg-divider mx-1" />
-            )}
             <NavLink
               key={item.to}
               to={item.to}
@@ -66,6 +63,9 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
                 </>
               )}
             </NavLink>
+            {mode !== "home" && index === 0 && (
+              <div className="h-10 w-px bg-divider mx-1" />
+            )}
           </>
         ))}
       </div>
