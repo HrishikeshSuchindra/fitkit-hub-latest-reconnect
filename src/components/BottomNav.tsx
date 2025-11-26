@@ -1,4 +1,4 @@
-import { Home, MapPin, Calendar, Users } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 type NavMode = "home" | "venues" | "events" | "social";
@@ -41,23 +41,32 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
   return (
     <nav className="h-16 bg-card border-t border-divider fixed bottom-0 left-0 right-0 z-50">
       <div className="h-full flex items-center justify-around px-2">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors"
-            activeClassName="text-brand-green"
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon className={`w-5 h-5 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
-                <span className={`text-xs font-medium ${isActive ? "text-brand-green" : "text-text-secondary"}`}>
-                  {item.label}
-                </span>
-              </>
+        {navItems.map((item, index) => (
+          <>
+            {mode !== "home" && index === 0 && (
+              <div className="h-10 w-px bg-divider mx-1" />
             )}
-          </NavLink>
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors"
+              activeClassName="text-brand-green"
+            >
+              {({ isActive }) => (
+                <>
+                  {mode !== "home" && item.to === "/" ? (
+                    <ArrowLeft className={`w-5 h-5 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                  ) : (
+                    <item.icon className={`w-5 h-5 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                  )}
+                  <span className={`text-xs font-medium ${isActive ? "text-brand-green" : "text-text-secondary"}`}>
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          </>
         ))}
       </div>
     </nav>

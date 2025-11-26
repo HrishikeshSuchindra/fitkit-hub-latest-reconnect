@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import promoGreen from "@/assets/promo-green-bg.jpg";
 import promoPurple from "@/assets/promo-purple-bg.jpg";
 import venueBadminton from "@/assets/venue-badminton.jpg";
@@ -12,6 +13,7 @@ import venueFootball from "@/assets/venue-football.jpg";
 
 const Home = () => {
   const [activeCategory, setActiveCategory] = useState("courts");
+  const navigate = useNavigate();
   
   const venues = [
     {
@@ -53,7 +55,7 @@ const Home = () => {
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {/* Green Promo */}
             <div 
-              className="min-w-[85%] h-40 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden"
+              className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden"
               style={{ backgroundImage: `url(${promoGreen})`, backgroundSize: 'cover' }}
             >
               <div className="relative z-10">
@@ -67,7 +69,7 @@ const Home = () => {
             
             {/* Purple Promo */}
             <div 
-              className="min-w-[85%] h-40 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden"
+              className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden"
               style={{ backgroundImage: `url(${promoPurple})`, backgroundSize: 'cover' }}
             >
               <div className="relative z-10">
@@ -89,7 +91,10 @@ const Home = () => {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-foreground">Nearby Venues</h2>
-            <button className="text-sm text-brand-green font-medium flex items-center gap-1">
+            <button 
+              onClick={() => navigate('/venues/courts')}
+              className="text-sm text-brand-green font-medium flex items-center gap-1"
+            >
               See all <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -111,10 +116,12 @@ const Home = () => {
             ))}
           </div>
           
-          {/* Venues Grid */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Venues Horizontal Scroll */}
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {venues.map((venue, idx) => (
-              <VenueCard key={idx} {...venue} />
+              <div key={idx} className="min-w-[280px]">
+                <VenueCard {...venue} />
+              </div>
             ))}
           </div>
         </section>
@@ -123,7 +130,10 @@ const Home = () => {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-foreground">Featured Events</h2>
-            <button className="text-sm text-brand-green font-medium flex items-center gap-1">
+            <button 
+              onClick={() => navigate('/events')}
+              className="text-sm text-brand-green font-medium flex items-center gap-1"
+            >
               See all <ChevronRight className="w-4 h-4" />
             </button>
           </div>
