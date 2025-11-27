@@ -1,4 +1,4 @@
-import { Home, MapPin, Calendar, Users, ArrowLeft } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft, Building2, Heart, Dumbbell, Laptop, MessageCircle, Globe } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 type NavMode = "home" | "venues" | "events" | "social";
@@ -10,7 +10,7 @@ interface BottomNavProps {
 export const BottomNav = ({ mode }: BottomNavProps) => {
   const homeNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/venues", label: "Venues", icon: MapPin },
+    { to: "/venues", label: "Venues", icon: Building2 },
     { to: "/events", label: "Events", icon: Calendar },
     { to: "/social", label: "Social", icon: Users },
   ];
@@ -18,20 +18,20 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
   const venuesNav = [
     { to: "/", label: "Home", icon: Home },
     { to: "/venues/courts", label: "Courts", icon: MapPin },
-    { to: "/venues/recovery", label: "Recovery", icon: MapPin },
-    { to: "/venues/studio", label: "Studio", icon: MapPin },
+    { to: "/venues/recovery", label: "Recovery", icon: Heart },
+    { to: "/venues/studio", label: "Studio", icon: Dumbbell },
   ];
 
   const eventsNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/events/workshop", label: "Workshop", icon: Calendar },
+    { to: "/events/workshop", label: "Workshop", icon: Laptop },
   ];
 
   const socialNav = [
     { to: "/", label: "Home", icon: Home },
     { to: "/social/games", label: "Games", icon: Users },
-    { to: "/social/chat", label: "Chat", icon: Users },
-    { to: "/social/community", label: "Community", icon: Users },
+    { to: "/social/chat", label: "Chat", icon: MessageCircle },
+    { to: "/social/community", label: "Community", icon: Globe },
   ];
 
   const navItems = mode === "home" ? homeNav : 
