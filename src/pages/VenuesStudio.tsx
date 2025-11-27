@@ -7,9 +7,10 @@ import studioYoga from "@/assets/studio-yoga.jpg";
 import studioGym from "@/assets/studio-gym.jpg";
 
 const VenuesStudio = () => {
-  const [activeCategory, setActiveCategory] = useState("yoga");
+  const [activeCategory, setActiveCategory] = useState("all");
   
   const categories = [
+    { id: "all", label: "All", count: 43 },
     { id: "yoga", label: "Yoga", count: 12 },
     { id: "gym", label: "Gym", count: 15 },
     { id: "pilates", label: "Pilates", count: 7 },
@@ -18,102 +19,44 @@ const VenuesStudio = () => {
   
   const venues = {
     yoga: [
-      {
-        image: studioYoga,
-        name: "Zen Yoga Studio",
-        rating: 4.9,
-        distance: "1.2 km",
-        amenities: ["AC", "Mats Provided", "Showers"],
-        price: "₹400/class"
-      },
-      {
-        image: studioYoga,
-        name: "Peace Flow Yoga",
-        rating: 4.8,
-        distance: "2.1 km",
-        amenities: ["Heated", "Props", "Parking"],
-        price: "₹350/class"
-      },
-      {
-        image: studioYoga,
-        name: "Mindful Movement Studio",
-        rating: 4.7,
-        distance: "2.8 km",
-        amenities: ["All Levels", "AC", "Café"],
-        price: "₹450/class"
-      },
+      { image: studioYoga, name: "Zen Yoga Studio", rating: 4.9, distance: "1.2 km", amenities: ["AC", "Mats Provided", "Showers"], price: "₹400/class" },
+      { image: studioYoga, name: "Peace Flow Yoga", rating: 4.8, distance: "2.1 km", amenities: ["Heated", "Props", "Parking"], price: "₹350/class" },
+      { image: studioYoga, name: "Mindful Movement Studio", rating: 4.7, distance: "2.8 km", amenities: ["All Levels", "AC", "Café"], price: "₹450/class" },
     ],
     gym: [
-      {
-        image: studioGym,
-        name: "PowerFit Gym",
-        rating: 4.8,
-        distance: "1.5 km",
-        amenities: ["Cardio", "Weights", "Trainer"],
-        price: "₹1500/month"
-      },
-      {
-        image: studioGym,
-        name: "Iron Temple Fitness",
-        rating: 4.9,
-        distance: "2.3 km",
-        amenities: ["24/7", "Sauna", "Locker"],
-        price: "₹2000/month"
-      },
-      {
-        image: studioGym,
-        name: "Elite Fitness Hub",
-        rating: 4.7,
-        distance: "3.1 km",
-        amenities: ["Classes", "Pool", "Café"],
-        price: "₹2500/month"
-      },
+      { image: studioGym, name: "PowerFit Gym", rating: 4.8, distance: "1.5 km", amenities: ["Cardio", "Weights", "Trainer"], price: "₹1500/month" },
+      { image: studioGym, name: "Iron Temple Fitness", rating: 4.9, distance: "2.3 km", amenities: ["24/7", "Sauna", "Locker"], price: "₹2000/month" },
+      { image: studioGym, name: "Elite Fitness Hub", rating: 4.7, distance: "3.1 km", amenities: ["Classes", "Pool", "Café"], price: "₹2500/month" },
     ],
     pilates: [
-      {
-        image: studioYoga,
-        name: "Core Pilates Studio",
-        rating: 4.9,
-        distance: "1.8 km",
-        amenities: ["Reformer", "AC", "Small Class"],
-        price: "₹600/class"
-      },
-      {
-        image: studioYoga,
-        name: "Body Balance Pilates",
-        rating: 4.8,
-        distance: "2.5 km",
-        amenities: ["Mat", "Equipment", "Parking"],
-        price: "₹550/class"
-      },
+      { image: studioYoga, name: "Core Pilates Studio", rating: 4.9, distance: "1.8 km", amenities: ["Reformer", "AC", "Small Class"], price: "₹600/class" },
+      { image: studioYoga, name: "Body Balance Pilates", rating: 4.8, distance: "2.5 km", amenities: ["Mat", "Equipment", "Parking"], price: "₹550/class" },
     ],
     dance: [
-      {
-        image: studioGym,
-        name: "Rhythm Dance Academy",
-        rating: 4.8,
-        distance: "2.2 km",
-        amenities: ["AC", "Mirrors", "Sound System"],
-        price: "₹500/class"
-      },
-      {
-        image: studioGym,
-        name: "Groove Studio",
-        rating: 4.7,
-        distance: "2.9 km",
-        amenities: ["All Styles", "AC", "Locker"],
-        price: "₹450/class"
-      },
+      { image: studioGym, name: "Rhythm Dance Academy", rating: 4.8, distance: "2.2 km", amenities: ["AC", "Mirrors", "Sound System"], price: "₹500/class" },
+      { image: studioGym, name: "Groove Studio", rating: 4.7, distance: "2.9 km", amenities: ["All Styles", "AC", "Locker"], price: "₹450/class" },
     ],
   };
 
-  const currentVenues = venues[activeCategory as keyof typeof venues] || [];
+  const getAllVenues = () => Object.values(venues).flat();
+  const currentVenues = activeCategory === "all" ? getAllVenues() : venues[activeCategory as keyof typeof venues] || [];
 
-  const sections = [
-    { title: "Top Rated Studios", venues: currentVenues },
-    { title: "Near You", venues: currentVenues },
-    { title: "Beginner Friendly", venues: currentVenues.slice(0, 2) },
+  const allSections = [
+    { title: "Recommended for You", venues: getAllVenues().slice(0, 4) },
+    { title: "Players Like You Booked", venues: getAllVenues().slice(2, 6) },
+    { title: "Trending in Your Area", venues: getAllVenues().slice(0, 3) },
+    { title: "Your Recent Choices", venues: getAllVenues().slice(1, 3) },
+    { title: "Because You Worked Out", venues: getAllVenues().slice(3, 7) },
+    { title: "Skill-Level Match", venues: getAllVenues().slice(0, 3) },
   ];
+
+  const categorySections = [
+    { title: "Top Rated", venues: currentVenues },
+    { title: "Hot Offers", venues: currentVenues.slice(0, 2) },
+    { title: "Trending Near You", venues: currentVenues },
+  ];
+
+  const sections = activeCategory === "all" ? allSections : categorySections;
 
   return (
     <div className="min-h-screen bg-background pb-20">

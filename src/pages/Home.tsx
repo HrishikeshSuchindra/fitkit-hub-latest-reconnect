@@ -2,7 +2,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, Trophy } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import promoGreen from "@/assets/promo-green-bg.jpg";
@@ -10,10 +10,25 @@ import promoPurple from "@/assets/promo-purple-bg.jpg";
 import venueBadminton from "@/assets/venue-badminton.jpg";
 import venueTennis from "@/assets/venue-tennis.jpg";
 import venueFootball from "@/assets/venue-football.jpg";
+import eventBadminton from "@/assets/event-badminton-championship.jpg";
+import eventFootball from "@/assets/event-football-league.jpg";
 
 const Home = () => {
   const [activeCategory, setActiveCategory] = useState("courts");
   const navigate = useNavigate();
+  
+  const featuredEvents = [
+    { id: 1, image: eventBadminton, title: "Badminton Championship", date: "Dec 28, 2024" },
+    { id: 2, image: eventFootball, title: "Football League Finals", date: "Dec 30, 2024" },
+    { id: 3, image: eventBadminton, title: "Winter Sports Fest", date: "Jan 5, 2025" },
+    { id: 4, image: eventFootball, title: "Corporate Cup 2025", date: "Jan 10, 2025" },
+  ];
+
+  const recentActivities = [
+    { id: 1, icon: <MapPin className="w-5 h-5 text-brand-green" />, title: "Turf Booked", subtitle: "Phoenix Arena • Court 2" },
+    { id: 2, icon: <Calendar className="w-5 h-5 text-brand-green" />, title: "Event Registered", subtitle: "Badminton Championship" },
+    { id: 3, icon: <Trophy className="w-5 h-5 text-brand-green" />, title: "Match Completed", subtitle: "Metro Football Arena" },
+  ];
   
   const venues = [
     {
@@ -139,11 +154,13 @@ const Home = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/4] rounded-xl bg-muted relative overflow-hidden">
+            {featuredEvents.map((event) => (
+              <div key={event.id} className="aspect-[3/4] rounded-xl relative overflow-hidden">
+                <img src={event.image} alt={event.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-3 left-3 right-3">
-                  <h3 className="text-sm font-semibold text-white drop-shadow-lg">Event {i}</h3>
-                  <p className="text-xs text-white/80">Dec 25, 2024</p>
+                  <h3 className="text-sm font-semibold text-white drop-shadow-lg">{event.title}</h3>
+                  <p className="text-xs text-white/80">{event.date}</p>
                 </div>
               </div>
             ))}
@@ -154,14 +171,14 @@ const Home = () => {
         <section>
           <h2 className="text-xl font-bold text-foreground mb-4">Recent Activity</h2>
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3">
+            {recentActivities.map((activity) => (
+              <div key={activity.id} className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-brand-soft flex items-center justify-center">
-                  <span className="text-brand-green font-bold">{i}</span>
+                  {activity.icon}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm text-foreground">Booking Confirmed</h4>
-                  <p className="text-xs text-text-secondary">Phoenix Arena • Court 2</p>
+                  <h4 className="font-medium text-sm text-foreground">{activity.title}</h4>
+                  <p className="text-xs text-text-secondary">{activity.subtitle}</p>
                 </div>
                 <ChevronRight className="w-5 h-5 text-text-tertiary" />
               </div>
