@@ -13,7 +13,7 @@ interface VenueCardProps {
 
 export const VenueCard = ({ image, name, rating, distance, amenities, price, onBook }: VenueCardProps) => {
   return (
-    <div className="bg-card rounded-xl shadow-soft overflow-hidden">
+    <div className="bg-card rounded-xl shadow-soft overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative aspect-[4/3]">
         <img src={image} alt={name} className="w-full h-full object-cover" />
@@ -23,7 +23,7 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
       </div>
       
       {/* Content */}
-      <div className="p-3 space-y-2">
+      <div className="p-3 space-y-2 flex-1 flex flex-col">
         <h3 className="font-semibold text-foreground text-base">{name}</h3>
         
         <div className="flex items-center gap-3 text-sm">
@@ -45,16 +45,18 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
           ))}
         </div>
         
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center justify-between pt-1 pb-2">
           <span className="text-brand-green font-semibold text-base">{price}</span>
-          <Button 
-            onClick={onBook}
-            className="bg-brand-green hover:bg-brand-green/90 text-white h-9 px-5 rounded-lg font-semibold"
-          >
-            Book Now
-          </Button>
         </div>
       </div>
+      
+      {/* Full Width Button at Bottom */}
+      <Button 
+        onClick={onBook}
+        className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-11 rounded-none rounded-b-xl font-semibold"
+      >
+        Book Now
+      </Button>
     </div>
   );
 };
