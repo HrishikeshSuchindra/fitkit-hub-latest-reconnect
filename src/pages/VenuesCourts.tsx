@@ -16,9 +16,10 @@ import venueSquash from "@/assets/venue-squash.jpg";
 import venueTennis from "@/assets/venue-tennis.jpg";
 
 const VenuesCourts = () => {
-  const [activeSport, setActiveSport] = useState("football");
+  const [activeSport, setActiveSport] = useState("all");
   
   const sports = [
+    { id: "all", label: "All", count: 71 },
     { id: "football", label: "Football", count: 15 },
     { id: "badminton", label: "Badminton", count: 12 },
     { id: "cricket", label: "Cricket", count: 10 },
@@ -30,6 +31,7 @@ const VenuesCourts = () => {
   ];
   
   const offers = {
+    all: { image: offerFootball, title: "Multi-Sport Pass", subtitle: "Unlimited Access" },
     football: { image: offerFootball, title: "Book 3 Hours", subtitle: "Get 1 Free" },
     badminton: { image: offerBadminton, title: "Weekend Special", subtitle: "20% Off" },
     cricket: { image: offerCricket, title: "Early Bird", subtitle: "30% Discount" },
@@ -37,196 +39,61 @@ const VenuesCourts = () => {
   
   const allVenues = {
     football: [
-      {
-        image: venueFootball,
-        name: "Metro Football Arena",
-        rating: 4.7,
-        distance: "1.8 km",
-        amenities: ["Lighting", "Parking", "Locker"],
-        price: "₹800/hr",
-        sport: "football"
-      },
-      {
-        image: venueFootball,
-        name: "Champions Football Ground",
-        rating: 4.8,
-        distance: "2.5 km",
-        amenities: ["Turf", "Lighting", "Parking"],
-        price: "₹900/hr",
-        sport: "football"
-      },
-      {
-        image: venueFootball,
-        name: "Victory Sports Complex",
-        rating: 4.6,
-        distance: "3.2 km",
-        amenities: ["Lighting", "Café", "Shower"],
-        price: "₹750/hr",
-        sport: "football"
-      },
+      { image: venueFootball, name: "Metro Football Arena", rating: 4.7, distance: "1.8 km", amenities: ["Lighting", "Parking", "Locker"], price: "₹800/hr" },
+      { image: venueFootball, name: "Champions Football Ground", rating: 4.8, distance: "2.5 km", amenities: ["Turf", "Lighting", "Parking"], price: "₹900/hr" },
+      { image: venueFootball, name: "Victory Sports Complex", rating: 4.6, distance: "3.2 km", amenities: ["Lighting", "Café", "Shower"], price: "₹750/hr" },
     ],
     badminton: [
-      {
-        image: venueBadminton,
-        name: "Phoenix Sports Arena",
-        rating: 4.8,
-        distance: "2.3 km",
-        amenities: ["Lighting", "Parking", "Shower"],
-        price: "₹300/hr",
-        sport: "badminton"
-      },
-      {
-        image: venueBadminton,
-        name: "Ace Badminton Center",
-        rating: 4.9,
-        distance: "1.5 km",
-        amenities: ["AC", "Parking", "Pro Shop"],
-        price: "₹350/hr",
-        sport: "badminton"
-      },
-      {
-        image: venueBadminton,
-        name: "Smash Court Hub",
-        rating: 4.7,
-        distance: "2.8 km",
-        amenities: ["Lighting", "Coaching", "Café"],
-        price: "₹280/hr",
-        sport: "badminton"
-      },
+      { image: venueBadminton, name: "Phoenix Sports Arena", rating: 4.8, distance: "2.3 km", amenities: ["Lighting", "Parking", "Shower"], price: "₹300/hr" },
+      { image: venueBadminton, name: "Ace Badminton Center", rating: 4.9, distance: "1.5 km", amenities: ["AC", "Parking", "Pro Shop"], price: "₹350/hr" },
+      { image: venueBadminton, name: "Smash Court Hub", rating: 4.7, distance: "2.8 km", amenities: ["Lighting", "Coaching", "Café"], price: "₹280/hr" },
     ],
     cricket: [
-      {
-        image: venueCricket,
-        name: "Stadium Cricket Nets",
-        rating: 4.8,
-        distance: "2.1 km",
-        amenities: ["Nets", "Lighting", "Parking"],
-        price: "₹600/hr",
-        sport: "cricket"
-      },
-      {
-        image: venueCricket,
-        name: "Cricket Academy Pro",
-        rating: 4.9,
-        distance: "3.5 km",
-        amenities: ["Coaching", "Nets", "Equipment"],
-        price: "₹700/hr",
-        sport: "cricket"
-      },
+      { image: venueCricket, name: "Stadium Cricket Nets", rating: 4.8, distance: "2.1 km", amenities: ["Nets", "Lighting", "Parking"], price: "₹600/hr" },
+      { image: venueCricket, name: "Cricket Academy Pro", rating: 4.9, distance: "3.5 km", amenities: ["Coaching", "Nets", "Equipment"], price: "₹700/hr" },
     ],
     pickleball: [
-      {
-        image: venuePickleball,
-        name: "Pickleball Pro Arena",
-        rating: 4.9,
-        distance: "1.9 km",
-        amenities: ["Indoor", "AC", "Equipment"],
-        price: "₹400/hr",
-        sport: "pickleball"
-      },
-      {
-        image: venuePickleball,
-        name: "Paddle Sports Complex",
-        rating: 4.7,
-        distance: "2.6 km",
-        amenities: ["Lighting", "Parking", "Café"],
-        price: "₹350/hr",
-        sport: "pickleball"
-      },
+      { image: venuePickleball, name: "Pickleball Pro Arena", rating: 4.9, distance: "1.9 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹400/hr" },
+      { image: venuePickleball, name: "Paddle Sports Complex", rating: 4.7, distance: "2.6 km", amenities: ["Lighting", "Parking", "Café"], price: "₹350/hr" },
     ],
     basketball: [
-      {
-        image: venueBasketball,
-        name: "Slam Dunk Courts",
-        rating: 4.6,
-        distance: "4.2 km",
-        amenities: ["AC", "Parking", "Shower"],
-        price: "₹400/hr",
-        sport: "basketball"
-      },
-      {
-        image: venueBasketball,
-        name: "Hoops Arena",
-        rating: 4.8,
-        distance: "2.9 km",
-        amenities: ["Indoor", "Lighting", "Locker"],
-        price: "₹450/hr",
-        sport: "basketball"
-      },
+      { image: venueBasketball, name: "Slam Dunk Courts", rating: 4.6, distance: "4.2 km", amenities: ["AC", "Parking", "Shower"], price: "₹400/hr" },
+      { image: venueBasketball, name: "Hoops Arena", rating: 4.8, distance: "2.9 km", amenities: ["Indoor", "Lighting", "Locker"], price: "₹450/hr" },
     ],
     tabletennis: [
-      {
-        image: venueTableTennis,
-        name: "Spin Masters TT Club",
-        rating: 4.8,
-        distance: "1.7 km",
-        amenities: ["Indoor", "AC", "Equipment"],
-        price: "₹200/hr",
-        sport: "tabletennis"
-      },
-      {
-        image: venueTableTennis,
-        name: "Table Tennis Academy",
-        rating: 4.7,
-        distance: "3.1 km",
-        amenities: ["Coaching", "AC", "Parking"],
-        price: "₹250/hr",
-        sport: "tabletennis"
-      },
+      { image: venueTableTennis, name: "Spin Masters TT Club", rating: 4.8, distance: "1.7 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹200/hr" },
+      { image: venueTableTennis, name: "Table Tennis Academy", rating: 4.7, distance: "3.1 km", amenities: ["Coaching", "AC", "Parking"], price: "₹250/hr" },
     ],
     squash: [
-      {
-        image: venueSquash,
-        name: "Elite Squash Center",
-        rating: 4.9,
-        distance: "2.4 km",
-        amenities: ["AC", "Shower", "Equipment"],
-        price: "₹500/hr",
-        sport: "squash"
-      },
-      {
-        image: venueSquash,
-        name: "Squash Pro Club",
-        rating: 4.7,
-        distance: "3.3 km",
-        amenities: ["Glass Court", "AC", "Café"],
-        price: "₹550/hr",
-        sport: "squash"
-      },
+      { image: venueSquash, name: "Elite Squash Center", rating: 4.9, distance: "2.4 km", amenities: ["AC", "Shower", "Equipment"], price: "₹500/hr" },
+      { image: venueSquash, name: "Squash Pro Club", rating: 4.7, distance: "3.3 km", amenities: ["Glass Court", "AC", "Café"], price: "₹550/hr" },
     ],
     tennis: [
-      {
-        image: venueTennis,
-        name: "Royal Tennis Club",
-        rating: 4.9,
-        distance: "3.1 km",
-        amenities: ["Coaching", "Parking", "Café"],
-        price: "₹500/hr",
-        sport: "tennis"
-      },
-      {
-        image: venueTennis,
-        name: "Grand Slam Tennis",
-        rating: 4.8,
-        distance: "2.7 km",
-        amenities: ["Clay Court", "Lighting", "Pro Shop"],
-        price: "₹600/hr",
-        sport: "tennis"
-      },
+      { image: venueTennis, name: "Royal Tennis Club", rating: 4.9, distance: "3.1 km", amenities: ["Coaching", "Parking", "Café"], price: "₹500/hr" },
+      { image: venueTennis, name: "Grand Slam Tennis", rating: 4.8, distance: "2.7 km", amenities: ["Clay Court", "Lighting", "Pro Shop"], price: "₹600/hr" },
     ],
   };
 
-  const currentOffer = offers[activeSport as keyof typeof offers];
-  const currentVenues = allVenues[activeSport as keyof typeof allVenues] || [];
+  const getAllVenues = () => Object.values(allVenues).flat();
+  const currentOffer = offers[activeSport as keyof typeof offers] || offers.all;
+  const currentVenues = activeSport === "all" ? getAllVenues() : allVenues[activeSport as keyof typeof allVenues] || [];
 
-  const sections = [
-    { title: "Recommended for You", venues: currentVenues },
-    { title: "Players Like You Booked", venues: currentVenues },
-    { title: "Trending in Your Area", venues: currentVenues },
-    { title: "Your Recent Choices", venues: currentVenues.slice(0, 2) },
-    { title: `Because You Played ${sports.find(s => s.id === activeSport)?.label}`, venues: currentVenues },
-    { title: "Skill-Level Match", venues: currentVenues.slice(0, 2) },
+  const allSections = [
+    { title: "Recommended for You", venues: getAllVenues().slice(0, 5) },
+    { title: "Players Like You Booked", venues: getAllVenues().slice(3, 8) },
+    { title: "Trending in Your Area", venues: getAllVenues().slice(0, 4) },
+    { title: "Your Recent Choices", venues: getAllVenues().slice(0, 3) },
+    { title: "Because You Played Sports", venues: getAllVenues().slice(2, 6) },
+    { title: "Skill-Level Match", venues: getAllVenues().slice(1, 4) },
   ];
+
+  const sportSections = [
+    { title: "Top Rated", venues: currentVenues },
+    { title: "Hot Offers", venues: currentVenues.slice(0, 2) },
+    { title: "Trending Near You", venues: currentVenues },
+  ];
+
+  const sections = activeSport === "all" ? allSections : sportSections;
 
   return (
     <div className="min-h-screen bg-background pb-20">

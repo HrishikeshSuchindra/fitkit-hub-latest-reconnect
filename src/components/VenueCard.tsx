@@ -1,5 +1,6 @@
 import { Heart, Star, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
+import { useState } from "react";
 
 interface VenueCardProps {
   image: string;
@@ -12,13 +13,18 @@ interface VenueCardProps {
 }
 
 export const VenueCard = ({ image, name, rating, distance, amenities, price, onBook }: VenueCardProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+
   return (
     <div className="bg-card rounded-xl shadow-soft overflow-hidden flex flex-col">
       {/* Image */}
       <div className="relative aspect-[4/3]">
         <img src={image} alt={name} className="w-full h-full object-cover" />
-        <button className="absolute top-3 right-3 w-8 h-8 bg-card rounded-full flex items-center justify-center shadow-soft">
-          <Heart className="w-4 h-4 text-text-secondary" />
+        <button 
+          onClick={() => setIsLiked(!isLiked)}
+          className="absolute top-3 right-3 w-8 h-8 bg-card rounded-full flex items-center justify-center shadow-soft transition-colors"
+        >
+          <Heart className={`w-4 h-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-text-secondary'}`} />
         </button>
       </div>
       
@@ -50,13 +56,15 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
         </div>
       </div>
       
-      {/* Full Width Button at Bottom */}
-      <Button 
-        onClick={onBook}
-        className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-11 rounded-none rounded-b-xl font-semibold"
-      >
-        Book Now
-      </Button>
+      {/* Cylindrical Button */}
+      <div className="px-3 pb-3">
+        <Button 
+          onClick={onBook}
+          className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-10 rounded-full font-semibold"
+        >
+          Book Now
+        </Button>
+      </div>
     </div>
   );
 };
