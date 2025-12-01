@@ -1,4 +1,4 @@
-import { Home, MapPin, Calendar, Users, ArrowLeft, Building2, Heart, Dumbbell, Laptop, MessageCircle, Globe } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Disc3 } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 type NavMode = "home" | "venues" | "events" | "social";
@@ -10,16 +10,16 @@ interface BottomNavProps {
 export const BottomNav = ({ mode }: BottomNavProps) => {
   const homeNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/venues", label: "Venues", icon: Building2 },
+    { to: "/venues", label: "Venues", icon: MapPin },
     { to: "/events", label: "Events", icon: Calendar },
     { to: "/social", label: "Social", icon: Users },
   ];
 
   const venuesNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/venues/courts", label: "Courts", icon: MapPin },
+    { to: "/venues/courts", label: "Courts", icon: Disc3 },
     { to: "/venues/recovery", label: "Recovery", icon: Heart },
-    { to: "/venues/studio", label: "Studio", icon: Dumbbell },
+    { to: "/venues/studio", label: "Studio", icon: Flower2 },
   ];
 
   const eventsNav = [

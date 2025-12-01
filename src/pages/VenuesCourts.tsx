@@ -119,12 +119,12 @@ const VenuesCourts = () => {
         )}
         
         {/* Sport Filter Chips */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mt-2">
           {sports.map((sport) => (
             <button
               key={sport.id}
               onClick={() => setActiveSport(sport.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
                 activeSport === sport.id
                   ? "bg-brand-green text-white"
                   : "bg-muted text-text-secondary"
