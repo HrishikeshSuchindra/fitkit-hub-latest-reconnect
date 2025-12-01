@@ -1,6 +1,10 @@
 import { MapPin, ChevronDown, Bell, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 export const AppHeader = () => {
+  const { user } = useAuth();
+
   return (
     <header className="h-14 bg-card border-b border-divider flex items-center justify-between px-5 sticky top-0 z-50">
       {/* Left: Location */}
@@ -11,9 +15,11 @@ export const AppHeader = () => {
       </div>
       
       {/* Center: Logo */}
-      <h1 className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
-        FitKits
-      </h1>
+      <Link to="/">
+        <h1 className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
+          FitKits
+        </h1>
+      </Link>
       
       {/* Right: Notifications & Avatar */}
       <div className="flex items-center gap-3">
@@ -21,9 +27,11 @@ export const AppHeader = () => {
           <Bell className="w-5 h-5 text-text-secondary" />
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-danger rounded-full"></span>
         </button>
-        <button className="w-10 h-10 rounded-full bg-brand-soft flex items-center justify-center">
-          <User className="w-5 h-5 text-brand-green" />
-        </button>
+        <Link to={user ? "/social/profile" : "/auth"}>
+          <button className="w-10 h-10 rounded-full bg-brand-soft flex items-center justify-center">
+            <User className="w-5 h-5 text-brand-green" />
+          </button>
+        </Link>
       </div>
     </header>
   );

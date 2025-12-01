@@ -1,9 +1,67 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, Share2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Users, Share2, LogOut, Settings, Edit2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface Profile {
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  games_played: number;
+  friends_count: number;
+}
 
 const SocialProfile = () => {
+  const { user, loading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else {
+        setProfile(data);
+      }
+      setLoadingProfile(false);
+    };
+
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+    navigate("/");
+  };
+
   const friends = [
     { name: "Rahul Sharma", status: "online", time: "2m ago" },
     { name: "Priya Patel", status: "online", time: "5m ago" },
@@ -11,39 +69,86 @@ const SocialProfile = () => {
     { name: "Sneha Reddy", status: "offline", time: "1d ago" },
   ];
 
+  if (loading || loadingProfile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-pulse text-text-secondary">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
       {/* Profile Header with Gradient */}
       <div className="relative bg-gradient-to-br from-chip-purple-text to-chip-purple-bg pt-8 pb-20">
+        {/* Settings & Logout */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10"
+          >
+            <Settings className="w-5 h-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10"
+            onClick={handleSignOut}
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
+        </div>
+
         {/* Avatar */}
         <div className="flex flex-col items-center">
           <div className="relative">
-            <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-soft flex items-center justify-center">
-              <Users className="w-12 h-12 text-brand-green" />
+            <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-soft flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url ? (
+                <img 
+                  src={profile.avatar_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Users className="w-12 h-12 text-brand-green" />
+              )}
             </div>
             <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
           </div>
           
           {/* User Info */}
-          <h2 className="mt-4 text-2xl font-bold text-white">Arjun Kumar</h2>
-          <p className="text-white/80 text-sm">@arjunkumar</p>
+          <h2 className="mt-4 text-2xl font-bold text-white">
+            {profile?.display_name || user?.email?.split('@')[0] || 'User'}
+          </h2>
+          <p className="text-white/80 text-sm">
+            @{profile?.username || user?.email?.split('@')[0] || 'user'}
+          </p>
+          
+          {/* Bio */}
+          {profile?.bio && (
+            <p className="text-white/70 text-sm mt-2 max-w-xs text-center">
+              {profile.bio}
+            </p>
+          )}
           
           {/* Stats */}
           <div className="flex gap-8 mt-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">248</p>
+              <p className="text-2xl font-bold text-white">{profile?.games_played || 0}</p>
               <p className="text-xs text-white/70">Games</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-white">156</p>
+              <p className="text-2xl font-bold text-white">{profile?.friends_count || 0}</p>
               <p className="text-xs text-white/70">Friends</p>
             </div>
           </div>
           
           {/* Edit Button */}
           <Button className="mt-4 bg-white text-chip-purple-text hover:bg-white/90 rounded-full px-6">
+            <Edit2 className="w-4 h-4 mr-2" />
             Edit Profile
           </Button>
         </div>
