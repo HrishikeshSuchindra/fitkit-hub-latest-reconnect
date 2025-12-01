@@ -120,7 +120,7 @@ const Home = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors capitalize ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                   activeCategory === cat
                     ? "bg-brand-green text-white"
                     : "bg-muted text-text-secondary"
