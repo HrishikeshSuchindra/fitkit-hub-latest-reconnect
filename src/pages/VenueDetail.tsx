@@ -155,19 +155,19 @@ const VenueDetail = () => {
           </div>
         </div>
 
-        {/* Selected Slots Display */}
+        {/* Selected Slots Display - Side by side highlighted boxes */}
         {selectedSlots.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-text-secondary">Selected Slot</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-sm font-medium text-text-secondary">Selected Slots</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {selectedSlots.map((slot) => (
-                <Badge 
+                <div 
                   key={slot} 
-                  className="bg-brand-green text-white border-0 px-3 py-1.5"
+                  className="flex-shrink-0 bg-brand-green/10 border-2 border-brand-green rounded-xl px-4 py-3 text-center"
                 >
-                  {slot}
-                  <span className="ml-1 text-xs opacity-80">4 left</span>
-                </Badge>
+                  <p className="text-brand-green font-semibold text-sm whitespace-nowrap">{slot}</p>
+                  <p className="text-brand-green/70 text-xs mt-0.5">4 left</p>
+                </div>
               ))}
             </div>
           </div>

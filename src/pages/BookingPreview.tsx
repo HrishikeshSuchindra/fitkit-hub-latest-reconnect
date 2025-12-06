@@ -44,6 +44,7 @@ const BookingPreview = () => {
     const newBooking = {
       id: bookingId,
       venue: venue.name,
+      venueImage: venue.image,
       sport: venue.name.includes("Tennis") ? "Tennis" : venue.name.includes("Football") ? "Football" : "Sports",
       date: formattedDate,
       time: timeRange,
@@ -110,17 +111,17 @@ const BookingPreview = () => {
           </p>
         </div>
 
-        {/* Selected Slots Display */}
+        {/* Selected Slots Display - Side by side highlighted boxes */}
         <div>
-          <h3 className="font-bold text-foreground mb-3">Selected Slot</h3>
-          <div className="flex flex-wrap gap-3">
+          <h3 className="font-bold text-foreground mb-3">Selected Slots</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {selectedSlots.map((slot: string, index: number) => (
               <div 
                 key={index}
-                className="bg-brand-green rounded-xl px-4 py-3 min-w-[140px]"
+                className="flex-shrink-0 bg-brand-green/10 border-2 border-brand-green rounded-xl px-4 py-3 text-center"
               >
-                <p className="text-white font-semibold text-center text-sm">{slot}</p>
-                <p className="text-white/80 text-xs text-center mt-0.5">4 left</p>
+                <p className="text-brand-green font-semibold text-sm whitespace-nowrap">{slot}</p>
+                <p className="text-brand-green/70 text-xs mt-0.5">4 left</p>
               </div>
             ))}
           </div>
