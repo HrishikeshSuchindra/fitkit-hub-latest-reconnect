@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
@@ -10,16 +10,34 @@ import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
 
 const VenueDetail = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { venueId } = useParams();
   const [searchParams] = useSearchParams();
   const venueName = searchParams.get("name") || "Green Valley Tennis Club";
+  const shouldOpenSlots = searchParams.get("openSlots") === "true";
   
   const [isLiked, setIsLiked] = useState(false);
   const [showSlotSelection, setShowSlotSelection] = useState(false);
-  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [playerCount, setPlayerCount] = useState(3);
-  const [visibility, setVisibility] = useState<"public" | "friends">("public");
+  
+  // Initialize state from location.state if returning from preview
+  const returnState = location.state;
+  const [selectedSlots, setSelectedSlots] = useState<string[]>(
+    returnState?.selectedSlots || []
+  );
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    returnState?.selectedDate ? new Date(returnState.selectedDate) : new Date()
+  );
+  const [playerCount, setPlayerCount] = useState(returnState?.playerCount || 3);
+  const [visibility, setVisibility] = useState<"public" | "friends">(
+    returnState?.visibility || "public"
+  );
+
+  // Open slot selection if returning from preview with openSlots param
+  useEffect(() => {
+    if (shouldOpenSlots || returnState?.returnFromPreview) {
+      setShowSlotSelection(true);
+    }
+  }, [shouldOpenSlots, returnState?.returnFromPreview]);
 
   const venue = {
     id: venueId || "1",

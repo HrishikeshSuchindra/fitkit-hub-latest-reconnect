@@ -164,9 +164,11 @@ const SlotSelectionSheet = ({
             </div>
           </div>
 
-          {/* Player Count */}
+          {/* Player Count - Label changes based on visibility */}
           <div className="space-y-2">
-            <h3 className="font-medium text-foreground">Maximum Players Required</h3>
+            <h3 className="font-medium text-foreground">
+              {visibility === "public" ? "Maximum Players Required" : "Number of Players"}
+            </h3>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
@@ -185,8 +187,14 @@ const SlotSelectionSheet = ({
               </div>
               <div className="flex items-center gap-2 text-text-secondary">
                 <Users className="w-4 h-4" />
-                <span className="text-sm">Current: 1/4</span>
-                <span className="text-xs">(You + {playerCount} players)</span>
+                {visibility === "public" ? (
+                  <>
+                    <span className="text-sm">Current: 1/{playerCount + 1}</span>
+                    <span className="text-xs">(You + {playerCount} players)</span>
+                  </>
+                ) : (
+                  <span className="text-sm">{playerCount} players</span>
+                )}
               </div>
             </div>
           </div>
