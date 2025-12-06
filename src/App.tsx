@@ -8,6 +8,9 @@ import Home from "./pages/Home";
 import VenuesCourts from "./pages/VenuesCourts";
 import VenuesRecovery from "./pages/VenuesRecovery";
 import VenuesStudio from "./pages/VenuesStudio";
+import VenueDetail from "./pages/VenueDetail";
+import BookingPreview from "./pages/BookingPreview";
+import BookingConfirmation from "./pages/BookingConfirmation";
 import Events from "./pages/Events";
 import EventsWorkshop from "./pages/EventsWorkshop";
 import SocialGames from "./pages/SocialGames";
@@ -35,6 +38,11 @@ const App = () => (
             <Route path="/venues/courts" element={<VenuesCourts />} />
             <Route path="/venues/recovery" element={<VenuesRecovery />} />
             <Route path="/venues/studio" element={<VenuesStudio />} />
+            <Route path="/venue/:venueId" element={<VenueDetail />} />
+            
+            {/* Booking Routes */}
+            <Route path="/booking/preview" element={<BookingPreview />} />
+            <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             
             {/* Events Routes */}
             <Route path="/events" element={<Events />} />
