@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Users, Target, Edit2, HelpCircle, Globe, Lock } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, Target, Edit2, HelpCircle, Globe, Lock, Rocket, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
@@ -26,7 +26,6 @@ const BookingPreview = () => {
   const isPublicGame = visibility === "public";
 
   const handleEditSlot = () => {
-    // Navigate back to venue detail with state to open slot selection
     navigate(`/venue/${venue.id}?name=${encodeURIComponent(venue.name)}&openSlots=true`, {
       state: {
         returnFromPreview: true,
@@ -39,13 +38,33 @@ const BookingPreview = () => {
   };
 
   const handleProceedToCheckout = () => {
-    // If public game, save to localStorage for display in Social Games
+    // Save to userBookings for profile page
+    const userBookings = JSON.parse(localStorage.getItem("userBookings") || "[]");
+    const bookingId = `booking-${Date.now()}`;
+    const newBooking = {
+      id: bookingId,
+      venue: venue.name,
+      sport: venue.name.includes("Tennis") ? "Tennis" : venue.name.includes("Football") ? "Football" : "Sports",
+      date: formattedDate,
+      time: timeRange,
+      rawDate: selectedDate,
+      location: venue.address,
+      playerCount: playerCount,
+      visibility: visibility,
+      slots: selectedSlots,
+      totalAmount: totalAmount,
+      createdAt: new Date().toISOString()
+    };
+    userBookings.push(newBooking);
+    localStorage.setItem("userBookings", JSON.stringify(userBookings));
+
+    // If public game, also save to publicGames for Social Games display
     if (isPublicGame) {
       const publicGames = JSON.parse(localStorage.getItem("publicGames") || "[]");
       const newGame = {
         id: `game-${Date.now()}`,
         venue: venue.name,
-        sport: venue.name.includes("Tennis") ? "Tennis" : "Sports",
+        sport: newBooking.sport,
         title: `${venue.name.split(" ")[0]} Game`,
         host: "You",
         date: formattedDate,
@@ -59,14 +78,13 @@ const BookingPreview = () => {
       localStorage.setItem("publicGames", JSON.stringify(publicGames));
     }
     
-    navigate("/booking/confirmation", { state: bookingData });
+    navigate("/booking/confirmation", { state: { ...bookingData, bookingId: bookingId } });
   };
 
-  // For friends-only games, no terms agreement needed
   const canProceed = isPublicGame ? agreedToTerms : true;
 
   return (
-    <div className="min-h-screen bg-muted">
+    <div className="min-h-screen bg-muted pb-32">
       {/* Header */}
       <div className="bg-background px-5 py-4 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2">
@@ -90,6 +108,22 @@ const BookingPreview = () => {
               : "Review your booking details before confirming."
             }
           </p>
+        </div>
+
+        {/* Selected Slots Display */}
+        <div>
+          <h3 className="font-bold text-foreground mb-3">Selected Slot</h3>
+          <div className="flex flex-wrap gap-3">
+            {selectedSlots.map((slot: string, index: number) => (
+              <div 
+                key={index}
+                className="bg-brand-green rounded-xl px-4 py-3 min-w-[140px]"
+              >
+                <p className="text-white font-semibold text-center text-sm">{slot}</p>
+                <p className="text-white/80 text-xs text-center mt-0.5">4 left</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Game Details Card */}
@@ -206,33 +240,45 @@ const BookingPreview = () => {
 
         {/* Terms Checkbox - Only for Public Games */}
         {isPublicGame && (
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="terms"
-              checked={agreedToTerms}
-              onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-              className="mt-0.5"
-            />
-            <label htmlFor="terms" className="text-sm text-text-secondary cursor-pointer">
-              I agree to the{" "}
-              <span className="text-brand-green font-medium">Host Guidelines</span>
-              {" "}and confirm all information is accurate
-            </label>
+          <div className="bg-background rounded-2xl p-4 space-y-4">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="terms"
+                checked={agreedToTerms}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-0.5 border-text-tertiary data-[state=checked]:bg-brand-green data-[state=checked]:border-brand-green"
+              />
+              <label htmlFor="terms" className="text-sm text-text-secondary cursor-pointer leading-relaxed">
+                I agree to the{" "}
+                <span className="text-brand-green font-medium">Host Guidelines</span>
+                <br />
+                and confirm all information is accurate
+              </label>
+            </div>
+
+            {/* Info Box for Public Games */}
+            <div className="bg-brand-green/10 rounded-xl p-4 flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-brand-green flex items-center justify-center flex-shrink-0">
+                <Info className="w-3 h-3 text-white" />
+              </div>
+              <p className="text-sm text-text-secondary">
+                Once published, your game will be visible to the community. You'll receive notifications when players join.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Info Box */}
-        <div className="bg-brand-green/10 rounded-xl p-4 flex items-start gap-3">
-          <div className="w-6 h-6 rounded-full bg-brand-green/20 flex items-center justify-center flex-shrink-0">
-            <Users className="w-3 h-3 text-brand-green" />
+        {/* Info Box for Friends Only */}
+        {!isPublicGame && (
+          <div className="bg-brand-green/10 rounded-xl p-4 flex items-start gap-3">
+            <div className="w-6 h-6 rounded-full bg-brand-green/20 flex items-center justify-center flex-shrink-0">
+              <Users className="w-3 h-3 text-brand-green" />
+            </div>
+            <p className="text-sm text-text-secondary">
+              Your booking will be confirmed immediately. Only invited friends will be able to see this game.
+            </p>
           </div>
-          <p className="text-sm text-text-secondary">
-            {isPublicGame 
-              ? "Once published, your game will be visible to the community. You'll receive notifications when players join."
-              : "Your booking will be confirmed immediately. Only invited friends will be able to see this game."
-            }
-          </p>
-        </div>
+        )}
       </div>
 
       {/* Bottom CTA */}
@@ -240,9 +286,10 @@ const BookingPreview = () => {
         <Button
           onClick={handleProceedToCheckout}
           disabled={!canProceed}
-          className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-12 disabled:opacity-50"
+          className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-12 rounded-xl disabled:opacity-50"
         >
-          <span className="mr-2">✓</span> Proceed to Checkout
+          <Rocket className="w-4 h-4 mr-2" />
+          Proceed to Checkout
         </Button>
         <p className="text-xs text-text-tertiary text-center mt-2">
           {isPublicGame ? "Your game will go live immediately" : "Your booking will be confirmed"}

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Share2, LogOut, Settings, Edit2 } from "lucide-react";
+import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -17,12 +17,25 @@ interface Profile {
   friends_count: number;
 }
 
+interface Booking {
+  id: string;
+  venue: string;
+  sport: string;
+  date: string;
+  time: string;
+  location: string;
+  visibility: string;
+  totalAmount: number;
+}
+
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -52,6 +65,21 @@ const SocialProfile = () => {
       fetchProfile();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Load bookings from localStorage
+    const userBookings = JSON.parse(localStorage.getItem("userBookings") || "[]");
+    setBookings(userBookings);
+  }, []);
+
+  useEffect(() => {
+    // Scroll to bookings section if coming from reminder popup
+    if (location.state?.scrollToBookings) {
+      setTimeout(() => {
+        document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    }
+  }, [location.state]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -156,6 +184,62 @@ const SocialProfile = () => {
       
       {/* Content */}
       <div className="px-5 -mt-10 space-y-5">
+        {/* My Bookings Section */}
+        <div id="my-bookings" className="bg-card rounded-2xl shadow-soft p-4">
+          <h3 className="font-bold text-lg text-foreground mb-4">My Bookings</h3>
+          
+          {bookings.length === 0 ? (
+            <div className="text-center py-6">
+              <Calendar className="w-10 h-10 text-text-tertiary mx-auto mb-2" />
+              <p className="text-text-secondary text-sm">No bookings yet</p>
+              <Button 
+                variant="outline" 
+                className="mt-3 text-brand-green border-brand-green"
+                onClick={() => navigate("/venues/courts")}
+              >
+                Book a Court
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {bookings.map((booking) => (
+                <div 
+                  key={booking.id}
+                  className="bg-muted rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{booking.sport}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Calendar className="w-3 h-3 text-text-tertiary" />
+                      <span className="text-xs text-text-secondary">{booking.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Clock className="w-3 h-3 text-text-tertiary" />
+                      <span className="text-xs text-text-secondary">{booking.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <MapPin className="w-3 h-3 text-text-tertiary" />
+                      <span className="text-xs text-text-secondary truncate">{booking.venue}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-brand-green font-bold">₹{booking.totalAmount}</span>
+                    <div className="mt-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        booking.visibility === 'public' 
+                          ? 'bg-brand-green/10 text-brand-green' 
+                          : 'bg-chip-purple-bg text-chip-purple-text'
+                      }`}>
+                        {booking.visibility === 'public' ? 'Public' : 'Friends'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Friends List Card */}
         <div className="bg-card rounded-2xl shadow-soft p-4">
           <h3 className="font-bold text-lg text-foreground mb-4">Friends</h3>
