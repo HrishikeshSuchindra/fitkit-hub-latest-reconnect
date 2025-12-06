@@ -3,6 +3,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import offerFootball from "@/assets/offer-football.jpg";
 import offerBadminton from "@/assets/offer-badminton.jpg";
 import offerCricket from "@/assets/offer-cricket.jpg";
@@ -16,6 +17,7 @@ import venueSquash from "@/assets/venue-squash.jpg";
 import venueTennis from "@/assets/venue-tennis.jpg";
 
 const VenuesCourts = () => {
+  const navigate = useNavigate();
   const [activeSport, setActiveSport] = useState("all");
   
   const sports = [
@@ -142,7 +144,10 @@ const VenuesCourts = () => {
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {section.venues.map((venue, venueIdx) => (
                 <div key={venueIdx} className="min-w-[280px]">
-                  <VenueCard {...venue} />
+                  <VenueCard 
+                    {...venue} 
+                    onBook={() => navigate(`/venue/${venueIdx}?name=${encodeURIComponent(venue.name)}`)}
+                  />
                 </div>
               ))}
             </div>
