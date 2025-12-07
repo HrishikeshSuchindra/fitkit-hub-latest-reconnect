@@ -142,21 +142,37 @@ export const useCreateBooking = () => {
   });
 };
 
-// Fetch public games (for social section)
+// Booking with user profile info
+export interface BookingWithProfile extends Booking {
+  profiles: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
+// Fetch public games (for social section) with user profile info
 export const usePublicGames = () => {
   return useQuery({
     queryKey: ["public-games"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("bookings")
-        .select("*")
+        .select(`
+          *,
+          profiles!bookings_user_id_fkey (
+            display_name,
+            username,
+            avatar_url
+          )
+        `)
         .eq("visibility", "public")
         .eq("status", "confirmed")
         .gte("slot_date", format(new Date(), "yyyy-MM-dd"))
         .order("slot_date", { ascending: true });
 
       if (error) throw error;
-      return data as Booking[];
+      return data as BookingWithProfile[];
     },
   });
 };

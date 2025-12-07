@@ -64,12 +64,12 @@ const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
           : "bg-[hsl(var(--chip-green-bg))] border-transparent hover:border-primary/50"
       )}
     >
-      {/* Time and Duration */}
+      {/* Time and Duration - single line */}
       <p className={cn(
-        "text-[10px] font-semibold leading-tight text-center",
+        "text-[10px] font-semibold leading-tight text-center whitespace-nowrap",
         isFullyBooked ? "text-gray-400" : "text-foreground"
       )}>
-        {formatTime(slot.start_time)} | {slot.duration_minutes} mins
+        {formatTime(slot.start_time)} • {slot.duration_minutes}m
       </p>
 
       {/* Availability Circles */}
