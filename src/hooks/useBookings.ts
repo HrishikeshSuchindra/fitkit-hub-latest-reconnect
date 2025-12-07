@@ -160,7 +160,7 @@ export const usePublicGames = () => {
         .from("bookings")
         .select(`
           *,
-          profiles!bookings_user_id_fkey (
+          profiles (
             display_name,
             username,
             avatar_url
@@ -172,7 +172,7 @@ export const usePublicGames = () => {
         .order("slot_date", { ascending: true });
 
       if (error) throw error;
-      return data as BookingWithProfile[];
+      return data as unknown as BookingWithProfile[];
     },
   });
 };
