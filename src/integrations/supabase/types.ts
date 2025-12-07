@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          id: string
+          player_count: number
+          price: number
+          slot_date: string
+          slot_time: string
+          sport: string | null
+          status: string
+          total_courts: number
+          updated_at: string
+          user_id: string
+          venue_address: string | null
+          venue_id: string
+          venue_image: string | null
+          venue_name: string
+          visibility: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          player_count?: number
+          price: number
+          slot_date: string
+          slot_time: string
+          sport?: string | null
+          status?: string
+          total_courts?: number
+          updated_at?: string
+          user_id: string
+          venue_address?: string | null
+          venue_id: string
+          venue_image?: string | null
+          venue_name: string
+          visibility?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          player_count?: number
+          price?: number
+          slot_date?: string
+          slot_time?: string
+          sport?: string | null
+          status?: string
+          total_courts?: number
+          updated_at?: string
+          user_id?: string
+          venue_address?: string | null
+          venue_id?: string
+          venue_image?: string | null
+          venue_name?: string
+          visibility?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

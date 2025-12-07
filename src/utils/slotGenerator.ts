@@ -60,7 +60,10 @@ const getStatus = (available: number, total: number): "available" | "limited" | 
   return "available";
 };
 
-export const generateTimeSlots = (config: TurfConfig): SlotData[] => {
+export const generateTimeSlots = (
+  config: TurfConfig, 
+  bookedCounts?: Record<string, number>
+): SlotData[] => {
   const {
     open_time,
     close_time,
@@ -82,7 +85,11 @@ export const generateTimeSlots = (config: TurfConfig): SlotData[] => {
   while (currentMinutes + slot_duration <= endMinutes) {
     const timeString = minutesToTime(currentMinutes);
     const hour = Math.floor(currentMinutes / 60);
-    const { booked, available } = generateRandomAvailability(total_courts);
+    
+    // Use real booked counts if available, otherwise generate random for demo
+    const bookedFromDb = bookedCounts?.[timeString] || 0;
+    const booked = bookedCounts ? bookedFromDb : generateRandomAvailability(total_courts).booked;
+    const available = Math.max(0, total_courts - booked);
     
     // Determine price based on peak hours
     const price = isPeakHour(hour, peak_hours) ? (peak_price || base_price) : base_price;

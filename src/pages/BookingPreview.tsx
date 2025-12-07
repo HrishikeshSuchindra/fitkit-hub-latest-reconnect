@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Calendar, MapPin, Users, Target, Edit2, HelpCircle, Globe, Lock, Rocket, Info } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, Target, Edit2, HelpCircle, Globe, Lock, Rocket, Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
+import { useCreateBooking } from "@/hooks/useBookings";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 const BookingPreview = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const bookingData = location.state;
+  const { user } = useAuth();
+  const createBooking = useCreateBooking();
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
@@ -19,6 +24,7 @@ const BookingPreview = () => {
 
   const { venue, selectedSlots, selectedSlotData, selectedDate, playerCount, visibility, totalAmount } = bookingData;
   const formattedDate = format(new Date(selectedDate), "EEEE, MMM do");
+  const slotDate = format(new Date(selectedDate), "yyyy-MM-dd");
   
   // Helper to format time for display
   const formatTime = (time: string) => {
@@ -50,49 +56,45 @@ const BookingPreview = () => {
     });
   };
 
-  const handleProceedToCheckout = () => {
-    // Save to userBookings for profile page
-    const userBookings = JSON.parse(localStorage.getItem("userBookings") || "[]");
-    const bookingId = `booking-${Date.now()}`;
-    const newBooking = {
-      id: bookingId,
-      venue: venue.name,
-      venueImage: venue.image,
-      sport: venue.name.includes("Tennis") ? "Tennis" : venue.name.includes("Football") ? "Football" : "Sports",
-      date: formattedDate,
-      time: timeRange,
-      rawDate: selectedDate,
-      location: venue.address,
-      playerCount: playerCount,
-      visibility: visibility,
-      slots: selectedSlots,
-      totalAmount: totalAmount,
-      createdAt: new Date().toISOString()
-    };
-    userBookings.push(newBooking);
-    localStorage.setItem("userBookings", JSON.stringify(userBookings));
-
-    // If public game, also save to publicGames for Social Games display
-    if (isPublicGame) {
-      const publicGames = JSON.parse(localStorage.getItem("publicGames") || "[]");
-      const newGame = {
-        id: `game-${Date.now()}`,
-        venue: venue.name,
-        sport: newBooking.sport,
-        title: `${venue.name.split(" ")[0]} Game`,
-        host: "You",
-        date: formattedDate,
-        time: timeRange,
-        location: venue.address,
-        spotsLeft: `1/${playerCount + 1}`,
-        playerCount: playerCount + 1,
-        createdAt: new Date().toISOString()
-      };
-      publicGames.push(newGame);
-      localStorage.setItem("publicGames", JSON.stringify(publicGames));
+  const handleProceedToCheckout = async () => {
+    if (!user) {
+      toast.error("Please log in to book a slot");
+      navigate("/auth");
+      return;
     }
-    
-    navigate("/booking/confirmation", { state: { ...bookingData, bookingId: bookingId } });
+
+    try {
+      // Create bookings for each selected slot
+      const bookingPromises = selectedSlotData.map((slot: any) =>
+        createBooking.mutateAsync({
+          venue_id: venue.id,
+          venue_name: venue.name,
+          venue_image: venue.image,
+          venue_address: venue.address,
+          sport: venue.name.includes("Tennis") ? "Tennis" : venue.name.includes("Football") ? "Football" : "Sports",
+          slot_date: slotDate,
+          slot_time: slot.start_time,
+          duration_minutes: slot.duration_minutes,
+          price: slot.price,
+          total_courts: slot.total_courts,
+          player_count: playerCount,
+          visibility: visibility,
+        })
+      );
+
+      await Promise.all(bookingPromises);
+
+      toast.success("Booking confirmed!");
+      navigate("/booking/confirmation", { 
+        state: { 
+          ...bookingData, 
+          bookingId: `booking-${Date.now()}` 
+        } 
+      });
+    } catch (error: any) {
+      console.error("Booking error:", error);
+      toast.error(error.message || "Failed to create booking");
+    }
   };
 
   const canProceed = isPublicGame ? agreedToTerms : true;
@@ -314,13 +316,17 @@ const BookingPreview = () => {
       <div className="fixed bottom-0 left-0 right-0 p-5 bg-background border-t border-border">
         <Button
           onClick={handleProceedToCheckout}
-          disabled={!canProceed}
-          className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-12 rounded-xl disabled:opacity-50"
+          disabled={!canProceed || createBooking.isPending}
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 rounded-xl disabled:opacity-50"
         >
-          <Rocket className="w-4 h-4 mr-2" />
-          Proceed to Checkout
+          {createBooking.isPending ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : (
+            <Rocket className="w-4 h-4 mr-2" />
+          )}
+          {createBooking.isPending ? "Processing..." : "Proceed to Checkout"}
         </Button>
-        <p className="text-xs text-text-tertiary text-center mt-2">
+        <p className="text-xs text-muted-foreground text-center mt-2">
           {isPublicGame ? "Your game will go live immediately" : "Your booking will be confirmed"}
         </p>
       </div>
