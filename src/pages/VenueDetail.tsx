@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Navigation, Phone, Heart, Share2, CheckCircle } from "lucide-react";
 import venueTennis from "@/assets/venue-tennis.jpg";
 import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
+import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
+import { SlotData } from "@/components/booking/SlotCard";
 
 const VenueDetail = () => {
   const navigate = useNavigate();
@@ -55,22 +57,44 @@ const VenueDetail = () => {
     instagram: "@greenvalley",
   };
 
+  // Generate slots to get pricing info
+  const allSlots = useMemo(() => {
+    return generateTimeSlots(defaultTurfConfig);
+  }, [selectedDate]);
+
+  // Helper to format time for display
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+  };
+
+  // Get selected slot data for pricing and display
+  const selectedSlotData = allSlots.filter(slot => 
+    selectedSlots.includes(slot.start_time)
+  );
+
   const handleProceed = () => {
     if (selectedSlots.length === 0) return;
+    
+    const totalAmount = selectedSlotData.reduce((sum, slot) => sum + slot.price, 0);
     
     const bookingData = {
       venue,
       selectedSlots,
+      selectedSlotData, // Include full slot data
       selectedDate: selectedDate.toISOString(),
       playerCount,
       visibility,
-      totalAmount: selectedSlots.length * venue.price,
+      totalAmount,
     };
     
     navigate("/booking/preview", { state: bookingData });
   };
 
-  const totalAmount = selectedSlots.length * venue.price;
+  const totalAmount = selectedSlotData.reduce((sum, slot) => sum + slot.price, 0);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -156,17 +180,21 @@ const VenueDetail = () => {
         </div>
 
         {/* Selected Slots Display - Side by side highlighted boxes */}
-        {selectedSlots.length > 0 && (
+        {selectedSlotData.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-text-secondary">Selected Slots</h3>
+            <h3 className="text-sm font-medium text-muted-foreground">Selected Slots</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {selectedSlots.map((slot) => (
+              {selectedSlotData.map((slot) => (
                 <div 
-                  key={slot} 
-                  className="flex-shrink-0 bg-brand-green/10 border-2 border-brand-green rounded-xl px-4 py-3 text-center"
+                  key={slot.start_time} 
+                  className="flex-shrink-0 bg-primary/10 border-2 border-primary rounded-xl px-4 py-3 text-center"
                 >
-                  <p className="text-brand-green font-semibold text-sm whitespace-nowrap">{slot}</p>
-                  <p className="text-brand-green/70 text-xs mt-0.5">4 left</p>
+                  <p className="text-primary font-semibold text-sm whitespace-nowrap">
+                    {formatTime(slot.start_time)} | {slot.duration_minutes} mins
+                  </p>
+                  <p className="text-primary/70 text-xs mt-0.5">
+                    {slot.available_courts}/{slot.total_courts} courts • ₹{slot.price}
+                  </p>
                 </div>
               ))}
             </div>

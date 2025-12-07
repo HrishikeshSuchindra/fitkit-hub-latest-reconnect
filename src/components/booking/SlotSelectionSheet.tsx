@@ -1,8 +1,12 @@
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Globe, Lock, Minus, Plus } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Users, Globe, Lock, Minus, Plus, Calendar } from "lucide-react";
 import { format, addDays } from "date-fns";
+import SlotCard, { SlotData } from "./SlotCard";
+import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
 
 interface SlotSelectionSheetProps {
   open: boolean;
@@ -36,42 +40,44 @@ const SlotSelectionSheet = ({
   setVisibility,
   onProceed,
 }: SlotSelectionSheetProps) => {
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
-  const timeSlots = [
-    { time: "9:00AM-9:30AM", available: 4 },
-    { time: "9:30AM-10:00AM", available: 4 },
-    { time: "10:00AM-10:30AM", available: 3 },
-    { time: "10:30AM-11:00AM", available: 2 },
-    { time: "11:00AM-11:30AM", available: 5 },
-    { time: "11:30AM-12:00PM", available: 4 },
-    { time: "12:00PM-12:30PM", available: 4 },
-    { time: "12:30PM-1:00PM", available: 0 },
-    { time: "1:00PM-1:30PM", available: 4 },
-    { time: "1:30PM-2:00PM", available: 1 },
-    { time: "2:00PM-2:30PM", available: 2 },
-    { time: "2:30PM-3:00PM", available: 4 },
-    { time: "3:00PM-3:30PM", available: 0 },
-    { time: "3:30PM-4:00PM", available: 4 },
-    { time: "4:00PM-4:30PM", available: 4 },
-  ];
+  // Generate slots using the slot generator
+  const allSlots = useMemo(() => {
+    return generateTimeSlots(defaultTurfConfig);
+  }, [selectedDate]);
 
-  const toggleSlot = (slot: string) => {
-    if (selectedSlots.includes(slot)) {
-      setSelectedSlots(selectedSlots.filter((s) => s !== slot));
+  // Filter slots based on toggle
+  const displayedSlots = useMemo(() => {
+    if (showAvailableOnly) {
+      return allSlots.filter(slot => slot.status !== "full");
+    }
+    return allSlots;
+  }, [allSlots, showAvailableOnly]);
+
+  const toggleSlot = (slotTime: string) => {
+    if (selectedSlots.includes(slotTime)) {
+      setSelectedSlots(selectedSlots.filter((s) => s !== slotTime));
     } else {
-      setSelectedSlots([...selectedSlots, slot]);
+      setSelectedSlots([...selectedSlots, slotTime]);
     }
   };
 
+  // Get selected slot data for display
+  const selectedSlotData = allSlots.filter(slot => 
+    selectedSlots.includes(slot.start_time)
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl p-0">
-        <div className="p-5 space-y-5 overflow-y-auto h-full pb-24">
+      <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl p-0">
+        <div className="p-5 space-y-5 overflow-y-auto h-full pb-28">
           {/* Venue Name */}
           <div className="text-center">
             <h2 className="text-lg font-bold text-foreground">{venue.name}</h2>
-            <Badge variant="outline" className="text-brand-green border-brand-green text-xs mt-1">
+            <Badge variant="outline" className="text-primary border-primary text-xs mt-1">
               Verified
             </Badge>
           </div>
@@ -80,50 +86,66 @@ const SlotSelectionSheet = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setVisibility("public")}
-              className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-colors ${
+              className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${
                 visibility === "public"
-                  ? "border-brand-green bg-brand-green/5"
+                  ? "border-primary bg-primary/5"
                   : "border-border"
               }`}
             >
-              <Globe className={`w-6 h-6 ${visibility === "public" ? "text-brand-green" : "text-text-secondary"}`} />
+              <Globe className={`w-6 h-6 ${visibility === "public" ? "text-primary" : "text-muted-foreground"}`} />
               <div className="text-center">
-                <p className={`font-medium ${visibility === "public" ? "text-brand-green" : "text-foreground"}`}>
+                <p className={`font-medium ${visibility === "public" ? "text-primary" : "text-foreground"}`}>
                   Public
                 </p>
-                <p className="text-xs text-text-secondary">Anyone can find and join</p>
+                <p className="text-xs text-muted-foreground">Anyone can find and join</p>
               </div>
             </button>
             <button
               onClick={() => setVisibility("friends")}
-              className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-colors ${
+              className={`p-4 rounded-xl border-2 flex flex-col items-center gap-2 transition-all ${
                 visibility === "friends"
-                  ? "border-brand-green bg-brand-green/5"
+                  ? "border-primary bg-primary/5"
                   : "border-border"
               }`}
             >
-              <Lock className={`w-6 h-6 ${visibility === "friends" ? "text-brand-green" : "text-text-secondary"}`} />
+              <Lock className={`w-6 h-6 ${visibility === "friends" ? "text-primary" : "text-muted-foreground"}`} />
               <div className="text-center">
-                <p className={`font-medium ${visibility === "friends" ? "text-brand-green" : "text-foreground"}`}>
+                <p className={`font-medium ${visibility === "friends" ? "text-primary" : "text-foreground"}`}>
                   Friends Only
                 </p>
-                <p className="text-xs text-text-secondary">Only your friends can see</p>
+                <p className="text-xs text-muted-foreground">Only your friends can see</p>
               </div>
             </button>
           </div>
 
-          {/* Date Selection */}
-          <div className="space-y-2">
-            <h3 className="font-medium text-foreground">Select Date</h3>
+          {/* Show Available Only Toggle */}
+          <div className="flex items-center justify-between py-3 px-4 bg-card rounded-xl border border-border">
+            <span className="text-sm font-medium text-foreground">View available slots only</span>
+            <Switch
+              checked={showAvailableOnly}
+              onCheckedChange={setShowAvailableOnly}
+            />
+          </div>
+
+          {/* Date Selection with Header */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-foreground">Available time</h3>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-sm">{format(selectedDate, "yyyy-MM-dd")}</span>
+                <Calendar className="w-4 h-4" />
+              </div>
+            </div>
+            
             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {dates.map((date) => (
                 <button
                   key={date.toISOString()}
                   onClick={() => setSelectedDate(date)}
-                  className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[60px] transition-colors ${
+                  className={`flex flex-col items-center px-4 py-2 rounded-xl min-w-[60px] transition-all ${
                     format(selectedDate, "yyyy-MM-dd") === format(date, "yyyy-MM-dd")
-                      ? "bg-brand-green text-white"
-                      : "bg-muted text-text-secondary"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   <span className="text-lg font-bold">{format(date, "d")}</span>
@@ -133,39 +155,33 @@ const SlotSelectionSheet = ({
             </div>
           </div>
 
-          {/* Time Slots */}
-          <div className="space-y-2">
-            <h3 className="font-medium text-foreground">Select Slot</h3>
-            <div className="grid grid-cols-3 gap-2">
-              {timeSlots.map((slot) => {
-                const isBooked = slot.available === 0;
-                const isSelected = selectedSlots.includes(slot.time);
-                
-                return (
-                  <button
-                    key={slot.time}
-                    onClick={() => !isBooked && toggleSlot(slot.time)}
-                    disabled={isBooked}
-                    className={`p-2 rounded-lg text-center transition-colors ${
-                      isBooked
-                        ? "bg-red-100 text-red-500 cursor-not-allowed"
-                        : isSelected
-                        ? "bg-brand-green text-white"
-                        : "bg-muted text-foreground hover:bg-muted/80"
-                    }`}
-                  >
-                    <p className="text-xs font-medium">{slot.time}</p>
-                    <p className="text-[10px] mt-0.5">
-                      {isBooked ? "Booked" : `${slot.available} left`}
-                    </p>
-                  </button>
-                );
-              })}
+          {/* Courts Availability Legend */}
+          <div className="flex items-center gap-4 text-sm">
+            <span className="font-medium text-foreground">Courts Availability</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              <span className="text-muted-foreground">Available</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-gray-300" />
+              <span className="text-muted-foreground">Unavailable</span>
             </div>
           </div>
 
-          {/* Player Count - Label changes based on visibility */}
-          <div className="space-y-2">
+          {/* Time Slots Grid */}
+          <div className="grid grid-cols-3 gap-2">
+            {displayedSlots.map((slot) => (
+              <SlotCard
+                key={slot.start_time}
+                slot={slot}
+                isSelected={selectedSlots.includes(slot.start_time)}
+                onSelect={() => slot.status !== "full" && toggleSlot(slot.start_time)}
+              />
+            ))}
+          </div>
+
+          {/* Player Count */}
+          <div className="space-y-3 pt-2">
             <h3 className="font-medium text-foreground">
               {visibility === "public" ? "Maximum Players Required" : "Number of Players"}
             </h3>
@@ -173,25 +189,22 @@ const SlotSelectionSheet = ({
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setPlayerCount(Math.max(1, playerCount - 1))}
-                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center"
+                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="text-xl font-bold text-foreground w-8 text-center">{playerCount}</span>
                 <button
                   onClick={() => setPlayerCount(Math.min(10, playerCount + 1))}
-                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center"
+                  className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
-              <div className="flex items-center gap-2 text-text-secondary">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Users className="w-4 h-4" />
                 {visibility === "public" ? (
-                  <>
-                    <span className="text-sm">Current: 1/{playerCount + 1}</span>
-                    <span className="text-xs">(You + {playerCount} players)</span>
-                  </>
+                  <span className="text-sm">Current: 1/{playerCount + 1}</span>
                 ) : (
                   <span className="text-sm">{playerCount} players</span>
                 )}
@@ -205,7 +218,7 @@ const SlotSelectionSheet = ({
           <Button
             onClick={onProceed}
             disabled={selectedSlots.length === 0}
-            className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-12 disabled:opacity-50"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 disabled:opacity-50"
           >
             Proceed
           </Button>
