@@ -17,10 +17,23 @@ const BookingPreview = () => {
     return null;
   }
 
-  const { venue, selectedSlots, selectedDate, playerCount, visibility, totalAmount } = bookingData;
+  const { venue, selectedSlots, selectedSlotData, selectedDate, playerCount, visibility, totalAmount } = bookingData;
   const formattedDate = format(new Date(selectedDate), "EEEE, MMM do");
-  const timeRange = selectedSlots.length > 0 
-    ? `${selectedSlots[0].split("-")[0]} - ${selectedSlots[selectedSlots.length - 1].split("-")[1]}`
+  
+  // Helper to format time for display
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+  };
+
+  // Build time range from slot data
+  const timeRange = selectedSlotData && selectedSlotData.length > 0 
+    ? `${formatTime(selectedSlotData[0].start_time)} - ${formatTime(selectedSlotData[selectedSlotData.length - 1].start_time)}`
+    : selectedSlots.length > 0 
+    ? `${selectedSlots[0]} - ${selectedSlots[selectedSlots.length - 1]}`
     : "";
 
   const isPublicGame = visibility === "public";
@@ -115,15 +128,30 @@ const BookingPreview = () => {
         <div>
           <h3 className="font-bold text-foreground mb-3">Selected Slots</h3>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {selectedSlots.map((slot: string, index: number) => (
-              <div 
-                key={index}
-                className="flex-shrink-0 bg-brand-green/10 border-2 border-brand-green rounded-xl px-4 py-3 text-center"
-              >
-                <p className="text-brand-green font-semibold text-sm whitespace-nowrap">{slot}</p>
-                <p className="text-brand-green/70 text-xs mt-0.5">4 left</p>
-              </div>
-            ))}
+            {selectedSlotData && selectedSlotData.length > 0 ? (
+              selectedSlotData.map((slot: any, index: number) => (
+                <div 
+                  key={index}
+                  className="flex-shrink-0 bg-primary/10 border-2 border-primary rounded-xl px-4 py-3 text-center"
+                >
+                  <p className="text-primary font-semibold text-sm whitespace-nowrap">
+                    {formatTime(slot.start_time)} | {slot.duration_minutes} mins
+                  </p>
+                  <p className="text-primary/70 text-xs mt-0.5">
+                    {slot.available_courts}/{slot.total_courts} • ₹{slot.price}
+                  </p>
+                </div>
+              ))
+            ) : (
+              selectedSlots.map((slot: string, index: number) => (
+                <div 
+                  key={index}
+                  className="flex-shrink-0 bg-primary/10 border-2 border-primary rounded-xl px-4 py-3 text-center"
+                >
+                  <p className="text-primary font-semibold text-sm whitespace-nowrap">{slot}</p>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
