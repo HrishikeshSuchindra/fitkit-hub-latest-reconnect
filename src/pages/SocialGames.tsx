@@ -54,15 +54,18 @@ const SocialGames = () => {
   ];
 
   // Combine user-created public games with default games
-  const userCreatedGames = publicGames.map(game => ({
-    image: venueTennis,
-    sport: game.sport || "Sports",
-    title: `${game.venue_name.split(" ")[0]} Game`,
-    host: "You",
-    date: `${format(new Date(game.slot_date), "MMM do")} ${formatTime(game.slot_time)}`,
-    location: game.venue_address || game.venue_name,
-    spotsLeft: `1/${game.player_count + 1}`
-  }));
+  const userCreatedGames = publicGames.map(game => {
+    const hostName = game.profiles?.display_name || game.profiles?.username || "Unknown Host";
+    return {
+      image: game.venue_image || venueTennis,
+      sport: game.sport || "Sports",
+      title: `${game.venue_name.split(" ")[0]} Game`,
+      host: hostName,
+      date: `${format(new Date(game.slot_date), "MMM do")} ${formatTime(game.slot_time)}`,
+      location: game.venue_address || game.venue_name,
+      spotsLeft: `1/${game.player_count + 1}`
+    };
+  });
 
   const allGames = [...userCreatedGames, ...defaultGames];
   
