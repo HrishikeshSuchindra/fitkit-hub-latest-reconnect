@@ -7,11 +7,13 @@ import { Users, Globe, Lock, Minus, Plus, Calendar } from "lucide-react";
 import { format, addDays } from "date-fns";
 import SlotCard, { SlotData } from "./SlotCard";
 import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
+import { useSlotAvailability } from "@/hooks/useBookings";
 
 interface SlotSelectionSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   venue: {
+    id: string;
     name: string;
     price: number;
   };
@@ -44,10 +46,13 @@ const SlotSelectionSheet = ({
   
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
-  // Generate slots using the slot generator
+  // Fetch real availability data from database
+  const { data: bookedCounts } = useSlotAvailability(venue.id, selectedDate);
+
+  // Generate slots using the slot generator with real availability
   const allSlots = useMemo(() => {
-    return generateTimeSlots(defaultTurfConfig);
-  }, [selectedDate]);
+    return generateTimeSlots(defaultTurfConfig, bookedCounts);
+  }, [selectedDate, bookedCounts]);
 
   // Filter slots based on toggle
   const displayedSlots = useMemo(() => {

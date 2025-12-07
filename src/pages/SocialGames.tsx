@@ -1,36 +1,27 @@
-import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { GameCard } from "@/components/GameCard";
 import { Button } from "@/components/ui/button";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import venueFootball from "@/assets/venue-football.jpg";
 import venueBadminton from "@/assets/venue-badminton.jpg";
 import venueBasketball from "@/assets/venue-basketball.jpg";
 import venueTennis from "@/assets/venue-tennis.jpg";
-
-interface PublicGame {
-  id: string;
-  venue: string;
-  sport: string;
-  title: string;
-  host: string;
-  date: string;
-  time: string;
-  location: string;
-  spotsLeft: string;
-  playerCount: number;
-  createdAt: string;
-}
+import { usePublicGames } from "@/hooks/useBookings";
+import { format } from "date-fns";
 
 const SocialGames = () => {
-  const [publicGames, setPublicGames] = useState<PublicGame[]>([]);
+  const { data: publicGames = [], isLoading } = usePublicGames();
 
-  useEffect(() => {
-    const storedGames = JSON.parse(localStorage.getItem("publicGames") || "[]");
-    setPublicGames(storedGames);
-  }, []);
+  // Format slot time for display
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+  };
 
   const defaultGames = [
     {
@@ -65,12 +56,12 @@ const SocialGames = () => {
   // Combine user-created public games with default games
   const userCreatedGames = publicGames.map(game => ({
     image: venueTennis,
-    sport: game.sport,
-    title: game.title,
-    host: game.host,
-    date: `${game.date} ${game.time}`,
-    location: game.location,
-    spotsLeft: game.spotsLeft
+    sport: game.sport || "Sports",
+    title: `${game.venue_name.split(" ")[0]} Game`,
+    host: "You",
+    date: `${format(new Date(game.slot_date), "MMM do")} ${formatTime(game.slot_time)}`,
+    location: game.venue_address || game.venue_name,
+    spotsLeft: `1/${game.player_count + 1}`
   }));
 
   const allGames = [...userCreatedGames, ...defaultGames];
@@ -112,13 +103,15 @@ const SocialGames = () => {
           <div className="space-y-2">
             {publicGames.slice(0, 2).map((game) => (
               <div key={game.id} className="p-3 bg-muted rounded-lg">
-                <p className="text-sm font-medium text-foreground">{game.title}</p>
-                <p className="text-xs text-text-secondary">{game.date} • {game.spotsLeft.split("/")[0]} joined</p>
+                <p className="text-sm font-medium text-foreground">{game.venue_name.split(" ")[0]} Game</p>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(game.slot_date), "MMM do")} • 1 joined
+                </p>
               </div>
             ))}
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm font-medium text-foreground">Evening Cricket Match</p>
-              <p className="text-xs text-text-secondary">Tomorrow • 4 joined</p>
+              <p className="text-xs text-muted-foreground">Tomorrow • 4 joined</p>
             </div>
           </div>
         </section>

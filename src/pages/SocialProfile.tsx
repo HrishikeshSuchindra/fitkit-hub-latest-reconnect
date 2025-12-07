@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock } from "lucide-react";
+import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUserBookings } from "@/hooks/useBookings";
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 interface Profile {
   display_name: string | null;
@@ -17,60 +20,36 @@ interface Profile {
   friends_count: number;
 }
 
-interface Booking {
-  id: string;
-  venue: string;
-  sport: string;
-  date: string;
-  time: string;
-  location: string;
-  visibility: string;
-  totalAmount: number;
-}
-
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  
+  // Fetch profile from database
+  const { data: profile, isLoading: loadingProfile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      if (error) throw error;
+      return data as Profile;
+    },
+    enabled: !!user,
+  });
+
+  // Fetch user bookings from database
+  const { data: bookings = [], isLoading: loadingBookings } = useUserBookings();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else {
-        setProfile(data);
-      }
-      setLoadingProfile(false);
-    };
-
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    // Load bookings from localStorage
-    const userBookings = JSON.parse(localStorage.getItem("userBookings") || "[]");
-    setBookings(userBookings);
-  }, []);
 
   useEffect(() => {
     // Scroll to bookings section if coming from reminder popup
@@ -97,10 +76,20 @@ const SocialProfile = () => {
     { name: "Sneha Reddy", status: "offline", time: "1d ago" },
   ];
 
-  if (loading || loadingProfile) {
+  // Format slot time for display
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour.toString().padStart(2, "0")}:${minutes} ${ampm}`;
+  };
+
+
+  if (loading || loadingProfile || loadingBookings) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-text-secondary">Loading...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -208,27 +197,29 @@ const SocialProfile = () => {
                   className="bg-muted rounded-xl p-4 flex items-center justify-between"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{booking.sport}</p>
+                    <p className="font-semibold text-foreground">{booking.sport || 'Sports'}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="w-3 h-3 text-text-tertiary" />
-                      <span className="text-xs text-text-secondary">{booking.date}</span>
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(booking.slot_date), "EEEE, MMM do")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Clock className="w-3 h-3 text-text-tertiary" />
-                      <span className="text-xs text-text-secondary">{booking.time}</span>
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{formatTime(booking.slot_time)}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <MapPin className="w-3 h-3 text-text-tertiary" />
-                      <span className="text-xs text-text-secondary truncate">{booking.venue}</span>
+                      <MapPin className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground truncate">{booking.venue_name}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-brand-green font-bold">₹{booking.totalAmount}</span>
+                    <span className="text-primary font-bold">₹{booking.price}</span>
                     <div className="mt-1">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         booking.visibility === 'public' 
-                          ? 'bg-brand-green/10 text-brand-green' 
-                          : 'bg-chip-purple-bg text-chip-purple-text'
+                          ? 'bg-primary/10 text-primary' 
+                          : 'bg-[hsl(var(--chip-purple-bg))] text-[hsl(var(--chip-purple-text))]'
                       }`}>
                         {booking.visibility === 'public' ? 'Public' : 'Friends'}
                       </span>

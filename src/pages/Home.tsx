@@ -135,7 +135,10 @@ const Home = () => {
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {venues.map((venue, idx) => (
               <div key={idx} className="min-w-[280px]">
-                <VenueCard {...venue} />
+                <VenueCard 
+                  {...venue} 
+                  onBook={() => navigate(`/venue/${idx}?name=${encodeURIComponent(venue.name)}&openSlots=true`)}
+                />
               </div>
             ))}
           </div>
