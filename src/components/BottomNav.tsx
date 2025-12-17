@@ -1,4 +1,4 @@
-import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Disc3, Gamepad2, Coffee, PartyPopper } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Gamepad2, Coffee, PartyPopper, LayoutGrid, Waves } from "lucide-react";
 import { NavLink } from "./NavLink";
 
 type NavMode = "home" | "venues" | "social" | "hub";
@@ -17,8 +17,8 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
 
   const venuesNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/venues/courts", label: "Courts", icon: Disc3 },
-    { to: "/venues/recovery", label: "Recovery", icon: Heart },
+    { to: "/venues/courts", label: "Courts", icon: LayoutGrid },
+    { to: "/venues/recovery", label: "Recovery", icon: Waves },
     { to: "/venues/studio", label: "Studio", icon: Flower2 },
   ];
 
