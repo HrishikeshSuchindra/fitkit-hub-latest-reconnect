@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { HubGameCard } from "@/components/HubGameCard";
+import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { UserPlus, ChevronDown, ChevronUp, Trophy, Gamepad2, Filter } from "lucide-react";
 import venueFootball from "@/assets/venue-football.jpg";
@@ -120,8 +121,10 @@ const HubGames = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <AppHeader />
+    <>
+      <PageTransition>
+        <div className="min-h-screen bg-background pb-20">
+          <AppHeader />
       
       <div className="px-5 py-4 space-y-5">
         <div className="flex items-center gap-3">
@@ -234,7 +237,10 @@ const HubGames = () => {
       </div>
       
       <BottomNav mode="hub" />
-    </div>
+        </div>
+      </PageTransition>
+      <BottomNav mode="hub" />
+    </>
   );
 };
 
