@@ -83,6 +83,58 @@ All colors MUST be HSL.
     --space-xl: 24px;
     --space-2xl: 32px;
   }
+
+  .dark {
+    /* Dark Mode - Sophisticated, muted inversion */
+    --bg-neutral: 220 15% 10%;           /* Deep charcoal */
+    --bg-card: 220 12% 14%;              /* Elevated dark surface */
+    --bg-muted: 220 10% 18%;             /* Subtle dark grey */
+    
+    --brand-primary-green: 150 25% 45%;  /* Slightly brighter sage for dark */
+    --brand-primary-soft: 150 20% 55%;   /* Soft sage accent */
+    --brand-danger: 15 50% 55%;          /* Lighter terracotta */
+    
+    --text-primary: 45 10% 92%;          /* Warm off-white */
+    --text-secondary: 45 6% 70%;         /* Muted cream */
+    --text-tertiary: 45 4% 55%;          /* Subtle grey */
+    
+    --chip-green-bg: 150 15% 20%;        /* Dark sage */
+    --chip-green-text: 150 25% 65%;      /* Light sage */
+    
+    --chip-purple-bg: 200 12% 20%;       /* Dark slate */
+    --chip-purple-text: 200 15% 70%;     /* Light slate */
+    
+    --divider: 220 10% 22%;              /* Subtle dark divider */
+    
+    /* Standard shadcn mappings - Dark */
+    --background: 220 15% 10%;
+    --foreground: 45 10% 92%;
+    
+    --card: 220 12% 14%;
+    --card-foreground: 45 10% 92%;
+    
+    --popover: 220 12% 14%;
+    --popover-foreground: 45 10% 92%;
+    
+    --primary: 150 25% 45%;
+    --primary-foreground: 220 15% 10%;
+    
+    --secondary: 220 10% 18%;
+    --secondary-foreground: 45 10% 92%;
+    
+    --muted: 220 10% 18%;
+    --muted-foreground: 45 6% 70%;
+    
+    --accent: 150 20% 55%;
+    --accent-foreground: 220 15% 10%;
+    
+    --destructive: 15 50% 55%;
+    --destructive-foreground: 220 15% 10%;
+    
+    --border: 220 10% 22%;
+    --input: 220 10% 22%;
+    --ring: 150 25% 45%;
+  }
 }
 
 @layer base {

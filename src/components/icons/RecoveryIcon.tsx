@@ -12,9 +12,11 @@ export const RecoveryIcon = ({ className }: RecoveryIconProps) => (
     strokeLinejoin="round"
     className={className}
   >
-    {/* Three flowing wave lines */}
-    <path d="M2 6c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
-    <path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
-    <path d="M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
+    {/* Swimming person icon */}
+    <circle cx="19" cy="6" r="2.5" />
+    <path d="M3 18c1.5-1 3-1.5 4.5-1.5s3 .5 4.5 1.5 3 1.5 4.5 1.5 3-.5 4.5-1.5" />
+    <path d="M3 13.5c1.5-1 3-1.5 4.5-1.5s3 .5 4.5 1.5" />
+    <path d="M12 13.5l4-3.5-2-2.5 3-2" />
+    <path d="M7 11l3.5-1" />
   </svg>
 );
