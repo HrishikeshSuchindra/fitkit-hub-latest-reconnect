@@ -16,7 +16,10 @@ export const AppHeader = () => {
       
       {/* Center: Logo */}
       <Link to="/">
-        <h1 className="text-2xl font-logo tracking-wider text-foreground">
+        <h1 
+          className="text-2xl tracking-wide text-foreground"
+          style={{ fontFamily: "'Helvetica Neue', 'Arial Black', Helvetica, sans-serif", fontWeight: 900 }}
+        >
           FITKITS
         </h1>
       </Link>
