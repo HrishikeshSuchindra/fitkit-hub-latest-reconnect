@@ -8,55 +8,55 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Premium Neutral Color System - Warm Stone & Architectural Tones */
-    --bg-neutral: 40 12% 92%;           /* Warm stone background */
-    --bg-card: 40 10% 98%;              /* Soft warm off-white cards */
-    --bg-muted: 40 8% 95%;              /* Subtle warm muted sections */
+    /* Premium Court Club Palette - Inspired by classic tennis courts */
+    --bg-neutral: 45 8% 92%;             /* Warm off-white stone */
+    --bg-card: 45 12% 97%;               /* Soft cream card */
+    --bg-muted: 45 6% 94%;               /* Light warm grey */
     
-    --brand-primary-green: 160 32% 32%; /* Muted sophisticated green */
-    --brand-primary-soft: 155 25% 75%;  /* Desaturated soft green */
-    --brand-danger: 8 55% 52%;          /* Muted terracotta red */
+    --brand-primary-green: 150 18% 38%;  /* Muted sage court green */
+    --brand-primary-soft: 150 15% 60%;   /* Soft sage accent */
+    --brand-danger: 15 40% 45%;          /* Terracotta rust */
     
-    --text-primary: 30 8% 18%;          /* Warm charcoal */
-    --text-secondary: 30 5% 45%;        /* Warm medium grey */
-    --text-tertiary: 30 4% 60%;         /* Soft warm grey */
+    --text-primary: 210 15% 20%;         /* Deep charcoal */
+    --text-secondary: 200 8% 42%;        /* Warm slate grey */
+    --text-tertiary: 200 6% 55%;         /* Muted grey */
     
-    --chip-green-bg: 150 20% 92%;       /* Muted sage background */
-    --chip-green-text: 155 28% 35%;     /* Muted sage text */
+    --chip-green-bg: 150 15% 90%;        /* Pale sage */
+    --chip-green-text: 150 20% 35%;      /* Deep sage */
     
-    --chip-purple-bg: 270 15% 92%;      /* Soft lavender grey */
-    --chip-purple-text: 265 25% 50%;    /* Muted purple */
+    --chip-purple-bg: 200 12% 90%;       /* Cool grey-blue */
+    --chip-purple-text: 210 15% 40%;     /* Slate blue */
     
-    --divider: 40 6% 90%;               /* Barely visible warm grey */
+    --divider: 45 6% 88%;                /* Subtle warm divider */
     
     /* Standard shadcn mappings */
-    --background: 40 12% 92%;
-    --foreground: 30 8% 18%;
+    --background: 45 8% 92%;
+    --foreground: 210 15% 20%;
     
-    --card: 40 10% 98%;
-    --card-foreground: 30 8% 18%;
+    --card: 45 12% 97%;
+    --card-foreground: 210 15% 20%;
     
-    --popover: 40 10% 98%;
-    --popover-foreground: 30 8% 18%;
+    --popover: 45 12% 97%;
+    --popover-foreground: 210 15% 20%;
     
-    --primary: 160 32% 32%;
-    --primary-foreground: 40 10% 98%;
+    --primary: 150 18% 38%;
+    --primary-foreground: 45 12% 97%;
     
-    --secondary: 40 8% 95%;
-    --secondary-foreground: 30 8% 18%;
+    --secondary: 45 6% 94%;
+    --secondary-foreground: 210 15% 20%;
     
-    --muted: 40 8% 95%;
-    --muted-foreground: 30 5% 45%;
+    --muted: 45 6% 94%;
+    --muted-foreground: 200 8% 42%;
     
-    --accent: 155 25% 75%;
-    --accent-foreground: 30 8% 18%;
+    --accent: 150 15% 60%;
+    --accent-foreground: 210 15% 20%;
     
-    --destructive: 8 55% 52%;
-    --destructive-foreground: 40 10% 98%;
+    --destructive: 15 40% 45%;
+    --destructive-foreground: 45 12% 97%;
     
-    --border: 40 6% 88%;
-    --input: 40 6% 88%;
-    --ring: 160 32% 32%;
+    --border: 45 6% 85%;
+    --input: 45 6% 85%;
+    --ring: 150 18% 38%;
     
     /* Radius System */
     --radius-sm: 8px;
