@@ -16,8 +16,8 @@ export const AppHeader = () => {
       
       {/* Center: Logo */}
       <Link to="/">
-        <h1 className="text-2xl font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
-          FitKits
+        <h1 className="text-2xl font-logo tracking-wider text-foreground">
+          FITKITS
         </h1>
       </Link>
       
