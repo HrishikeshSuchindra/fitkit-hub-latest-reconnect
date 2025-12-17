@@ -64,15 +64,15 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
                 key={item.to}
                 to={item.to}
                 end={item.to === "/" || item.to === getDefaultRoute()}
-                className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 active:scale-95"
+                className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 active:scale-[0.97]"
               >
                 {({ isActive }) => (
                   <>
-                    <div className={`p-1.5 rounded-lg transition-all duration-200 ${isActive ? "ring-1.5 ring-brand-green/70" : ""}`}>
+                    <div className="p-1.5 transition-all duration-200">
                       {mode !== "home" && item.to === "/" ? (
-                        <ArrowLeft className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                        <ArrowLeft className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green drop-shadow-[0_0_3px_hsl(var(--brand-primary-green)/0.5)]" : "text-text-secondary"}`} />
                       ) : (
-                        <IconComponent className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                        <IconComponent className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green drop-shadow-[0_0_3px_hsl(var(--brand-primary-green)/0.5)]" : "text-text-secondary"}`} />
                       )}
                     </div>
                     <span className={`text-xs transition-all duration-200 ${isActive ? "text-brand-green font-semibold" : "text-text-secondary font-medium"}`}>

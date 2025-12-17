@@ -10,9 +10,10 @@ const VenuesRecovery = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   
   const categories = [
-    { id: "all", label: "All", count: 2 },
+    { id: "all", label: "All", count: 3 },
     { id: "spa", label: "Spa & Massage", count: 1 },
     { id: "physio", label: "Physiotherapy", count: 1 },
+    { id: "swimming", label: "Swimming", count: 1 },
   ];
   
   const venues = {
@@ -21,6 +22,9 @@ const VenuesRecovery = () => {
     ],
     physio: [
       { image: recoveryPhysio, name: "Elite Physiotherapy Clinic", rating: 4.9, distance: "1.8 km", amenities: ["Sports Rehab", "Manual Therapy", "Exercise"], price: "₹800/session" },
+    ],
+    swimming: [
+      { image: recoverySpa, name: "Aqua Wellness Pool", rating: 4.8, distance: "2.0 km", amenities: ["Heated Pool", "Lap Lanes", "Aqua Therapy"], price: "₹500/session" },
     ],
   };
 

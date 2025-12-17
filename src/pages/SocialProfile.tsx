@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2 } from "lucide-react";
+import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2, Moon, Sun } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserBookings } from "@/hooks/useBookings";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +24,7 @@ interface Profile {
 
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -102,6 +105,16 @@ const SocialProfile = () => {
       <div className="relative bg-gradient-to-br from-chip-purple-text to-chip-purple-bg pt-8 pb-20">
         {/* Settings & Logout */}
         <div className="absolute top-4 right-4 flex gap-2">
+          {/* Dark Mode Toggle */}
+          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
+            <Sun className="w-4 h-4 text-white/80" />
+            <Switch 
+              checked={theme === "dark"}
+              onCheckedChange={toggleTheme}
+              className="data-[state=checked]:bg-white/30 data-[state=unchecked]:bg-white/20"
+            />
+            <Moon className="w-4 h-4 text-white/80" />
+          </div>
           <Button 
             variant="ghost" 
             size="icon" 
