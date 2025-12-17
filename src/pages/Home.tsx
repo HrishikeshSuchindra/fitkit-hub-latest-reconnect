@@ -147,7 +147,7 @@ const Home = () => {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-foreground">Featured Events</h2>
             <button 
-              onClick={() => navigate('/events')}
+              onClick={() => navigate('/social')}
               className="text-sm text-brand-green font-medium flex items-center gap-1"
             >
               See all <ChevronRight className="w-4 h-4" />

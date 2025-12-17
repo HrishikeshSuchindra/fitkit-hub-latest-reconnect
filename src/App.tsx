@@ -12,12 +12,15 @@ import VenuesStudio from "./pages/VenuesStudio";
 import VenueDetail from "./pages/VenueDetail";
 import BookingPreview from "./pages/BookingPreview";
 import BookingConfirmation from "./pages/BookingConfirmation";
-import Events from "./pages/Events";
-import EventsWorkshop from "./pages/EventsWorkshop";
-import SocialGames from "./pages/SocialGames";
-import SocialChat from "./pages/SocialChat";
+import Social from "./pages/Social";
+import SocialEventDetail from "./pages/SocialEventDetail";
+import SocialHost from "./pages/SocialHost";
+import HubGames from "./pages/HubGames";
+import HubGameDetail from "./pages/HubGameDetail";
+import HubChat from "./pages/HubChat";
+import HubChatRoom from "./pages/HubChatRoom";
+import HubCommunity from "./pages/HubCommunity";
 import SocialProfile from "./pages/SocialProfile";
-import SocialCommunity from "./pages/SocialCommunity";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -45,16 +48,21 @@ const App = () => (
             <Route path="/booking/preview" element={<BookingPreview />} />
             <Route path="/booking/confirmation" element={<BookingConfirmation />} />
             
-            {/* Events Routes */}
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/workshop" element={<EventsWorkshop />} />
+            {/* Social Routes (Fun Events) */}
+            <Route path="/social" element={<Social />} />
+            <Route path="/social/event/:eventId" element={<SocialEventDetail />} />
+            <Route path="/social/host" element={<SocialHost />} />
             
-            {/* Social Routes */}
-            <Route path="/social" element={<SocialGames />} />
-            <Route path="/social/games" element={<SocialGames />} />
-            <Route path="/social/chat" element={<SocialChat />} />
+            {/* Hub Routes (Public Games, Chat, Community) */}
+            <Route path="/hub" element={<HubGames />} />
+            <Route path="/hub/games" element={<HubGames />} />
+            <Route path="/hub/game/:gameId" element={<HubGameDetail />} />
+            <Route path="/hub/chat" element={<HubChat />} />
+            <Route path="/hub/chat/:chatId" element={<HubChatRoom />} />
+            <Route path="/hub/community" element={<HubCommunity />} />
+            
+            {/* Profile */}
             <Route path="/social/profile" element={<SocialProfile />} />
-            <Route path="/social/community" element={<SocialCommunity />} />
             
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />

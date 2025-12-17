@@ -1,7 +1,7 @@
-import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Disc3 } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Disc3, Gamepad2, Coffee, PartyPopper } from "lucide-react";
 import { NavLink } from "./NavLink";
 
-type NavMode = "home" | "venues" | "events" | "social";
+type NavMode = "home" | "venues" | "social" | "hub";
 
 interface BottomNavProps {
   mode: NavMode;
@@ -11,8 +11,8 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
   const homeNav = [
     { to: "/", label: "Home", icon: Home },
     { to: "/venues", label: "Venues", icon: MapPin },
-    { to: "/events", label: "Events", icon: Calendar },
-    { to: "/social", label: "Social", icon: Users },
+    { to: "/social", label: "Social", icon: PartyPopper },
+    { to: "/hub", label: "Hub", icon: Users },
   ];
 
   const venuesNav = [
@@ -22,21 +22,22 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
     { to: "/venues/studio", label: "Studio", icon: Flower2 },
   ];
 
-  const eventsNav = [
-    { to: "/", label: "Home", icon: Home },
-    { to: "/events/workshop", label: "Workshop", icon: Laptop },
-  ];
-
   const socialNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/social/games", label: "Games", icon: Users },
-    { to: "/social/chat", label: "Chat", icon: MessageCircle },
-    { to: "/social/community", label: "Community", icon: Globe },
+    { to: "/social", label: "Events", icon: PartyPopper },
+    { to: "/social/host", label: "Host", icon: Coffee },
+  ];
+
+  const hubNav = [
+    { to: "/", label: "Home", icon: Home },
+    { to: "/hub/games", label: "Games", icon: Gamepad2 },
+    { to: "/hub/chat", label: "Chat", icon: MessageCircle },
+    { to: "/hub/community", label: "Community", icon: Globe },
   ];
 
   const navItems = mode === "home" ? homeNav : 
                    mode === "venues" ? venuesNav : 
-                   mode === "events" ? eventsNav : socialNav;
+                   mode === "social" ? socialNav : hubNav;
 
   return (
     <nav className="h-16 bg-card border-t border-divider fixed bottom-0 left-0 right-0 z-50">
