@@ -133,6 +133,7 @@ const HubGames = () => {
               placeholder="Search games, tournaments..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              context="hub"
             />
           </div>
           <button className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">

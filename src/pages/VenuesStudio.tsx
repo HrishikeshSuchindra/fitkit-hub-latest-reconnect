@@ -42,7 +42,7 @@ const VenuesStudio = () => {
       <AppHeader />
       
       <div className="px-5 py-4 space-y-5">
-        <SearchBar placeholder="Search studios..." />
+        <SearchBar placeholder="Search studios..." context="studio" />
         
         {/* Promotional Banner */}
         <div className="bg-gradient-to-br from-chip-purple-bg via-chip-green-bg to-chip-purple-bg rounded-xl p-5 text-foreground">

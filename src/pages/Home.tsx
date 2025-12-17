@@ -64,7 +64,7 @@ const Home = () => {
       
       <div className="px-5 py-4 space-y-6">
         {/* Search */}
-        <SearchBar />
+        <SearchBar context="master" />
         
         {/* Special Offers */}
         <section>

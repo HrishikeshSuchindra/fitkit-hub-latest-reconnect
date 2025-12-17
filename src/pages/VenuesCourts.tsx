@@ -86,7 +86,7 @@ const VenuesCourts = () => {
       <AppHeader />
       
       <div className="px-5 py-4 space-y-5">
-        <SearchBar placeholder="Search courts..." />
+        <SearchBar placeholder="Search courts..." context="courts" />
         
         {/* Special Offer Banner */}
         {currentOffer && (
