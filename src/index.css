@@ -8,55 +8,55 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* FitKits Color System - All HSL */
-    --bg-neutral: 40 22% 91%;           /* #EDEAE5 beige background */
-    --bg-card: 0 0% 100%;               /* #FFFFFF card backgrounds */
-    --bg-muted: 40 33% 96%;             /* #F6F4F2 light muted sections */
+    /* Premium Neutral Color System - Warm Stone & Architectural Tones */
+    --bg-neutral: 40 12% 92%;           /* Warm stone background */
+    --bg-card: 40 10% 98%;              /* Soft warm off-white cards */
+    --bg-muted: 40 8% 95%;              /* Subtle warm muted sections */
     
-    --brand-primary-green: 158 39% 30%; /* #2F6B55 */
-    --brand-primary-soft: 145 42% 73%;  /* #9ACCAE */
-    --brand-danger: 4 74% 59%;          /* #E65347 red CTA */
+    --brand-primary-green: 160 32% 32%; /* Muted sophisticated green */
+    --brand-primary-soft: 155 25% 75%;  /* Desaturated soft green */
+    --brand-danger: 8 55% 52%;          /* Muted terracotta red */
     
-    --text-primary: 214 11% 13%;        /* #1D1F22 */
-    --text-secondary: 225 5% 45%;       /* #6D6F75 */
-    --text-tertiary: 0 0% 65%;          /* #A5A5A5 */
+    --text-primary: 30 8% 18%;          /* Warm charcoal */
+    --text-secondary: 30 5% 45%;        /* Warm medium grey */
+    --text-tertiary: 30 4% 60%;         /* Soft warm grey */
     
-    --chip-green-bg: 140 45% 92%;       /* #E2F3E7 */
-    --chip-green-text: 145 49% 32%;     /* #2A7A4D */
+    --chip-green-bg: 150 20% 92%;       /* Muted sage background */
+    --chip-green-text: 155 28% 35%;     /* Muted sage text */
     
-    --chip-purple-bg: 280 89% 93%;      /* #EDDDFE */
-    --chip-purple-text: 265 91% 58%;    /* #7C31F7 */
+    --chip-purple-bg: 270 15% 92%;      /* Soft lavender grey */
+    --chip-purple-text: 265 25% 50%;    /* Muted purple */
     
-    --divider: 40 14% 87%;              /* #E0DED9 */
+    --divider: 40 6% 90%;               /* Barely visible warm grey */
     
     /* Standard shadcn mappings */
-    --background: 40 22% 91%;
-    --foreground: 214 11% 13%;
+    --background: 40 12% 92%;
+    --foreground: 30 8% 18%;
     
-    --card: 0 0% 100%;
-    --card-foreground: 214 11% 13%;
+    --card: 40 10% 98%;
+    --card-foreground: 30 8% 18%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 214 11% 13%;
+    --popover: 40 10% 98%;
+    --popover-foreground: 30 8% 18%;
     
-    --primary: 158 39% 30%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 160 32% 32%;
+    --primary-foreground: 40 10% 98%;
     
-    --secondary: 40 33% 96%;
-    --secondary-foreground: 214 11% 13%;
+    --secondary: 40 8% 95%;
+    --secondary-foreground: 30 8% 18%;
     
-    --muted: 40 33% 96%;
-    --muted-foreground: 225 5% 45%;
+    --muted: 40 8% 95%;
+    --muted-foreground: 30 5% 45%;
     
-    --accent: 145 42% 73%;
-    --accent-foreground: 214 11% 13%;
+    --accent: 155 25% 75%;
+    --accent-foreground: 30 8% 18%;
     
-    --destructive: 4 74% 59%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 8 55% 52%;
+    --destructive-foreground: 40 10% 98%;
     
-    --border: 40 14% 87%;
-    --input: 40 14% 87%;
-    --ring: 158 39% 30%;
+    --border: 40 6% 88%;
+    --input: 40 6% 88%;
+    --ring: 160 32% 32%;
     
     /* Radius System */
     --radius-sm: 8px;
@@ -95,16 +95,16 @@ All colors MUST be HSL.
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   
-  /* Custom shadows */
+  /* Custom shadows - Refined and subtle */
   .shadow-strong {
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.12);
+    box-shadow: 0px 8px 24px rgba(30, 25, 20, 0.08);
   }
   
   .shadow-soft {
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.10);
+    box-shadow: 0px 4px 12px rgba(30, 25, 20, 0.06);
   }
   
   .shadow-ultralight {
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.06);
+    box-shadow: 0px 2px 8px rgba(30, 25, 20, 0.04);
   }
 }
