@@ -13,6 +13,11 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        'logo': ['Bebas Neue', 'Arial Black', 'sans-serif'],
+        'heading': ['Cormorant Garamond', 'Georgia', 'serif'],
+        'body': ['Source Serif 4', 'Georgia', 'serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
