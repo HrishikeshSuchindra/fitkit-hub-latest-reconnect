@@ -48,17 +48,17 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
               key={item.to}
               to={item.to}
               end={item.to === "/"}
-              className="flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-lg transition-colors"
-              activeClassName="text-brand-green"
+              className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200"
+              activeClassName="bg-brand-green/15 text-brand-green"
             >
               {({ isActive }) => (
                 <>
                   {mode !== "home" && item.to === "/" ? (
-                    <ArrowLeft className={`w-5 h-5 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                    <ArrowLeft className={`w-5 h-5 transition-colors ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
                   ) : (
-                    <item.icon className={`w-5 h-5 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                    <item.icon className={`w-5 h-5 transition-colors ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
                   )}
-                  <span className={`text-xs font-medium ${isActive ? "text-brand-green" : "text-text-secondary"}`}>
+                  <span className={`text-xs transition-colors ${isActive ? "text-brand-green font-semibold" : "text-text-secondary font-medium"}`}>
                     {item.label}
                   </span>
                 </>
