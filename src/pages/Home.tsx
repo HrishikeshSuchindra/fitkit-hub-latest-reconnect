@@ -20,8 +20,6 @@ const Home = () => {
   const featuredEvents = [
     { id: 1, image: eventBadminton, title: "Badminton Championship", date: "Dec 28, 2024" },
     { id: 2, image: eventFootball, title: "Football League Finals", date: "Dec 30, 2024" },
-    { id: 3, image: eventBadminton, title: "Winter Sports Fest", date: "Jan 5, 2025" },
-    { id: 4, image: eventFootball, title: "Corporate Cup 2025", date: "Jan 10, 2025" },
   ];
 
   const recentActivities = [
