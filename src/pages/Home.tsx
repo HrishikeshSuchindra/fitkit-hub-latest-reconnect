@@ -57,9 +57,10 @@ const Home = () => {
   ];
 
   return (
-    <PageTransition>
-    <div className="min-h-screen bg-background pb-20">
-      <AppHeader />
+    <>
+      <PageTransition>
+        <div className="min-h-screen bg-background pb-20">
+          <AppHeader />
       
       <div className="px-5 py-4 space-y-6">
         {/* Search */}
@@ -189,10 +190,10 @@ const Home = () => {
           </div>
         </section>
       </div>
-      
+        </div>
+      </PageTransition>
       <BottomNav mode="home" />
-    </div>
-    </PageTransition>
+    </>
   );
 };
 

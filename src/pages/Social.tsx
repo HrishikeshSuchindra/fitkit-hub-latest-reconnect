@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { SocialEventCard } from "@/components/SocialEventCard";
+import { PageTransition } from "@/components/PageTransition";
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 
@@ -111,8 +112,10 @@ const Social = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <AppHeader />
+    <>
+      <PageTransition>
+        <div className="min-h-screen bg-background pb-20">
+          <AppHeader />
       
       <div className="px-5 py-4 space-y-5">
         <div className="flex items-center gap-3">
@@ -189,7 +192,10 @@ const Social = () => {
       </div>
       
       <BottomNav mode="social" />
-    </div>
+        </div>
+      </PageTransition>
+      <BottomNav mode="social" />
+    </>
   );
 };
 

@@ -2,7 +2,6 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
-import { PageTransition } from "@/components/PageTransition";
 import { useState } from "react";
 import recoverySpa from "@/assets/recovery-spa.jpg";
 import recoveryPhysio from "@/assets/recovery-physio.jpg";
@@ -44,7 +43,6 @@ const VenuesRecovery = () => {
   const sections = activeCategory === "all" ? allSections : categorySections;
 
   return (
-    <PageTransition>
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
@@ -94,7 +92,6 @@ const VenuesRecovery = () => {
       
       <BottomNav mode="venues" />
     </div>
-    </PageTransition>
   );
 };
 
