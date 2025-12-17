@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Droplets, Snowflake, Sparkles, Flame, Heart } from "lucide-react";
 import offerRecovery from "@/assets/offer-recovery.jpg";
 import recoverySpa from "@/assets/recovery-spa.jpg";
 import recoveryPhysio from "@/assets/recovery-physio.jpg";
@@ -15,17 +16,14 @@ import recoveryYoga from "@/assets/recovery-yoga.jpg";
 
 const VenuesRecovery = () => {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
-  const categories = [
-    { id: "all", label: "All", count: 7 },
-    { id: "swimming", label: "Swimming", count: 1 },
-    { id: "icebath", label: "Ice Bath", count: 1 },
-    { id: "massage", label: "Massage", count: 1 },
-    { id: "sauna", label: "Sauna", count: 1 },
-    { id: "yoga", label: "Yoga", count: 1 },
-    { id: "physio", label: "Physiotherapy", count: 1 },
-    { id: "spa", label: "Spa", count: 1 },
+  const activities = [
+    { id: "swimming", label: "Swimming", icon: Droplets, color: "bg-blue-500" },
+    { id: "icebath", label: "Ice Bath", icon: Snowflake, color: "bg-cyan-500" },
+    { id: "massage", label: "Massage", icon: Sparkles, color: "bg-amber-500" },
+    { id: "sauna", label: "Sauna", icon: Flame, color: "bg-orange-500" },
+    { id: "yoga", label: "Yoga", icon: Heart, color: "bg-rose-400" },
   ];
   
   const offers = {
@@ -35,8 +33,6 @@ const VenuesRecovery = () => {
     massage: { image: recoveryMassage, title: "Relaxation Special", subtitle: "Book 3 Get 1 Free" },
     sauna: { image: recoverySauna, title: "Heat Therapy", subtitle: "Couples Discount" },
     yoga: { image: recoveryYoga, title: "Mindfulness Week", subtitle: "7 Days Unlimited" },
-    physio: { image: recoveryPhysio, title: "Recovery Plan", subtitle: "Consultation Free" },
-    spa: { image: recoverySpa, title: "Wellness Package", subtitle: "25% Off" },
   };
   
   const allVenues = {
@@ -55,35 +51,46 @@ const VenuesRecovery = () => {
     yoga: [
       { image: recoveryYoga, name: "Zen Yoga Studio", rating: 4.8, distance: "1.3 km", amenities: ["Hatha", "Vinyasa", "Meditation"], price: "₹400/session" },
     ],
-    physio: [
-      { image: recoveryPhysio, name: "Elite Physiotherapy Clinic", rating: 4.9, distance: "1.8 km", amenities: ["Sports Rehab", "Manual Therapy", "Exercise"], price: "₹800/session" },
-    ],
-    spa: [
-      { image: recoverySpa, name: "Tranquil Spa & Wellness", rating: 4.9, distance: "1.5 km", amenities: ["Full Body", "Facial", "Scrub"], price: "₹1500/session" },
-    ],
   };
 
   const getAllVenues = () => Object.values(allVenues).flat();
-  const currentOffer = offers[activeCategory as keyof typeof offers] || offers.all;
-  const currentVenues = activeCategory === "all" ? getAllVenues() : allVenues[activeCategory as keyof typeof allVenues] || [];
+  const currentOffer = activeCategory ? offers[activeCategory as keyof typeof offers] : offers.all;
+  const currentVenues = activeCategory ? allVenues[activeCategory as keyof typeof allVenues] || [] : getAllVenues();
 
   const allSections = [
-    { title: "Recommended for You", venues: getAllVenues().slice(0, 4) },
-    { title: "Trending in Your Area", venues: getAllVenues().slice(4, 7) },
+    { title: "Recommended for You", venues: getAllVenues().slice(0, 3) },
+    { title: "Trending in Your Area", venues: getAllVenues().slice(2, 5) },
   ];
 
   const categorySections = [
     { title: "Top Rated", venues: currentVenues },
   ];
 
-  const sections = activeCategory === "all" ? allSections : categorySections;
+  const sections = activeCategory ? categorySections : allSections;
+
+  const recoverySuggestions = [
+    "Swimming pools near me",
+    "Ice bath therapy",
+    "Massage centers",
+    "Sauna & steam rooms",
+    "Yoga studios",
+    "Physiotherapy clinics",
+    "Spa & wellness",
+    "Aqua therapy",
+    "Cold plunge",
+    "Hot stone massage",
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
       <div className="px-5 py-4 space-y-5">
-        <SearchBar placeholder="Search recovery centers..." />
+        <SearchBar 
+          placeholder="Search recovery centers & activities..." 
+          suggestions={recoverySuggestions}
+          context="recovery"
+        />
         
         {/* Special Offer Banner */}
         {currentOffer && (
@@ -102,27 +109,42 @@ const VenuesRecovery = () => {
           </div>
         )}
         
-        {/* Category Filter Chips */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mt-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                activeCategory === cat.id
-                  ? "bg-brand-green text-white"
-                  : "bg-muted text-text-secondary"
-              }`}
-            >
-              {cat.label} ({cat.count})
-            </button>
-          ))}
-        </div>
+        {/* Activity Icons */}
+        <section>
+          <h2 className="text-lg font-semibold text-foreground mb-3">Activities</h2>
+          <div className="flex justify-between px-2">
+            {activities.map((activity) => {
+              const IconComponent = activity.icon;
+              const isActive = activeCategory === activity.id;
+              return (
+                <button
+                  key={activity.id}
+                  onClick={() => setActiveCategory(isActive ? null : activity.id)}
+                  className="flex flex-col items-center gap-2 group"
+                >
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
+                    isActive 
+                      ? `${activity.color} shadow-lg scale-105` 
+                      : 'bg-muted group-hover:bg-muted/80'
+                  }`}>
+                    <IconComponent className={`w-6 h-6 ${isActive ? 'text-white' : 'text-foreground'}`} />
+                  </div>
+                  <span className={`text-xs font-medium ${isActive ? 'text-brand-green' : 'text-text-secondary'}`}>
+                    {activity.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
         
         {/* Venue Sections */}
         {sections.map((section, idx) => (
           <section key={idx}>
-            <h2 className="text-lg font-bold text-foreground mb-3">{section.title}</h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-bold text-foreground">{section.title}</h2>
+              <button className="text-sm text-brand-green font-medium">View All</button>
+            </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {section.venues.map((venue, venueIdx) => (
                 <div key={venueIdx} className="min-w-[280px]">
