@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
+import { PageTransition } from "@/components/PageTransition";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import offerFootball from "@/assets/offer-football.jpg";
@@ -82,6 +83,7 @@ const VenuesCourts = () => {
   const sections = activeSport === "all" ? allSections : sportSections;
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
@@ -141,6 +143,7 @@ const VenuesCourts = () => {
       
       <BottomNav mode="venues" />
     </div>
+    </PageTransition>
   );
 };
 
