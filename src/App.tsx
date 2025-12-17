@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { BookingReminderPopup } from "@/components/booking/BookingReminderPopup";
@@ -27,6 +28,49 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
+        
+        {/* Venues Routes */}
+        <Route path="/venues" element={<VenuesCourts />} />
+        <Route path="/venues/courts" element={<VenuesCourts />} />
+        <Route path="/venues/recovery" element={<VenuesRecovery />} />
+        <Route path="/venues/studio" element={<VenuesStudio />} />
+        <Route path="/venue/:venueId" element={<VenueDetail />} />
+        
+        {/* Booking Routes */}
+        <Route path="/booking/preview" element={<BookingPreview />} />
+        <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+        
+        {/* Social Routes (Fun Events) */}
+        <Route path="/social" element={<Social />} />
+        <Route path="/social/event/:eventId" element={<SocialEventDetail />} />
+        <Route path="/social/host" element={<SocialHost />} />
+        
+        {/* Hub Routes (Public Games, Chat, Community) */}
+        <Route path="/hub" element={<HubGames />} />
+        <Route path="/hub/games" element={<HubGames />} />
+        <Route path="/hub/game/:gameId" element={<HubGameDetail />} />
+        <Route path="/hub/chat" element={<HubChat />} />
+        <Route path="/hub/chat/:chatId" element={<HubChatRoom />} />
+        <Route path="/hub/community" element={<HubCommunity />} />
+        
+        {/* Profile */}
+        <Route path="/social/profile" element={<SocialProfile />} />
+        
+        {/* Catch-all */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -35,40 +79,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/auth" element={<Auth />} />
-              
-              {/* Venues Routes */}
-              <Route path="/venues" element={<VenuesCourts />} />
-              <Route path="/venues/courts" element={<VenuesCourts />} />
-              <Route path="/venues/recovery" element={<VenuesRecovery />} />
-              <Route path="/venues/studio" element={<VenuesStudio />} />
-              <Route path="/venue/:venueId" element={<VenueDetail />} />
-              
-              {/* Booking Routes */}
-              <Route path="/booking/preview" element={<BookingPreview />} />
-              <Route path="/booking/confirmation" element={<BookingConfirmation />} />
-              
-              {/* Social Routes (Fun Events) */}
-              <Route path="/social" element={<Social />} />
-              <Route path="/social/event/:eventId" element={<SocialEventDetail />} />
-              <Route path="/social/host" element={<SocialHost />} />
-              
-              {/* Hub Routes (Public Games, Chat, Community) */}
-              <Route path="/hub" element={<HubGames />} />
-              <Route path="/hub/games" element={<HubGames />} />
-              <Route path="/hub/game/:gameId" element={<HubGameDetail />} />
-              <Route path="/hub/chat" element={<HubChat />} />
-              <Route path="/hub/chat/:chatId" element={<HubChatRoom />} />
-              <Route path="/hub/community" element={<HubCommunity />} />
-              
-              {/* Profile */}
-              <Route path="/social/profile" element={<SocialProfile />} />
-              
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AnimatedRoutes />
             <BookingReminderPopup />
           </BrowserRouter>
         </TooltipProvider>

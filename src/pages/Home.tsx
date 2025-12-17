@@ -2,6 +2,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
+import { PageTransition } from "@/components/PageTransition";
 import { ChevronRight, MapPin, Calendar, Trophy } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +57,7 @@ const Home = () => {
   ];
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
@@ -190,6 +192,7 @@ const Home = () => {
       
       <BottomNav mode="home" />
     </div>
+    </PageTransition>
   );
 };
 

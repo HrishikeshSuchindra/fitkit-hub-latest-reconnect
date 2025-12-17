@@ -2,9 +2,11 @@ import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
+import { PageTransition } from "@/components/PageTransition";
 import { useState } from "react";
 import recoverySpa from "@/assets/recovery-spa.jpg";
 import recoveryPhysio from "@/assets/recovery-physio.jpg";
+import recoverySwimming from "@/assets/recovery-swimming.jpg";
 
 const VenuesRecovery = () => {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -24,7 +26,7 @@ const VenuesRecovery = () => {
       { image: recoveryPhysio, name: "Elite Physiotherapy Clinic", rating: 4.9, distance: "1.8 km", amenities: ["Sports Rehab", "Manual Therapy", "Exercise"], price: "₹800/session" },
     ],
     swimming: [
-      { image: recoverySpa, name: "Aqua Wellness Pool", rating: 4.8, distance: "2.0 km", amenities: ["Heated Pool", "Lap Lanes", "Aqua Therapy"], price: "₹500/session" },
+      { image: recoverySwimming, name: "Aqua Wellness Pool", rating: 4.8, distance: "2.0 km", amenities: ["Heated Pool", "Lap Lanes", "Aqua Therapy"], price: "₹500/session" },
     ],
   };
 
@@ -42,6 +44,7 @@ const VenuesRecovery = () => {
   const sections = activeCategory === "all" ? allSections : categorySections;
 
   return (
+    <PageTransition>
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
@@ -91,6 +94,7 @@ const VenuesRecovery = () => {
       
       <BottomNav mode="venues" />
     </div>
+    </PageTransition>
   );
 };
 
