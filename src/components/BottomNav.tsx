@@ -1,5 +1,7 @@
-import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Gamepad2, Coffee, PartyPopper, LayoutGrid, Waves } from "lucide-react";
+import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Gamepad2, Coffee, PartyPopper } from "lucide-react";
 import { NavLink } from "./NavLink";
+import { CourtsIcon } from "./icons/CourtsIcon";
+import { RecoveryIcon } from "./icons/RecoveryIcon";
 
 type NavMode = "home" | "venues" | "social" | "hub";
 
@@ -17,8 +19,8 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
 
   const venuesNav = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/venues/courts", label: "Courts", icon: LayoutGrid },
-    { to: "/venues/recovery", label: "Recovery", icon: Waves },
+    { to: "/venues/courts", label: "Courts", icon: CourtsIcon, isCustom: true },
+    { to: "/venues/recovery", label: "Recovery", icon: RecoveryIcon, isCustom: true },
     { to: "/venues/studio", label: "Studio", icon: Flower2 },
   ];
 
@@ -39,36 +41,52 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
                    mode === "venues" ? venuesNav : 
                    mode === "social" ? socialNav : hubNav;
 
+  // Determine default active route for each mode
+  const getDefaultRoute = () => {
+    switch (mode) {
+      case "venues": return "/venues/courts";
+      case "social": return "/social";
+      case "hub": return "/hub/games";
+      default: return "/";
+    }
+  };
+
   return (
     <nav className="h-16 bg-card border-t border-divider fixed bottom-0 left-0 right-0 z-50">
       <div className="h-full flex items-center justify-around px-2">
-        {navItems.map((item, index) => (
-          <>
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 active:scale-95"
-              activeClassName="ring-1.5 ring-brand-green/60 text-brand-green"
-            >
-              {({ isActive }) => (
-                <>
-                  {mode !== "home" && item.to === "/" ? (
-                    <ArrowLeft className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
-                  ) : (
-                    <item.icon className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
-                  )}
-                  <span className={`text-xs transition-all duration-200 ${isActive ? "text-brand-green font-semibold" : "text-text-secondary font-medium"}`}>
-                    {item.label}
-                  </span>
-                </>
+        {navItems.map((item, index) => {
+          const IconComponent = item.icon;
+          const isCustomIcon = 'isCustom' in item && item.isCustom;
+          
+          return (
+            <>
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/" || item.to === getDefaultRoute()}
+                className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 active:scale-95"
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className={`p-1.5 rounded-lg transition-all duration-200 ${isActive ? "ring-1.5 ring-brand-green/70" : ""}`}>
+                      {mode !== "home" && item.to === "/" ? (
+                        <ArrowLeft className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                      ) : (
+                        <IconComponent className={`w-5 h-5 transition-all duration-200 ${isActive ? "text-brand-green" : "text-text-secondary"}`} />
+                      )}
+                    </div>
+                    <span className={`text-xs transition-all duration-200 ${isActive ? "text-brand-green font-semibold" : "text-text-secondary font-medium"}`}>
+                      {item.label}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+              {mode !== "home" && index === 0 && (
+                <div className="h-10 w-px bg-divider mx-1" />
               )}
-            </NavLink>
-            {mode !== "home" && index === 0 && (
-              <div className="h-10 w-px bg-divider mx-1" />
-            )}
-          </>
-        ))}
+            </>
+          );
+        })}
       </div>
     </nav>
   );
