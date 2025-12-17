@@ -66,6 +66,9 @@ export default {
         },
         divider: "hsl(var(--divider))",
       },
+      ringWidth: {
+        "1.5": "1.5px",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
