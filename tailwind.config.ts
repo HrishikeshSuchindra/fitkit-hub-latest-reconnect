@@ -65,6 +65,13 @@ export default {
           text: "hsl(var(--chip-purple-text))",
         },
         divider: "hsl(var(--divider))",
+        auth: {
+          cream: "hsl(var(--auth-cream))",
+          peach: "hsl(var(--auth-peach))",
+          orange: "hsl(var(--auth-orange))",
+          coral: "hsl(var(--auth-coral))",
+          amber: "hsl(var(--auth-amber))",
+        },
       },
       ringWidth: {
         "1.5": "1.5px",
