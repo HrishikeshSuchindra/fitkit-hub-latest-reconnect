@@ -66,11 +66,10 @@ export default {
         },
         divider: "hsl(var(--divider))",
         auth: {
-          cream: "hsl(var(--auth-cream))",
-          peach: "hsl(var(--auth-peach))",
-          orange: "hsl(var(--auth-orange))",
+          bone: "hsl(var(--auth-bone))",
+          beige: "hsl(var(--auth-beige))",
+          stone: "hsl(var(--auth-stone))",
           coral: "hsl(var(--auth-coral))",
-          amber: "hsl(var(--auth-amber))",
         },
       },
       ringWidth: {

@@ -10,12 +10,6 @@ import { z } from "zod";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import fitkitsLogo from "@/assets/fitkits-logo.png";
 
-// Color palette:
-// #F9AD6E (hsl 30 73% 70%) – Soft warm bone
-// #FFC396 (hsl 25 100% 80%) – Light warm beige  
-// #F09241 (hsl 27 88% 60%) – Muted stone
-// #FDCBC9 (hsl 2 93% 89%) – Cool slate/coral
-
 const emailSchema = z.string().email("Please enter a valid email");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 const phoneSchema = z.string().min(10, "Please enter a valid phone number");
@@ -288,14 +282,14 @@ const Auth = () => {
         <div className="space-y-6">
           <button 
             onClick={() => setMode(otpPurpose === 'login' ? 'phone' : 'forgot')} 
-            className="flex items-center gap-2 text-[#F09241] hover:text-[#F9AD6E] transition-colors"
+            className="flex items-center gap-2 text-auth-stone hover:text-auth-bone transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
           
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#F9AD6E] to-[#FFC396] rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-auth-bone to-auth-beige rounded-full mx-auto mb-4 flex items-center justify-center">
               <Mail className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Enter Verification Code</h2>
@@ -307,19 +301,19 @@ const Auth = () => {
           <div className="flex justify-center">
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
               <InputOTPGroup>
-                <InputOTPSlot index={0} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
-                <InputOTPSlot index={1} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
-                <InputOTPSlot index={2} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
-                <InputOTPSlot index={3} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
-                <InputOTPSlot index={4} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
-                <InputOTPSlot index={5} className="border-[#FDCBC9] focus:border-[#F9AD6E] bg-white/50" />
+                <InputOTPSlot index={0} className="border-auth-coral focus:border-auth-bone bg-white/50" />
+                <InputOTPSlot index={1} className="border-auth-coral focus:border-auth-bone bg-white/50" />
+                <InputOTPSlot index={2} className="border-auth-coral focus:border-auth-bone bg-white/50" />
+                <InputOTPSlot index={3} className="border-auth-coral focus:border-auth-bone bg-white/50" />
+                <InputOTPSlot index={4} className="border-auth-coral focus:border-auth-bone bg-white/50" />
+                <InputOTPSlot index={5} className="border-auth-coral focus:border-auth-bone bg-white/50" />
               </InputOTPGroup>
             </InputOTP>
           </div>
 
           <p className="text-center text-sm text-muted-foreground">
             Didn't receive the code?{" "}
-            <button className="text-[#F09241] font-medium hover:underline">
+            <button className="text-auth-stone font-medium hover:underline">
               Resend
             </button>
           </p>
@@ -327,7 +321,7 @@ const Auth = () => {
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || otp.length < 6}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-[#F9AD6E] to-[#FFC396] hover:from-[#FFC396] hover:to-[#F9AD6E] text-white font-semibold shadow-lg"
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold shadow-lg"
           >
             {isSubmitting ? "Verifying..." : otpPurpose === 'login' ? "Verify & Login" : "Verify OTP"}
           </Button>
@@ -340,14 +334,14 @@ const Auth = () => {
         <div className="space-y-6">
           <button 
             onClick={() => setMode('login')} 
-            className="flex items-center gap-2 text-[#F09241] hover:text-[#F9AD6E] transition-colors"
+            className="flex items-center gap-2 text-auth-stone hover:text-auth-bone transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Login
           </button>
           
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#F9AD6E] to-[#FFC396] rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-auth-bone to-auth-beige rounded-full mx-auto mb-4 flex items-center justify-center">
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Reset Password</h2>
@@ -355,7 +349,7 @@ const Auth = () => {
           </div>
           
           {/* Reset Type Toggle */}
-          <div className="flex bg-[#FDCBC9]/40 rounded-xl p-1">
+          <div className="flex bg-auth-coral/40 rounded-xl p-1">
             <button
               onClick={() => setResetType('email')}
               className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${
@@ -385,14 +379,14 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-foreground">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                    className="pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                   />
                 </div>
                 {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
@@ -401,14 +395,14 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="+1 234 567 8900"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                    className="pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                   />
                 </div>
                 {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
@@ -418,7 +412,7 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#F9AD6E] to-[#FFC396] hover:from-[#FFC396] hover:to-[#F9AD6E] text-white font-semibold shadow-lg"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold shadow-lg"
             >
               {isSubmitting ? "Sending..." : "Send OTP"}
             </Button>
@@ -431,7 +425,7 @@ const Auth = () => {
       return (
         <div className="space-y-6">
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#F9AD6E] to-[#FFC396] rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-auth-bone to-auth-beige rounded-full mx-auto mb-4 flex items-center justify-center">
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Create New Password</h2>
@@ -442,14 +436,14 @@ const Auth = () => {
             <div className="space-y-2">
               <Label htmlFor="newPassword" className="text-foreground">New Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                 <Input
                   id="newPassword"
                   type={showNewPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                  className="pl-10 pr-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                 />
                 <button
                   type="button"
@@ -465,14 +459,14 @@ const Auth = () => {
             <div className="space-y-2">
               <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                 <Input
                   id="confirmPassword"
                   type={showNewPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                  className="pl-10 pr-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                 />
               </div>
               {errors.confirmPassword && <p className="text-xs text-destructive">{errors.confirmPassword}</p>}
@@ -481,7 +475,7 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#F9AD6E] to-[#FFC396] hover:from-[#FFC396] hover:to-[#F9AD6E] text-white font-semibold shadow-lg"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold shadow-lg"
             >
               {isSubmitting ? "Resetting..." : "Reset Password"}
             </Button>
@@ -495,14 +489,14 @@ const Auth = () => {
         <div className="space-y-6">
           <button 
             onClick={() => setMode('login')} 
-            className="flex items-center gap-2 text-[#F09241] hover:text-[#F9AD6E] transition-colors"
+            className="flex items-center gap-2 text-auth-stone hover:text-auth-bone transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>
           
           <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-[#F9AD6E] to-[#FFC396] rounded-full mx-auto mb-4 flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-auth-bone to-auth-beige rounded-full mx-auto mb-4 flex items-center justify-center">
               <Phone className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">Sign in with Phone</h2>
@@ -513,14 +507,14 @@ const Auth = () => {
             <div className="space-y-2">
               <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="+1 234 567 8900"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                  className="pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                 />
               </div>
               {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
@@ -529,7 +523,7 @@ const Auth = () => {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-[#F9AD6E] to-[#FFC396] hover:from-[#FFC396] hover:to-[#F9AD6E] text-white font-semibold shadow-lg"
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold shadow-lg"
             >
               {isSubmitting ? "Sending..." : "Send OTP"}
             </Button>
@@ -542,7 +536,7 @@ const Auth = () => {
     return (
       <>
         {/* Toggle */}
-        <div className="flex bg-[#FDCBC9]/40 rounded-xl p-1 mb-6">
+        <div className="flex bg-auth-coral/40 rounded-xl p-1 mb-6">
           <button
             onClick={() => setMode('login')}
             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
@@ -571,14 +565,14 @@ const Auth = () => {
             <div className="space-y-2">
               <Label htmlFor="displayName" className="text-foreground">Display Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
                 <Input
                   id="displayName"
                   type="text"
                   placeholder="Your name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20"
+                  className="pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
                 />
               </div>
             </div>
@@ -588,7 +582,7 @@ const Auth = () => {
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
               <Input
                 id="email"
                 type="email"
@@ -598,7 +592,7 @@ const Auth = () => {
                   setEmail(e.target.value);
                   if (errors.email) setErrors({ ...errors, email: undefined });
                 }}
-                className={`pl-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20 ${
+                className={`pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20 ${
                   errors.email ? "border-destructive" : ""
                 }`}
               />
@@ -610,7 +604,7 @@ const Auth = () => {
           <div className="space-y-2">
             <Label htmlFor="password" className="text-foreground">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F09241]" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -620,7 +614,7 @@ const Auth = () => {
                   setPassword(e.target.value);
                   if (errors.password) setErrors({ ...errors, password: undefined });
                 }}
-                className={`pl-10 pr-10 h-12 rounded-xl border-[#FDCBC9] bg-white/50 focus:border-[#F9AD6E] focus:ring-[#F9AD6E]/20 ${
+                className={`pl-10 pr-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20 ${
                   errors.password ? "border-destructive" : ""
                 }`}
               />
@@ -639,7 +633,7 @@ const Auth = () => {
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-[#F9AD6E] to-[#FFC396] hover:from-[#FFC396] hover:to-[#F9AD6E] text-white font-semibold mt-2 shadow-lg"
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold mt-2 shadow-lg"
           >
             {isSubmitting ? "Please wait..." : mode === 'login' ? "Log In" : "Create Account"}
           </Button>
@@ -651,7 +645,7 @@ const Auth = () => {
             Forgot your password?{" "}
             <button 
               onClick={() => setMode('forgot')}
-              className="text-[#F09241] font-medium hover:underline"
+              className="text-auth-stone font-medium hover:underline"
             >
               Reset it
             </button>
@@ -661,7 +655,7 @@ const Auth = () => {
         {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-[#FDCBC9]" />
+            <span className="w-full border-t border-auth-coral" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-3 text-muted-foreground">Or continue with</span>
@@ -676,7 +670,7 @@ const Auth = () => {
             variant="outline"
             onClick={() => handleSocialLogin('google')}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl border-[#FDCBC9] bg-white/50 hover:bg-[#FFC396]/20 hover:border-[#F9AD6E]"
+            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -693,7 +687,7 @@ const Auth = () => {
             variant="outline"
             onClick={() => handleSocialLogin('apple')}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl border-[#FDCBC9] bg-white/50 hover:bg-[#FFC396]/20 hover:border-[#F9AD6E]"
+            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
@@ -706,9 +700,9 @@ const Auth = () => {
             type="button"
             variant="outline"
             onClick={() => setMode('phone')}
-            className="w-full h-12 rounded-xl border-[#FDCBC9] bg-white/50 hover:bg-[#FFC396]/20 hover:border-[#F9AD6E]"
+            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
           >
-            <Phone className="w-5 h-5 mr-2 text-[#F09241]" />
+            <Phone className="w-5 h-5 mr-2 text-auth-stone" />
             Continue with Phone
           </Button>
         </div>
@@ -717,7 +711,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFC396]/30 via-[#FDCBC9]/20 to-[#F9AD6E]/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-auth-beige/30 via-auth-coral/20 to-auth-bone/20 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
@@ -736,15 +730,15 @@ const Auth = () => {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-[#FDCBC9]/30">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-auth-coral/30">
           {renderContent()}
         </div>
 
         {/* Terms */}
         <p className="text-center text-xs text-muted-foreground mt-6">
           By continuing, you agree to our{" "}
-          <span className="text-[#F09241] hover:underline cursor-pointer">Terms of Service</span> and{" "}
-          <span className="text-[#F09241] hover:underline cursor-pointer">Privacy Policy</span>
+          <span className="text-auth-stone hover:underline cursor-pointer">Terms of Service</span> and{" "}
+          <span className="text-auth-stone hover:underline cursor-pointer">Privacy Policy</span>
         </p>
       </div>
     </div>
