@@ -14,6 +14,8 @@ interface AuthContextType {
   signInWithApple: () => Promise<{ error: Error | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
   resetPasswordForPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyResetOtp: (emailOrPhone: string, token: string, type: 'email' | 'phone') => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   verifyOtpAndResetPassword: (emailOrPhone: string, token: string, newPassword: string, type: 'email' | 'phone') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
@@ -107,8 +109,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPasswordForEmail = async (email: string) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    // Send an email OTP (no account creation) so we can verify and set a session before updating password.
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: false,
+        emailRedirectTo: `${window.location.origin}/auth`,
+      },
     });
     return { error };
   };
@@ -120,19 +127,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
-  const verifyOtpAndResetPassword = async (emailOrPhone: string, token: string, newPassword: string, type: 'email' | 'phone') => {
-    if (type === 'phone') {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        phone: emailOrPhone,
-        token,
-        type: 'sms',
+  const verifyResetOtp = async (emailOrPhone: string, token: string, type: 'email' | 'phone') => {
+    const { data, error } = await supabase.auth.verifyOtp(
+      type === 'phone'
+        ? { phone: emailOrPhone, token, type: 'sms' }
+        : { email: emailOrPhone, token, type: 'email' }
+    );
+
+    if (error) return { error };
+
+    // Ensure the session is persisted for the next step (update password).
+    if (data?.session?.access_token && data?.session?.refresh_token) {
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
       });
-      if (verifyError) return { error: verifyError };
+      if (setSessionError) return { error: setSessionError };
     }
-    
+
+    return { error: null };
+  };
+
+  const updatePassword = async (newPassword: string) => {
     const { error } = await supabase.auth.updateUser({
       password: newPassword,
     });
+    return { error };
+  };
+
+  const verifyOtpAndResetPassword = async (emailOrPhone: string, token: string, newPassword: string, type: 'email' | 'phone') => {
+    const { error: verifyError } = await verifyResetOtp(emailOrPhone, token, type);
+    if (verifyError) return { error: verifyError };
+
+    const { error } = await updatePassword(newPassword);
     return { error };
   };
 
@@ -153,6 +180,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       signInWithApple,
       resetPasswordForEmail,
       resetPasswordForPhone,
+      verifyResetOtp,
+      updatePassword,
       verifyOtpAndResetPassword,
       signOut 
     }}>
