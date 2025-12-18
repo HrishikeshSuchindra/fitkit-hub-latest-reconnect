@@ -49,7 +49,8 @@ const Auth = () => {
     signInWithApple,
     resetPasswordForEmail,
     resetPasswordForPhone,
-    verifyOtpAndResetPassword
+    verifyResetOtp,
+    updatePassword
   } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -210,19 +211,24 @@ const Auth = () => {
             });
           }
         } else {
-          setMode('reset');
-          toast({
-            title: "OTP Verified!",
-            description: "Please enter your new password.",
-          });
+          const emailOrPhone = resetType === 'email' ? email : phone;
+          const { error } = await verifyResetOtp(emailOrPhone, otp, resetType);
+          if (error) {
+            toast({
+              title: "OTP verification failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "OTP verified",
+              description: "Now set your new password.",
+            });
+            setMode('reset');
+          }
         }
       } else if (mode === 'reset') {
-        const { error } = await verifyOtpAndResetPassword(
-          resetType === 'email' ? email : phone,
-          otp,
-          newPassword,
-          resetType
-        );
+        const { error } = await updatePassword(newPassword);
         if (error) {
           toast({
             title: "Failed to reset password",
