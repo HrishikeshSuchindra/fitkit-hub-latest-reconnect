@@ -17,6 +17,13 @@ All colors MUST be HSL.
     --brand-primary-soft: 150 15% 60%;   /* Soft sage accent */
     --brand-danger: 15 40% 45%;          /* Terracotta rust */
     
+    /* Fitkits Auth Palette - Warm energetic tones */
+    --auth-cream: 30 73% 70%;            /* #F9AD6E - Soft warm bone */
+    --auth-peach: 25 100% 80%;           /* #FFC396 - Light warm beige */
+    --auth-orange: 27 88% 60%;           /* #F09241 - Muted stone grey-beige */
+    --auth-coral: 2 93% 89%;             /* #FDCBC9 - Cool slate grey */
+    --auth-amber: 30 96% 54%;            /* #FA8317 - Deep charcoal / near-black */
+    
     --text-primary: 210 15% 20%;         /* Deep charcoal */
     --text-secondary: 200 8% 42%;        /* Warm slate grey */
     --text-tertiary: 200 6% 55%;         /* Muted grey */

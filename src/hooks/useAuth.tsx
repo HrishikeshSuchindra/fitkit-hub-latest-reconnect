@@ -8,6 +8,13 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyPhoneOtp: (phone: string, token: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithApple: () => Promise<{ error: Error | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
+  resetPasswordForPhone: (phone: string) => Promise<{ error: Error | null }>;
+  verifyOtpAndResetPassword: (emailOrPhone: string, token: string, newPassword: string, type: 'email' | 'phone') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -63,12 +70,92 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const signInWithPhone = async (phone: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+    });
+    return { error };
+  };
+
+  const verifyPhoneOtp = async (phone: string, token: string) => {
+    const { error } = await supabase.auth.verifyOtp({
+      phone,
+      token,
+      type: 'sms',
+    });
+    return { error };
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      }
+    });
+    return { error };
+  };
+
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      }
+    });
+    return { error };
+  };
+
+  const resetPasswordForEmail = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
+    });
+    return { error };
+  };
+
+  const resetPasswordForPhone = async (phone: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      phone,
+    });
+    return { error };
+  };
+
+  const verifyOtpAndResetPassword = async (emailOrPhone: string, token: string, newPassword: string, type: 'email' | 'phone') => {
+    if (type === 'phone') {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        phone: emailOrPhone,
+        token,
+        type: 'sms',
+      });
+      if (verifyError) return { error: verifyError };
+    }
+    
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      loading, 
+      signUp, 
+      signIn, 
+      signInWithPhone,
+      verifyPhoneOtp,
+      signInWithGoogle, 
+      signInWithApple,
+      resetPasswordForEmail,
+      resetPasswordForPhone,
+      verifyOtpAndResetPassword,
+      signOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );
