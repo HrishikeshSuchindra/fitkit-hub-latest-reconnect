@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft, Dumbbell } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import fitkitsLogo from "@/assets/fitkits-logo.png";
 
 const emailSchema = z.string().email("Please enter a valid email");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -709,10 +710,17 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-[hsl(30,96%,54%)] to-[hsl(27,88%,60%)] rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-xl rotate-3 hover:rotate-0 transition-transform">
-            <Dumbbell className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">Fitkits</h1>
+          <img 
+            src={fitkitsLogo} 
+            alt="Fitkits Logo" 
+            className="w-24 h-24 mx-auto mb-4 object-contain"
+          />
+          <h1 
+            className="text-2xl text-foreground"
+            style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '0.15em' }}
+          >
+            FITKITS
+          </h1>
           <p className="text-muted-foreground mt-2 text-sm">Play More. Live Fit.</p>
         </div>
 
