@@ -53,9 +53,16 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      // Redirect to the page user came from, or home as fallback
+      const lastNonAuth = sessionStorage.getItem("last_non_auth_path");
+      const redirectTo = fromPath && fromPath !== "/auth" && !fromPath.startsWith("/social/profile") 
+        ? fromPath 
+        : lastNonAuth && lastNonAuth !== "/auth" && !lastNonAuth.startsWith("/social/profile")
+        ? lastNonAuth
+        : "/";
+      navigate(redirectTo, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, fromPath]);
 
   useEffect(() => {
     if (searchParams.get('mode') === 'reset') {
