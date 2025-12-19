@@ -17,11 +17,11 @@ All colors MUST be HSL.
     --brand-primary-soft: 150 15% 60%;   /* Soft sage accent */
     --brand-danger: 15 40% 45%;          /* Terracotta rust */
     
-    /* Fitkits Auth Palette - Warm soft tones (no bright orange) */
-    --auth-bone: 30 73% 70%;              /* #F9AD6E - Soft warm bone */
-    --auth-beige: 25 100% 80%;            /* #FFC396 - Light warm beige */
-    --auth-stone: 27 88% 60%;             /* #F09241 - Muted stone */
-    --auth-coral: 2 93% 89%;              /* #FDCBC9 - Cool slate/coral */
+    /* Fitkits Auth Palette - Fresh green tones */
+    --auth-bone: 150 45% 50%;             /* Fresh sage green */
+    --auth-beige: 145 40% 65%;            /* Light mint green */
+    --auth-stone: 155 50% 40%;            /* Deep forest green */
+    --auth-coral: 145 30% 90%;            /* Pale mint background */
     
     --text-primary: 210 15% 20%;         /* Deep charcoal */
     --text-secondary: 200 8% 42%;        /* Warm slate grey */

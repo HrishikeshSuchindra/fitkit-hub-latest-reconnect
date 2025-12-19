@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { AppHeader } from "@/components/AppHeader";
-import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2, Moon, Sun } from "lucide-react";
+import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2, Moon, Sun, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUserBookings } from "@/hooks/useBookings";
 import { useQuery } from "@tanstack/react-query";
@@ -79,6 +77,15 @@ const SocialProfile = () => {
     }
   };
 
+  const handleBack = () => {
+    // Go back to the previous page
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   const friends = [
     { name: "Rahul Sharma", status: "online", time: "2m ago" },
     { name: "Priya Patel", status: "online", time: "5m ago" },
@@ -105,12 +112,20 @@ const SocialProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <AppHeader />
-      
+    <div className="min-h-screen bg-background pb-10">
       {/* Profile Header with Gradient */}
       <div className="relative bg-gradient-to-br from-chip-purple-text to-chip-purple-bg pt-8 pb-20">
-        {/* Settings & Logout */}
+        {/* Back Button & Settings & Logout */}
+        <div className="absolute top-4 left-4">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-white/80 hover:text-white hover:bg-white/10"
+            onClick={handleBack}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        </div>
         <div className="absolute top-4 right-4 flex gap-2">
           {/* Dark Mode Toggle */}
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
@@ -307,8 +322,6 @@ const SocialProfile = () => {
           </Button>
         </div>
       </div>
-      
-      <BottomNav mode="social" />
     </div>
   );
 };
