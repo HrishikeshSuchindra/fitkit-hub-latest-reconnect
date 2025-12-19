@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,8 @@ const Auth = () => {
     updatePassword
   } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromPath = (location.state as { from?: string } | null)?.from;
   const { toast } = useToast();
 
   useEffect(() => {
@@ -711,7 +713,17 @@ const Auth = () => {
   };
 
   const handleBack = () => {
-    if (window.history.length > 1) {
+    const lastNonAuth = sessionStorage.getItem("last_non_auth_path") || undefined;
+    const rawFrom = fromPath && fromPath !== "/auth" ? fromPath : lastNonAuth;
+    const safeFrom = rawFrom?.startsWith("/social/profile") ? "/" : rawFrom;
+
+    if (safeFrom) {
+      navigate(safeFrom, { replace: true });
+      return;
+    }
+
+    // Fallback: try browser history
+    if ((window.history.state?.idx ?? 0) > 0) {
       navigate(-1);
     } else {
       navigate("/");

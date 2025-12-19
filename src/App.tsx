@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,20 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
+
+const RouteMemory = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname === "/auth") return;
+    sessionStorage.setItem(
+      "last_non_auth_path",
+      `${location.pathname}${location.search}${location.hash}`
+    );
+  }, [location.pathname, location.search, location.hash]);
+
+  return null;
+};
 
 const AnimatedRoutes = () => {
   const location = useLocation();
@@ -79,6 +94,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <RouteMemory />
             <AnimatedRoutes />
             <BookingReminderPopup />
           </BrowserRouter>

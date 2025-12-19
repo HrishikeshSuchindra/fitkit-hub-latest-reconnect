@@ -1,9 +1,11 @@
 import { MapPin, ChevronDown, Bell, User } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 export const AppHeader = () => {
   const { user } = useAuth();
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}`;
 
   return (
     <header className="h-14 bg-card border-b border-divider flex items-center justify-between px-5 sticky top-0 z-50">
@@ -30,7 +32,10 @@ export const AppHeader = () => {
           <Bell className="w-5 h-5 text-text-secondary" />
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-danger rounded-full"></span>
         </button>
-        <Link to={user ? "/social/profile" : "/auth"}>
+        <Link
+          to={user ? "/social/profile" : "/auth"}
+          state={user ? undefined : { from }}
+        >
           <button className="w-10 h-10 rounded-full bg-brand-soft flex items-center justify-center">
             <User className="w-5 h-5 text-brand-green" />
           </button>

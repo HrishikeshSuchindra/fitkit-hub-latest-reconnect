@@ -62,7 +62,8 @@ const SocialProfile = () => {
   useEffect(() => {
     // Only redirect to auth if not currently signing out
     if (!loading && !user && !isSigningOut.current) {
-      navigate("/auth");
+      // Don't allow navigating "back" into the protected profile when logged out
+      navigate("/auth", { replace: true, state: { from: "/" } });
     }
   }, [user, loading, navigate]);
 

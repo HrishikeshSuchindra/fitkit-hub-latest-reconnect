@@ -59,7 +59,7 @@ const BookingPreview = () => {
   const handleProceedToCheckout = async () => {
     if (!user) {
       toast.error("Please log in to book a slot");
-      navigate("/auth");
+      navigate("/auth", { state: { from: `${location.pathname}${location.search}` } });
       return;
     }
 
