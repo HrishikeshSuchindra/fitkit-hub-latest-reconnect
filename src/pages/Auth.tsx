@@ -719,11 +719,11 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-auth-beige/30 via-auth-coral/20 to-auth-bone/20 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-auth-beige/30 via-auth-coral/20 to-auth-bone/20 flex items-center justify-center p-4 relative">
       {/* Back Button */}
       <button
         onClick={handleBack}
-        className="absolute top-4 left-4 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors"
+        className="absolute top-4 left-4 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors z-10"
       >
         <ArrowLeft className="w-5 h-5 text-auth-stone" />
       </button>
