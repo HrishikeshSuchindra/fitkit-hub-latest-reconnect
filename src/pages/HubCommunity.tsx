@@ -1,151 +1,292 @@
+import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
-import { Users, MapPin, Calendar, ChevronRight, Trophy, Star } from "lucide-react";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, MapPin, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+interface Post {
+  id: string;
+  user: {
+    name: string;
+    username: string;
+    avatar?: string;
+  };
+  content: string;
+  image?: string;
+  activity?: {
+    type: 'game' | 'booking' | 'achievement';
+    sport?: string;
+    venue?: string;
+    date?: string;
+    players?: number;
+  };
+  likes: number;
+  comments: number;
+  shares: number;
+  isLiked: boolean;
+  isSaved: boolean;
+  timeAgo: string;
+}
 
 const HubCommunity = () => {
-  const communities = [
+  const [posts, setPosts] = useState<Post[]>([
     {
       id: "1",
-      name: "Mumbai Football League",
-      members: 2340,
-      description: "Official community for football enthusiasts in Mumbai",
-      image: "⚽",
-      category: "Football"
+      user: { name: "Rahul Sharma", username: "rahul_plays", avatar: "" },
+      content: "Just had an amazing badminton session at Phoenix Arena! 🏸 The new courts are incredible. Who's up for doubles this weekend?",
+      image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=600&h=400&fit=crop",
+      activity: {
+        type: 'game',
+        sport: 'Badminton',
+        venue: 'Phoenix Sports Arena',
+        players: 4
+      },
+      likes: 24,
+      comments: 8,
+      shares: 2,
+      isLiked: false,
+      isSaved: false,
+      timeAgo: "2h ago"
     },
     {
       id: "2",
-      name: "Badminton Club India",
-      members: 1856,
-      description: "Connect with badminton players across the city",
-      image: "🏸",
-      category: "Badminton"
+      user: { name: "Priya Patel", username: "priya_fitness", avatar: "" },
+      content: "🎾 Finally hit my 100th game milestone! Thanks to everyone who's played with me this year. Here's to many more! #FitkitsFam",
+      activity: {
+        type: 'achievement',
+        sport: 'Tennis',
+      },
+      likes: 156,
+      comments: 32,
+      shares: 12,
+      isLiked: true,
+      isSaved: true,
+      timeAgo: "4h ago"
     },
     {
       id: "3",
-      name: "Cricket Fanatics",
-      members: 5420,
-      description: "For passionate cricket players and fans",
-      image: "🏏",
-      category: "Cricket"
+      user: { name: "Amit Desai", username: "amit_cricket", avatar: "" },
+      content: "Booking confirmed for Saturday morning cricket! 🏏 Need 3 more players to complete the team. Drop a comment if you're in!",
+      image: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=600&h=400&fit=crop",
+      activity: {
+        type: 'booking',
+        sport: 'Cricket',
+        venue: 'Stadium Cricket Nets',
+        date: 'Saturday, 7:00 AM',
+        players: 8
+      },
+      likes: 18,
+      comments: 12,
+      shares: 1,
+      isLiked: false,
+      isSaved: false,
+      timeAgo: "6h ago"
     },
     {
       id: "4",
-      name: "Tennis Pros Mumbai",
-      members: 980,
-      description: "Tennis community for all skill levels",
-      image: "🎾",
-      category: "Tennis"
+      user: { name: "Sneha Reddy", username: "sneha_squash", avatar: "" },
+      content: "Recovery day at the spa after an intense week of training. Self-care is part of the game! 💆‍♀️ #Recovery #FitkitsWellness",
+      image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&h=400&fit=crop",
+      likes: 89,
+      comments: 15,
+      shares: 5,
+      isLiked: false,
+      isSaved: false,
+      timeAgo: "8h ago"
     },
-  ];
+    {
+      id: "5",
+      user: { name: "Vikram Kumar", username: "vikram_hoops", avatar: "" },
+      content: "Epic basketball showdown at Slam Dunk Courts yesterday! 🏀 Our team pulled through in the final quarter. What a game!",
+      image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&h=400&fit=crop",
+      activity: {
+        type: 'game',
+        sport: 'Basketball',
+        venue: 'Slam Dunk Courts',
+        players: 10
+      },
+      likes: 67,
+      comments: 21,
+      shares: 8,
+      isLiked: true,
+      isSaved: false,
+      timeAgo: "1d ago"
+    }
+  ]);
 
-  const leaderboard = [
-    { rank: 1, name: "Rahul Sharma", points: 2450, games: 48 },
-    { rank: 2, name: "Priya Patel", points: 2280, games: 42 },
-    { rank: 3, name: "Amit Desai", points: 2150, games: 39 },
-  ];
+  const toggleLike = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 }
+        : post
+    ));
+  };
 
-  const upcomingEvents = [
-    { title: "Mumbai Football Championship", date: "Dec 28, 2024", participants: 128 },
-    { title: "Badminton Doubles League", date: "Jan 5, 2025", participants: 64 },
-  ];
+  const toggleSave = (postId: string) => {
+    setPosts(posts.map(post => 
+      post.id === postId 
+        ? { ...post, isSaved: !post.isSaved }
+        : post
+    ));
+  };
+
+  const getActivityBadge = (activity: Post['activity']) => {
+    if (!activity) return null;
+    
+    const badges = {
+      game: { bg: 'bg-primary/10', text: 'text-primary', label: 'Game Completed' },
+      booking: { bg: 'bg-[hsl(var(--chip-purple-bg))]', text: 'text-[hsl(var(--chip-purple-text))]', label: 'Upcoming Booking' },
+      achievement: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Achievement Unlocked' }
+    };
+    
+    const badge = badges[activity.type];
+    return (
+      <span className={`text-xs px-2 py-1 rounded-full ${badge.bg} ${badge.text} font-medium`}>
+        {badge.label}
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
-      <div className="px-5 py-4 space-y-5">
-        <SearchBar placeholder="Search communities..." />
+      <div className="px-4 py-4 space-y-4">
+        <SearchBar placeholder="Search community..." />
         
-        {/* Featured Communities */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-lg text-foreground">Featured Communities</h2>
-            <button className="text-sm text-brand-green font-medium">See all</button>
+        {/* Stories/Quick Actions Row */}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex flex-col items-center gap-1 min-w-[70px]">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white border-2 border-white shadow-soft">
+              <span className="text-2xl">+</span>
+            </div>
+            <span className="text-xs text-text-secondary">Your Story</span>
           </div>
-          
-          <div className="space-y-3">
-            {communities.map((community) => (
-              <div key={community.id} className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3">
-                <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center text-2xl">
-                  {community.image}
+          {['Rahul', 'Priya', 'Amit', 'Sneha', 'Vikram'].map((name, idx) => (
+            <div key={idx} className="flex flex-col items-center gap-1 min-w-[70px]">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 p-0.5">
+                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
+                  <span className="text-sm font-semibold text-text-secondary">{name[0]}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm text-foreground">{community.name}</h3>
-                  <p className="text-xs text-text-secondary truncate">{community.description}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-text-tertiary flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {community.members.toLocaleString()}
-                    </span>
-                    <span className="text-xs bg-brand-soft text-brand-green px-2 py-0.5 rounded-full">
-                      {community.category}
-                    </span>
+              </div>
+              <span className="text-xs text-text-secondary">{name}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Feed Posts */}
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-card rounded-2xl shadow-soft overflow-hidden">
+              {/* Post Header */}
+              <div className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={post.user.avatar} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      {post.user.name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{post.user.name}</p>
+                    <p className="text-xs text-text-tertiary">@{post.user.username} · {post.timeAgo}</p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline" className="text-xs h-8">
-                  Join
+                <Button variant="ghost" size="icon" className="text-text-tertiary">
+                  <MoreHorizontal className="w-5 h-5" />
                 </Button>
               </div>
-            ))}
-          </div>
-        </section>
-        
-        {/* Leaderboard */}
-        <section className="bg-card rounded-xl shadow-soft p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-yellow-500" />
-              <h2 className="font-bold text-foreground">Weekly Leaderboard</h2>
+
+              {/* Activity Badge */}
+              {post.activity && (
+                <div className="px-4 pb-2">
+                  {getActivityBadge(post.activity)}
+                </div>
+              )}
+
+              {/* Post Content */}
+              <div className="px-4 pb-3">
+                <p className="text-foreground text-sm leading-relaxed">{post.content}</p>
+              </div>
+
+              {/* Activity Details */}
+              {post.activity && (post.activity.venue || post.activity.date || post.activity.players) && (
+                <div className="mx-4 mb-3 p-3 bg-muted rounded-xl space-y-2">
+                  {post.activity.sport && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium text-foreground">{post.activity.sport}</span>
+                    </div>
+                  )}
+                  {post.activity.venue && (
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>{post.activity.venue}</span>
+                    </div>
+                  )}
+                  {post.activity.date && (
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>{post.activity.date}</span>
+                    </div>
+                  )}
+                  {post.activity.players && (
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{post.activity.players} players</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Post Image */}
+              {post.image && (
+                <div className="w-full aspect-video bg-muted">
+                  <img 
+                    src={post.image} 
+                    alt="Post" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="p-4 flex items-center justify-between border-t border-border/50">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => toggleLike(post.id)}
+                    className="flex items-center gap-1.5 text-sm"
+                  >
+                    <Heart 
+                      className={`w-5 h-5 transition-colors ${
+                        post.isLiked ? 'fill-red-500 text-red-500' : 'text-text-secondary'
+                      }`} 
+                    />
+                    <span className={post.isLiked ? 'text-red-500 font-medium' : 'text-text-secondary'}>
+                      {post.likes}
+                    </span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-text-secondary">
+                    <MessageCircle className="w-5 h-5" />
+                    <span>{post.comments}</span>
+                  </button>
+                  <button className="flex items-center gap-1.5 text-sm text-text-secondary">
+                    <Share2 className="w-5 h-5" />
+                    <span>{post.shares}</span>
+                  </button>
+                </div>
+                <button onClick={() => toggleSave(post.id)}>
+                  <Bookmark 
+                    className={`w-5 h-5 transition-colors ${
+                      post.isSaved ? 'fill-foreground text-foreground' : 'text-text-secondary'
+                    }`} 
+                  />
+                </button>
+              </div>
             </div>
-            <button className="text-sm text-brand-green font-medium">View all</button>
-          </div>
-          
-          <div className="space-y-2">
-            {leaderboard.map((player) => (
-              <div key={player.rank} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                  player.rank === 1 ? "bg-yellow-100 text-yellow-600" :
-                  player.rank === 2 ? "bg-gray-100 text-gray-600" :
-                  "bg-orange-100 text-orange-600"
-                }`}>
-                  {player.rank}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">{player.name}</p>
-                  <p className="text-xs text-text-secondary">{player.games} games played</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-brand-green">{player.points}</p>
-                  <p className="text-xs text-text-tertiary">points</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        
-        {/* Upcoming Community Events */}
-        <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-lg text-foreground">Community Events</h2>
-            <button className="text-sm text-brand-green font-medium">See all</button>
-          </div>
-          
-          <div className="space-y-3">
-            {upcomingEvents.map((event, idx) => (
-              <div key={idx} className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3">
-                <div className="w-12 h-12 bg-chip-purple-bg rounded-lg flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-chip-purple-text" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-sm text-foreground">{event.title}</h3>
-                  <p className="text-xs text-text-secondary">{event.date} • {event.participants} participants</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-text-tertiary" />
-              </div>
-            ))}
-          </div>
-        </section>
+          ))}
+        </div>
       </div>
       
       <BottomNav mode="hub" />
