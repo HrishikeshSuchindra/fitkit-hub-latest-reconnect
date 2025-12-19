@@ -710,8 +710,24 @@ const Auth = () => {
     );
   };
 
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-auth-beige/30 via-auth-coral/20 to-auth-bone/20 flex items-center justify-center p-4">
+      {/* Back Button */}
+      <button
+        onClick={handleBack}
+        className="absolute top-4 left-4 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5 text-auth-stone" />
+      </button>
+
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-8">
@@ -726,7 +742,7 @@ const Auth = () => {
           >
             FITKITS
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm">Play More. Live Fit.</p>
+          <p className="text-muted-foreground mt-2 text-sm">Wellness Reimagined</p>
         </div>
 
         {/* Auth Card */}

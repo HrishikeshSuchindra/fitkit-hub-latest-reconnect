@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserBookings } from "@/hooks/useBookings";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Profile {
   display_name: string | null;
@@ -27,6 +37,8 @@ const SocialProfile = () => {
   const location = useLocation();
   const { toast } = useToast();
   const isSigningOut = useRef(false);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [isSigningOutLoading, setIsSigningOutLoading] = useState(false);
   
   // Fetch profile from database
   const { data: profile, isLoading: loadingProfile } = useQuery({
@@ -64,9 +76,8 @@ const SocialProfile = () => {
   }, [location.state]);
 
   const handleSignOut = async () => {
+    setIsSigningOutLoading(true);
     isSigningOut.current = true;
-    // Navigate first to prevent useEffect from redirecting to /auth
-    navigate("/", { replace: true });
     
     try {
       await signOut();
@@ -74,10 +85,14 @@ const SocialProfile = () => {
         title: "Signed out",
         description: "You have been successfully signed out.",
       });
+      // Navigate after successful sign out
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Sign out error:", error);
+      setIsSigningOutLoading(false);
+      isSigningOut.current = false;
     }
-    // Don't reset isSigningOut to avoid race conditions
+    setShowSignOutDialog(false);
   };
 
   const handleBack = () => {
@@ -151,9 +166,14 @@ const SocialProfile = () => {
             variant="ghost" 
             size="icon" 
             className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={handleSignOut}
+            onClick={() => setShowSignOutDialog(true)}
+            disabled={isSigningOutLoading}
           >
-            <LogOut className="w-5 h-5" />
+            {isSigningOutLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <LogOut className="w-5 h-5" />
+            )}
           </Button>
         </div>
 
@@ -325,6 +345,35 @@ const SocialProfile = () => {
           </Button>
         </div>
       </div>
+
+      {/* Sign Out Confirmation Dialog */}
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSigningOutLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleSignOut}
+              disabled={isSigningOutLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isSigningOutLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Signing out...
+                </>
+              ) : (
+                "Sign out"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
