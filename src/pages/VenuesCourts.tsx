@@ -37,6 +37,11 @@ const VenuesCourts = () => {
     football: { image: offerFootball, title: "Book 3 Hours", subtitle: "Get 1 Free" },
     badminton: { image: offerBadminton, title: "Weekend Special", subtitle: "20% Off" },
     cricket: { image: offerCricket, title: "Early Bird", subtitle: "30% Discount" },
+    pickleball: { image: venuePickleball, title: "Pickleball Starter", subtitle: "First Game Free" },
+    basketball: { image: venueBasketball, title: "Slam Dunk Deal", subtitle: "25% Off Weekdays" },
+    tabletennis: { image: venueTableTennis, title: "TT Marathon", subtitle: "2 Hours for 1" },
+    squash: { image: venueSquash, title: "Squash Starter", subtitle: "Free Equipment" },
+    tennis: { image: venueTennis, title: "Grand Slam Offer", subtitle: "15% Off Coaching" },
   };
   
   const allVenues = {
