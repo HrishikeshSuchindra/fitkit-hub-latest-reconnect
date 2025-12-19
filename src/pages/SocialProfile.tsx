@@ -65,16 +65,19 @@ const SocialProfile = () => {
 
   const handleSignOut = async () => {
     isSigningOut.current = true;
+    // Navigate first to prevent useEffect from redirecting to /auth
+    navigate("/", { replace: true });
+    
     try {
       await signOut();
       toast({
         title: "Signed out",
         description: "You have been successfully signed out.",
       });
-      navigate("/");
-    } finally {
-      isSigningOut.current = false;
+    } catch (error) {
+      console.error("Sign out error:", error);
     }
+    // Don't reset isSigningOut to avoid race conditions
   };
 
   const handleBack = () => {
