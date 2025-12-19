@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
@@ -28,6 +28,7 @@ const SocialProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const isSigningOut = useRef(false);
   
   // Fetch profile from database
   const { data: profile, isLoading: loadingProfile } = useQuery({
@@ -49,7 +50,8 @@ const SocialProfile = () => {
   const { data: bookings = [], isLoading: loadingBookings } = useUserBookings();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Only redirect to auth if not currently signing out
+    if (!loading && !user && !isSigningOut.current) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
@@ -64,12 +66,17 @@ const SocialProfile = () => {
   }, [location.state]);
 
   const handleSignOut = async () => {
-    await signOut();
-    toast({
-      title: "Signed out",
-      description: "You have been successfully signed out.",
-    });
-    navigate("/");
+    isSigningOut.current = true;
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+      navigate("/");
+    } finally {
+      isSigningOut.current = false;
+    }
   };
 
   const friends = [

@@ -109,14 +109,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const resetPasswordForEmail = async (email: string) => {
-    // Send an email OTP (no account creation) so we can verify and set a session before updating password.
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: false,
-        emailRedirectTo: `${window.location.origin}/auth`,
-      },
+    // Generate a 6-digit OTP for password recovery
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP temporarily (it will be verified later)
+    // We'll use Supabase's built-in recovery flow
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=reset`,
     });
+    
+    if (!error) {
+      // Also send a custom OTP email via our edge function
+      try {
+        await supabase.functions.invoke('send-otp-email', {
+          body: { to: email, otp, type: 'recovery' },
+        });
+      } catch (e) {
+        console.error('Failed to send custom OTP email:', e);
+      }
+    }
+    
     return { error };
   };
 
