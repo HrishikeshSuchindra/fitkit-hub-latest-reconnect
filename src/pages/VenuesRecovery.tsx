@@ -5,9 +5,9 @@ import { VenueCard } from "@/components/VenueCard";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Droplets, Snowflake, Sparkles, Flame, Heart } from "lucide-react";
+import { useVenues, getVenueImageUrl } from "@/hooks/useVenues";
+import { Skeleton } from "@/components/ui/skeleton";
 import offerRecovery from "@/assets/offer-recovery.jpg";
-import recoverySpa from "@/assets/recovery-spa.jpg";
-import recoveryPhysio from "@/assets/recovery-physio.jpg";
 import recoverySwimming from "@/assets/recovery-swimming.jpg";
 import recoveryIcebath from "@/assets/recovery-icebath.jpg";
 import recoveryMassage from "@/assets/recovery-massage.jpg";
@@ -18,6 +18,9 @@ const VenuesRecovery = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
+  // Fetch venues from database
+  const { data: venues, isLoading } = useVenues("recovery", activeCategory || undefined);
+  
   const activities = [
     { id: "swimming", label: "Swimming", icon: Droplets, color: "bg-blue-500" },
     { id: "icebath", label: "Ice Bath", icon: Snowflake, color: "bg-cyan-500" },
@@ -26,7 +29,7 @@ const VenuesRecovery = () => {
     { id: "yoga", label: "Yoga", icon: Heart, color: "bg-rose-400" },
   ];
   
-  const offers = {
+  const offers: Record<string, { image: string; title: string; subtitle: string }> = {
     all: { image: offerRecovery, title: "First Session Free", subtitle: "New Members Only" },
     swimming: { image: recoverySwimming, title: "Pool Pass", subtitle: "Unlimited Monthly" },
     icebath: { image: recoveryIcebath, title: "Cold Therapy", subtitle: "20% Off First Visit" },
@@ -34,39 +37,19 @@ const VenuesRecovery = () => {
     sauna: { image: recoverySauna, title: "Heat Therapy", subtitle: "Couples Discount" },
     yoga: { image: recoveryYoga, title: "Mindfulness Week", subtitle: "7 Days Unlimited" },
   };
-  
-  const allVenues = {
-    swimming: [
-      { image: recoverySwimming, name: "Aqua Wellness Pool", rating: 4.8, distance: "2.0 km", amenities: ["Heated Pool", "Lap Lanes", "Aqua Therapy"], price: "₹500/session" },
-    ],
-    icebath: [
-      { image: recoveryIcebath, name: "Arctic Recovery Center", rating: 4.9, distance: "1.5 km", amenities: ["Cold Plunge", "Contrast Therapy", "Guided"], price: "₹800/session" },
-    ],
-    massage: [
-      { image: recoveryMassage, name: "Serenity Massage Studio", rating: 4.9, distance: "1.8 km", amenities: ["Deep Tissue", "Hot Stone", "Aromatherapy"], price: "₹1200/hr" },
-    ],
-    sauna: [
-      { image: recoverySauna, name: "Nordic Sauna House", rating: 4.7, distance: "2.2 km", amenities: ["Finnish Sauna", "Steam Room", "Ice Shower"], price: "₹600/session" },
-    ],
-    yoga: [
-      { image: recoveryYoga, name: "Zen Yoga Studio", rating: 4.8, distance: "1.3 km", amenities: ["Hatha", "Vinyasa", "Meditation"], price: "₹400/session" },
-    ],
-  };
 
-  const getAllVenues = () => Object.values(allVenues).flat();
-  const currentOffer = activeCategory ? offers[activeCategory as keyof typeof offers] : offers.all;
-  const currentVenues = activeCategory ? allVenues[activeCategory as keyof typeof allVenues] || [] : getAllVenues();
+  const currentOffer = activeCategory ? offers[activeCategory] : offers.all;
 
-  const allSections = [
-    { title: "Recommended for You", venues: getAllVenues().slice(0, 3) },
-    { title: "Trending in Your Area", venues: getAllVenues().slice(2, 5) },
-  ];
+  // Group venues for sections
+  const recommendedVenues = venues?.slice(0, 3) || [];
+  const trendingVenues = venues?.slice(2, 5) || [];
 
-  const categorySections = [
-    { title: "Top Rated", venues: currentVenues },
-  ];
-
-  const sections = activeCategory ? categorySections : allSections;
+  const sections = activeCategory 
+    ? [{ title: "Top Rated", venues: venues || [] }]
+    : [
+        { title: "Recommended for You", venues: recommendedVenues },
+        { title: "Trending in Your Area", venues: trendingVenues },
+      ];
 
   const recoverySuggestions = [
     "Swimming pools near me",
@@ -138,19 +121,39 @@ const VenuesRecovery = () => {
           </div>
         </section>
         
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex gap-3 overflow-x-auto">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="min-w-[280px] h-64 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Venue Sections */}
-        {sections.map((section, idx) => (
+        {!isLoading && sections.map((section, idx) => (
           <section key={idx}>
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-bold text-foreground">{section.title}</h2>
               <button className="text-sm text-brand-green font-medium">View All</button>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {section.venues.map((venue, venueIdx) => (
-                <div key={venueIdx} className="min-w-[280px]">
+              {section.venues.length === 0 && (
+                <p className="text-text-secondary text-sm">No venues found</p>
+              )}
+              {section.venues.map((venue) => (
+                <div key={venue.id} className="min-w-[280px]">
                   <VenueCard 
-                    {...venue} 
-                    onBook={() => navigate(`/venue/${venueIdx}?name=${encodeURIComponent(venue.name)}`)}
+                    image={getVenueImageUrl(venue.image_url)}
+                    name={venue.name}
+                    rating={venue.rating || 0}
+                    distance="2.0 km"
+                    amenities={venue.amenities || []}
+                    price={`₹${venue.price_per_hour}/session`}
+                    onBook={() => navigate(`/venue/${venue.slug}`)}
                   />
                 </div>
               ))}

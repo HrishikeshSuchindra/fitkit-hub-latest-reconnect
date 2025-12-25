@@ -3,39 +3,28 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { useState } from "react";
-import studioYoga from "@/assets/studio-yoga.jpg";
-import studioGym from "@/assets/studio-gym.jpg";
+import { useNavigate } from "react-router-dom";
+import { useVenues, useVenueCounts, getVenueImageUrl } from "@/hooks/useVenues";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const VenuesStudio = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState("all");
   
-  const categories = [
-    { id: "all", label: "All", count: 2 },
-    { id: "yoga", label: "Yoga", count: 1 },
-    { id: "gym", label: "Gym", count: 1 },
-  ];
+  // Fetch venues from database
+  const { data: venues, isLoading } = useVenues("studio", activeCategory === "all" ? undefined : activeCategory);
+  const { data: counts } = useVenueCounts("studio");
   
-  const venues = {
-    yoga: [
-      { image: studioYoga, name: "Zen Yoga Studio", rating: 4.9, distance: "1.2 km", amenities: ["AC", "Mats Provided", "Showers"], price: "₹400/class" },
-    ],
-    gym: [
-      { image: studioGym, name: "PowerFit Gym", rating: 4.8, distance: "1.5 km", amenities: ["Cardio", "Weights", "Trainer"], price: "₹1500/month" },
-    ],
-  };
-
-  const getAllVenues = () => Object.values(venues).flat();
-  const currentVenues = activeCategory === "all" ? getAllVenues() : venues[activeCategory as keyof typeof venues] || [];
-
-  const allSections = [
-    { title: "Recommended for You", venues: getAllVenues() },
+  const categories = [
+    { id: "all", label: "All" },
+    { id: "yoga", label: "Yoga" },
+    { id: "gym", label: "Gym" },
   ];
 
-  const categorySections = [
-    { title: "Top Rated", venues: currentVenues },
-  ];
-
-  const sections = activeCategory === "all" ? allSections : categorySections;
+  // Group venues for sections
+  const sections = activeCategory === "all"
+    ? [{ title: "Recommended for You", venues: venues || [] }]
+    : [{ title: "Top Rated", venues: venues || [] }];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -65,19 +54,42 @@ const VenuesStudio = () => {
                   : "bg-muted text-text-secondary"
               }`}
             >
-              {cat.label} ({cat.count})
+              {cat.label} ({counts?.[cat.id] || 0})
             </button>
           ))}
         </div>
         
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex gap-3 overflow-x-auto">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="min-w-[280px] h-64 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Venue Sections */}
-        {sections.map((section, idx) => (
+        {!isLoading && sections.map((section, idx) => (
           <section key={idx}>
             <h2 className="text-lg font-bold text-foreground mb-3">{section.title}</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {section.venues.map((venue, venueIdx) => (
-                <div key={venueIdx} className="min-w-[280px]">
-                  <VenueCard {...venue} />
+              {section.venues.length === 0 && (
+                <p className="text-text-secondary text-sm">No venues found</p>
+              )}
+              {section.venues.map((venue) => (
+                <div key={venue.id} className="min-w-[280px]">
+                  <VenueCard 
+                    image={getVenueImageUrl(venue.image_url)}
+                    name={venue.name}
+                    rating={venue.rating || 0}
+                    distance="1.5 km"
+                    amenities={venue.amenities || []}
+                    price={venue.sport === "gym" ? `₹${venue.price_per_hour}/month` : `₹${venue.price_per_hour}/class`}
+                    onBook={() => navigate(`/venue/${venue.slug}`)}
+                  />
                 </div>
               ))}
             </div>

@@ -4,19 +4,21 @@ import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Star, MapPin, Navigation, Phone, Heart, Share2, CheckCircle } from "lucide-react";
-import venueTennis from "@/assets/venue-tennis.jpg";
 import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
 import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
-import { SlotData } from "@/components/booking/SlotCard";
+import { useVenueById, getVenueImageUrl } from "@/hooks/useVenues";
 
 const VenueDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { venueId } = useParams();
   const [searchParams] = useSearchParams();
-  const venueName = searchParams.get("name") || "Green Valley Tennis Club";
   const shouldOpenSlots = searchParams.get("openSlots") === "true";
+  
+  // Fetch venue from database
+  const { data: venue, isLoading } = useVenueById(venueId || "");
   
   const [isLiked, setIsLiked] = useState(false);
   const [showSlotSelection, setShowSlotSelection] = useState(false);
@@ -41,22 +43,6 @@ const VenueDetail = () => {
     }
   }, [shouldOpenSlots, returnState?.returnFromPreview]);
 
-  const venue = {
-    id: venueId || "1",
-    name: venueName,
-    image: venueTennis,
-    rating: 4.8,
-    distance: "1.5 km",
-    amenities: ["Lighting", "Parking", "Shower"],
-    price: 300,
-    verified: true,
-    timing: "Today - 9:00 AM – 10:00 PM",
-    lastSlot: "Last slot starts at 9:30 PM",
-    phone: "+91 9874563125",
-    address: "KNK Road, Chennai",
-    instagram: "@greenvalley",
-  };
-
   // Generate slots to get pricing info
   const allSlots = useMemo(() => {
     return generateTimeSlots(defaultTurfConfig);
@@ -77,14 +63,30 @@ const VenueDetail = () => {
   );
 
   const handleProceed = () => {
-    if (selectedSlots.length === 0) return;
+    if (selectedSlots.length === 0 || !venue) return;
     
     const totalAmount = selectedSlotData.reduce((sum, slot) => sum + slot.price, 0);
     
+    const venueData = {
+      id: venue.id,
+      name: venue.name,
+      image: getVenueImageUrl(venue.image_url),
+      rating: venue.rating || 0,
+      distance: "1.5 km",
+      amenities: venue.amenities || [],
+      price: venue.price_per_hour,
+      verified: true,
+      timing: `Today - ${venue.opening_time} – ${venue.closing_time}`,
+      lastSlot: `Last slot available`,
+      phone: "+91 9874563125",
+      address: venue.address,
+      instagram: "@" + venue.slug,
+    };
+    
     const bookingData = {
-      venue,
+      venue: venueData,
       selectedSlots,
-      selectedSlotData, // Include full slot data
+      selectedSlotData,
       selectedDate: selectedDate.toISOString(),
       playerCount,
       visibility,
@@ -96,6 +98,56 @@ const VenueDetail = () => {
 
   const totalAmount = selectedSlotData.reduce((sum, slot) => sum + slot.price, 0);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <AppHeader />
+        <div className="px-5 py-4 space-y-4">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="flex gap-2">
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-6 w-20" />
+          </div>
+          <Skeleton className="h-12 w-full" />
+        </div>
+        <BottomNav mode="venues" />
+      </div>
+    );
+  }
+
+  if (!venue) {
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <AppHeader />
+        <div className="px-5 py-4 flex flex-col items-center justify-center h-[60vh]">
+          <h2 className="text-xl font-bold text-foreground mb-2">Venue Not Found</h2>
+          <p className="text-text-secondary mb-4">The venue you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+        <BottomNav mode="venues" />
+      </div>
+    );
+  }
+
+  const venueForSheet = {
+    id: venue.id,
+    name: venue.name,
+    image: getVenueImageUrl(venue.image_url),
+    rating: venue.rating || 0,
+    distance: "1.5 km",
+    amenities: venue.amenities || [],
+    price: venue.price_per_hour,
+    verified: true,
+    timing: `Today - ${venue.opening_time} – ${venue.closing_time}`,
+    lastSlot: `Last slot available`,
+    phone: "+91 9874563125",
+    address: venue.address,
+    instagram: "@" + venue.slug,
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
@@ -103,11 +155,11 @@ const VenueDetail = () => {
       <div className="px-5 py-4 space-y-4">
         {/* Venue Image */}
         <div className="relative rounded-2xl overflow-hidden">
-          <Badge className="absolute top-3 left-3 bg-brand-green/90 text-white border-0 z-10">
-            Courts
+          <Badge className="absolute top-3 left-3 bg-brand-green/90 text-white border-0 z-10 capitalize">
+            {venue.category}
           </Badge>
           <img 
-            src={venue.image} 
+            src={getVenueImageUrl(venue.image_url)} 
             alt={venue.name} 
             className="w-full h-48 object-cover"
           />
@@ -119,11 +171,9 @@ const VenueDetail = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-xl font-bold text-foreground">{venue.name}</h1>
-                {venue.verified && (
-                  <Badge variant="outline" className="text-brand-green border-brand-green text-xs">
-                    Verified
-                  </Badge>
-                )}
+                <Badge variant="outline" className="text-brand-green border-brand-green text-xs">
+                  Verified
+                </Badge>
               </div>
               <div className="flex items-center gap-3 mt-1 text-sm text-text-secondary">
                 <div className="flex items-center gap-1">
@@ -132,15 +182,20 @@ const VenueDetail = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span>{venue.distance}</span>
+                  <span>1.5 km</span>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Description */}
+          {venue.description && (
+            <p className="text-sm text-text-secondary">{venue.description}</p>
+          )}
+
           {/* Amenities */}
           <div className="flex flex-wrap gap-2">
-            {venue.amenities.map((amenity) => (
+            {venue.amenities?.map((amenity) => (
               <Badge key={amenity} variant="secondary" className="bg-muted text-text-secondary">
                 {amenity}
               </Badge>
@@ -179,7 +234,7 @@ const VenueDetail = () => {
           </div>
         </div>
 
-        {/* Selected Slots Display - Side by side highlighted boxes */}
+        {/* Selected Slots Display */}
         {selectedSlotData.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Selected Slots</h3>
@@ -206,15 +261,15 @@ const VenueDetail = () => {
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-brand-green flex-shrink-0" />
             <div>
-              <p className="font-medium text-foreground">{venue.timing}</p>
-              <p className="text-sm text-text-secondary">{venue.lastSlot}</p>
+              <p className="font-medium text-foreground">Today - {venue.opening_time} – {venue.closing_time}</p>
+              <p className="text-sm text-text-secondary">Last slot available</p>
             </div>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Phone className="w-5 h-5 text-text-secondary" />
-              <span className="text-foreground">{venue.phone}</span>
+              <span className="text-foreground">+91 9874563125</span>
             </div>
             <span className="text-brand-green font-medium">Call</span>
           </div>
@@ -230,7 +285,7 @@ const VenueDetail = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="w-5 h-5 text-text-secondary text-center">@</span>
-              <span className="text-foreground">{venue.instagram}</span>
+              <span className="text-foreground">@{venue.slug}</span>
             </div>
             <span className="text-brand-green font-medium">Open</span>
           </div>
@@ -240,7 +295,7 @@ const VenueDetail = () => {
               <span className="w-5 h-5 text-text-secondary text-center">₹</span>
               <span className="text-foreground">Amount</span>
             </div>
-            <span className="text-brand-green font-medium">{venue.price}/hr</span>
+            <span className="text-brand-green font-medium">₹{venue.price_per_hour}/hr</span>
           </div>
         </div>
 
@@ -275,7 +330,7 @@ const VenueDetail = () => {
       <SlotSelectionSheet
         open={showSlotSelection}
         onOpenChange={setShowSlotSelection}
-        venue={venue}
+        venue={venueForSheet}
         selectedSlots={selectedSlots}
         setSelectedSlots={setSelectedSlots}
         selectedDate={selectedDate}
