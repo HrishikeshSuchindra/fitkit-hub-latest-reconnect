@@ -4,12 +4,11 @@ import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useVenues, useVenueCounts, getVenueImageUrl } from "@/hooks/useVenues";
+import { Skeleton } from "@/components/ui/skeleton";
 import offerFootball from "@/assets/offer-football.jpg";
 import offerBadminton from "@/assets/offer-badminton.jpg";
 import offerCricket from "@/assets/offer-cricket.jpg";
-import venueFootball from "@/assets/venue-football.jpg";
-import venueBadminton from "@/assets/venue-badminton.jpg";
-import venueCricket from "@/assets/venue-cricket.jpg";
 import venuePickleball from "@/assets/venue-pickleball.jpg";
 import venueBasketball from "@/assets/venue-basketball.jpg";
 import venueTableTennis from "@/assets/venue-tabletennis.jpg";
@@ -20,19 +19,23 @@ const VenuesCourts = () => {
   const navigate = useNavigate();
   const [activeSport, setActiveSport] = useState("all");
   
+  // Fetch venues from database
+  const { data: venues, isLoading } = useVenues("courts", activeSport === "all" ? undefined : activeSport);
+  const { data: counts } = useVenueCounts("courts");
+  
   const sports = [
-    { id: "all", label: "All", count: 8 },
-    { id: "football", label: "Football", count: 1 },
-    { id: "badminton", label: "Badminton", count: 1 },
-    { id: "cricket", label: "Cricket", count: 1 },
-    { id: "pickleball", label: "Pickleball", count: 1 },
-    { id: "basketball", label: "Basketball", count: 1 },
-    { id: "tabletennis", label: "Table Tennis", count: 1 },
-    { id: "squash", label: "Squash", count: 1 },
-    { id: "tennis", label: "Tennis", count: 1 },
+    { id: "all", label: "All" },
+    { id: "football", label: "Football" },
+    { id: "badminton", label: "Badminton" },
+    { id: "cricket", label: "Cricket" },
+    { id: "pickleball", label: "Pickleball" },
+    { id: "basketball", label: "Basketball" },
+    { id: "tabletennis", label: "Table Tennis" },
+    { id: "squash", label: "Squash" },
+    { id: "tennis", label: "Tennis" },
   ];
   
-  const offers = {
+  const offers: Record<string, { image: string; title: string; subtitle: string }> = {
     all: { image: offerFootball, title: "Multi-Sport Pass", subtitle: "Unlimited Access" },
     football: { image: offerFootball, title: "Book 3 Hours", subtitle: "Get 1 Free" },
     badminton: { image: offerBadminton, title: "Weekend Special", subtitle: "20% Off" },
@@ -43,48 +46,21 @@ const VenuesCourts = () => {
     squash: { image: venueSquash, title: "Squash Starter", subtitle: "Free Equipment" },
     tennis: { image: venueTennis, title: "Grand Slam Offer", subtitle: "15% Off Coaching" },
   };
-  
-  const allVenues = {
-    football: [
-      { image: venueFootball, name: "Metro Football Arena", rating: 4.7, distance: "1.8 km", amenities: ["Lighting", "Parking", "Locker"], price: "₹800/hr" },
-    ],
-    badminton: [
-      { image: venueBadminton, name: "Phoenix Sports Arena", rating: 4.8, distance: "2.3 km", amenities: ["Lighting", "Parking", "Shower"], price: "₹300/hr" },
-    ],
-    cricket: [
-      { image: venueCricket, name: "Stadium Cricket Nets", rating: 4.8, distance: "2.1 km", amenities: ["Nets", "Lighting", "Parking"], price: "₹600/hr" },
-    ],
-    pickleball: [
-      { image: venuePickleball, name: "Pickleball Pro Arena", rating: 4.9, distance: "1.9 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹400/hr" },
-    ],
-    basketball: [
-      { image: venueBasketball, name: "Slam Dunk Courts", rating: 4.6, distance: "4.2 km", amenities: ["AC", "Parking", "Shower"], price: "₹400/hr" },
-    ],
-    tabletennis: [
-      { image: venueTableTennis, name: "Spin Masters TT Club", rating: 4.8, distance: "1.7 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹200/hr" },
-    ],
-    squash: [
-      { image: venueSquash, name: "Elite Squash Center", rating: 4.9, distance: "2.4 km", amenities: ["AC", "Shower", "Equipment"], price: "₹500/hr" },
-    ],
-    tennis: [
-      { image: venueTennis, name: "Royal Tennis Club", rating: 4.9, distance: "3.1 km", amenities: ["Coaching", "Parking", "Café"], price: "₹500/hr" },
-    ],
-  };
 
-  const getAllVenues = () => Object.values(allVenues).flat();
-  const currentOffer = offers[activeSport as keyof typeof offers] || offers.all;
-  const currentVenues = activeSport === "all" ? getAllVenues() : allVenues[activeSport as keyof typeof allVenues] || [];
+  const currentOffer = offers[activeSport] || offers.all;
 
-  const allSections = [
-    { title: "Recommended for You", venues: getAllVenues().slice(0, 4) },
-    { title: "Trending in Your Area", venues: getAllVenues().slice(4, 8) },
-  ];
+  // Group venues for sections
+  const recommendedVenues = venues?.slice(0, 4) || [];
+  const trendingVenues = venues?.slice(4, 8) || [];
 
-  const sportSections = [
-    { title: "Top Rated", venues: currentVenues },
-  ];
-
-  const sections = activeSport === "all" ? allSections : sportSections;
+  const sections = activeSport === "all" 
+    ? [
+        { title: "Recommended for You", venues: recommendedVenues },
+        { title: "Trending in Your Area", venues: trendingVenues },
+      ]
+    : [
+        { title: "Top Rated", venues: venues || [] },
+      ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -121,21 +97,41 @@ const VenuesCourts = () => {
                   : "bg-muted text-text-secondary"
               }`}
             >
-              {sport.label} ({sport.count})
+              {sport.label} ({counts?.[sport.id] || 0})
             </button>
           ))}
         </div>
         
+        {/* Loading State */}
+        {isLoading && (
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex gap-3 overflow-x-auto">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="min-w-[280px] h-64 rounded-xl" />
+              ))}
+            </div>
+          </div>
+        )}
+        
         {/* Venue Sections */}
-        {sections.map((section, idx) => (
+        {!isLoading && sections.map((section, idx) => (
           <section key={idx}>
             <h2 className="text-lg font-bold text-foreground mb-3">{section.title}</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {section.venues.map((venue, venueIdx) => (
-                <div key={venueIdx} className="min-w-[280px]">
+              {section.venues.length === 0 && (
+                <p className="text-text-secondary text-sm">No venues found</p>
+              )}
+              {section.venues.map((venue) => (
+                <div key={venue.id} className="min-w-[280px]">
                   <VenueCard 
-                    {...venue} 
-                    onBook={() => navigate(`/venue/${venueIdx}?name=${encodeURIComponent(venue.name)}`)}
+                    image={getVenueImageUrl(venue.image_url)}
+                    name={venue.name}
+                    rating={venue.rating || 0}
+                    distance="2.0 km"
+                    amenities={venue.amenities || []}
+                    price={`₹${venue.price_per_hour}/hr`}
+                    onBook={() => navigate(`/venue/${venue.slug}`)}
                   />
                 </div>
               ))}
