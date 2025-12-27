@@ -280,7 +280,7 @@ const Home = () => {
             <h2 className="text-xl font-bold text-foreground">Recent Activity</h2>
             {recentBookings.length > 3 && (
               <button 
-                onClick={() => navigate('/social/profile', { state: { scrollToBookings: true } })}
+                onClick={() => navigate('/profile/bookings')}
                 className="text-sm text-brand-green font-medium flex items-center gap-1"
               >
                 See all <ChevronRight className="w-4 h-4" />
@@ -312,9 +312,9 @@ const Home = () => {
                 <div 
                   key={booking.id} 
                   className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3 cursor-pointer"
-                  onClick={() => navigate('/social/profile', { state: { scrollToBookings: true } })}
+                  onClick={() => navigate('/profile/bookings')}
                 >
-                  <div className="w-12 h-12 rounded-lg bg-brand-green flex items-center justify-center text-xl">
+                  <div className="w-12 h-12 rounded-lg bg-brand-green flex items-center justify-center text-xl text-white">
                     {getSportIcon(booking.sport)}
                   </div>
                   <div className="flex-1 min-w-0">
