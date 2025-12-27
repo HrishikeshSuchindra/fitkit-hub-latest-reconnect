@@ -26,6 +26,11 @@ import HubCommunity from "./pages/HubCommunity";
 import SocialProfile from "./pages/SocialProfile";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import HelpCentre from "./pages/HelpCentre";
+import ContactUs from "./pages/ContactUs";
+import AboutUs from "./pages/AboutUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
