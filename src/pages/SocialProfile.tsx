@@ -135,18 +135,18 @@ const SocialProfile = () => {
             <p className="text-white/80 text-sm">@{profile?.username || user?.email?.split('@')[0] || 'user'}</p>
             {profile?.bio && <p className="text-white/70 text-sm mt-2 max-w-xs text-center">{profile.bio}</p>}
             
-            <div className="flex gap-8 mt-4">
+            <div className="flex gap-8 mt-4 items-end">
               {/* Badge */}
               <div className="text-center">
-                <div className={`w-12 h-12 ${badge.color} rounded-full flex items-center justify-center text-2xl mx-auto mb-1`}>
+                <div className={`w-10 h-10 ${badge.color} rounded-full flex items-center justify-center text-xl mx-auto`}>
                   {badge.icon}
                 </div>
-                <p className="text-xs text-white/70">{badge.name}</p>
+                <p className="text-xs text-white/70 mt-1">{badge.name}</p>
               </div>
               {/* Friends */}
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{profile?.friends_count || 0}</p>
-                <p className="text-xs text-white/70">Friends</p>
+                <p className="text-2xl font-bold text-white leading-none">{profile?.friends_count || 0}</p>
+                <p className="text-xs text-white/70 mt-1">Friends</p>
               </div>
             </div>
           </div>
