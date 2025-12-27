@@ -11,21 +11,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import promoGreen from "@/assets/promo-green-bg.jpg";
 import promoPurple from "@/assets/promo-purple-bg.jpg";
-import venueBadminton from "@/assets/venue-badminton.jpg";
-import venueTennis from "@/assets/venue-tennis.jpg";
-import venueFootball from "@/assets/venue-football.jpg";
-import venuePickleball from "@/assets/venue-pickleball.jpg";
-import venueBasketball from "@/assets/venue-basketball.jpg";
-import venueTableTennis from "@/assets/venue-tabletennis.jpg";
-import venueSquash from "@/assets/venue-squash.jpg";
-import venueCricket from "@/assets/venue-cricket.jpg";
-import studioYoga from "@/assets/studio-yoga.jpg";
-import studioGym from "@/assets/studio-gym.jpg";
-import recoverySpa from "@/assets/recovery-spa.jpg";
-import recoveryMassage from "@/assets/recovery-massage.jpg";
-import recoverySwimming from "@/assets/recovery-swimming.jpg";
 import eventBadminton from "@/assets/event-badminton-championship.jpg";
 import eventFootball from "@/assets/event-football-league.jpg";
+import { useVenues, getVenueImageUrl } from "@/hooks/useVenues";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Booking = {
   id: string;
@@ -79,30 +68,23 @@ const Home = () => {
     { id: 2, image: eventFootball, title: "Football League Finals", date: "Dec 30, 2024" },
   ];
   
-  // Venue data organized by category
-  const venuesByCategory = {
-    courts: [
-      { image: venueBadminton, name: "Phoenix Sports Arena", rating: 4.8, distance: "2.3 km", amenities: ["Lighting", "Parking", "Shower"], price: "₹300/hr", id: "badminton-1" },
-      { image: venueTennis, name: "Royal Tennis Club", rating: 4.9, distance: "3.1 km", amenities: ["Coaching", "Parking", "Café"], price: "₹500/hr", id: "tennis-1" },
-      { image: venueFootball, name: "Metro Football Arena", rating: 4.7, distance: "1.8 km", amenities: ["Lighting", "Parking", "Locker"], price: "₹800/hr", id: "football-1" },
-      { image: venuePickleball, name: "Pickleball Pro Arena", rating: 4.9, distance: "1.9 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹400/hr", id: "pickleball-1" },
-      { image: venueBasketball, name: "Slam Dunk Courts", rating: 4.6, distance: "4.2 km", amenities: ["AC", "Parking", "Shower"], price: "₹400/hr", id: "basketball-1" },
-      { image: venueTableTennis, name: "Spin Masters TT Club", rating: 4.8, distance: "1.7 km", amenities: ["Indoor", "AC", "Equipment"], price: "₹200/hr", id: "tabletennis-1" },
-      { image: venueSquash, name: "Elite Squash Center", rating: 4.9, distance: "2.4 km", amenities: ["AC", "Shower", "Equipment"], price: "₹500/hr", id: "squash-1" },
-      { image: venueCricket, name: "Stadium Cricket Nets", rating: 4.8, distance: "2.1 km", amenities: ["Nets", "Lighting", "Parking"], price: "₹600/hr", id: "cricket-1" },
-    ],
-    studios: [
-      { image: studioYoga, name: "Zen Yoga Studio", rating: 4.9, distance: "1.2 km", amenities: ["AC", "Mats Provided", "Showers"], price: "₹400/class", id: "yoga-1" },
-      { image: studioGym, name: "PowerFit Gym", rating: 4.8, distance: "1.5 km", amenities: ["Cardio", "Weights", "Trainer"], price: "₹1500/month", id: "gym-1" },
-    ],
-    recovery: [
-      { image: recoverySpa, name: "Serenity Spa & Wellness", rating: 4.9, distance: "1.8 km", amenities: ["Spa", "Massage", "Steam"], price: "₹1200/session", id: "spa-1" },
-      { image: recoveryMassage, name: "Serenity Massage Studio", rating: 4.9, distance: "1.8 km", amenities: ["Deep Tissue", "Hot Stone", "Aromatherapy"], price: "₹1200/hr", id: "massage-1" },
-      { image: recoverySwimming, name: "Aqua Wellness Pool", rating: 4.8, distance: "2.0 km", amenities: ["Heated Pool", "Lap Lanes", "Aqua Therapy"], price: "₹500/session", id: "swimming-1" },
-    ],
-  };
+  // Nearby venues (from database)
+  const venueCategory = activeCategory === "studios" ? "studio" : activeCategory;
+  const { data: venues, isLoading: venuesLoading } = useVenues(venueCategory);
 
-  const currentVenues = venuesByCategory[activeCategory as keyof typeof venuesByCategory] || venuesByCategory.courts;
+  const currentVenues = venues || [];
+
+  const formatVenuePrice = (venue: any) => {
+    if (venueCategory === "studio") {
+      return venue.sport === "gym"
+        ? `₹${venue.price_per_hour}/month`
+        : `₹${venue.price_per_hour}/class`;
+    }
+    if (venueCategory === "recovery") {
+      return `₹${venue.price_per_hour}/session`;
+    }
+    return `₹${venue.price_per_hour}/hr`;
+  };
 
   // Navigate to appropriate venues page based on category
   const handleCategoryChange = (category: string) => {
@@ -223,16 +205,33 @@ const Home = () => {
           </div>
           
           {/* Venues Horizontal Scroll */}
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {currentVenues.map((venue, idx) => (
-              <div key={venue.id} className="min-w-[280px]">
-                <VenueCard 
-                  {...venue} 
-                  onBook={() => navigate(`/venue/${venue.id}?name=${encodeURIComponent(venue.name)}&openSlots=true`)}
-                />
-              </div>
-            ))}
-          </div>
+          {venuesLoading ? (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="min-w-[280px] h-64 rounded-xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {currentVenues.length === 0 ? (
+                <p className="text-text-secondary text-sm">No venues found</p>
+              ) : (
+                currentVenues.map((venue) => (
+                  <div key={venue.id} className="min-w-[280px]">
+                    <VenueCard
+                      image={getVenueImageUrl(venue.image_url)}
+                      name={venue.name}
+                      rating={venue.rating || 0}
+                      distance={venueCategory === "studio" ? "1.5 km" : "2.0 km"}
+                      amenities={venue.amenities || []}
+                      price={formatVenuePrice(venue)}
+                      onBook={() => navigate(`/venue/${venue.slug}?openSlots=true`)}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </section>
         
         {/* Featured Events */}
