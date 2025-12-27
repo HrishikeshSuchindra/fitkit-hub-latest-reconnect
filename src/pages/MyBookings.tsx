@@ -141,11 +141,19 @@ const MyBookings = () => {
     new Date(b).getTime() - new Date(a).getTime()
   );
 
+  const handleBack = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      navigate('/social/profile');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="px-5 pt-4 pb-6">
         <div className="flex items-center mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <h1 className="text-lg font-semibold ml-2">My Bookings</h1>
@@ -192,34 +200,35 @@ const MyBookings = () => {
                       <div className="space-y-3">
                         {groupedUpcoming[dateKey].map((booking) => (
                           <Card key={booking.id} className="p-4 shadow-md">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-xl bg-brand-green flex items-center justify-center text-2xl">
+                            <div className="flex items-start gap-3 mb-2">
+                              <div className="w-12 h-12 rounded-xl bg-brand-green flex items-center justify-center text-2xl flex-shrink-0">
                                 {getSportIcon(booking.sport)}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-foreground">{booking.sport || "Sports"}</p>
                                 <p className="text-sm text-muted-foreground truncate">{booking.venue_name}</p>
+                                <p className="text-xs text-muted-foreground">ID: {booking.id.slice(0, 8).toUpperCase()}</p>
                               </div>
-                              <span className="text-primary font-bold">₹{booking.price}</span>
+                              <span className="text-primary font-bold flex-shrink-0">₹{booking.price}</span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
                                 <span>{formatTime(booking.slot_time)}</span>
                               </div>
                             </div>
 
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="flex-1" onClick={() => handleContact(booking)}>
+                            <div className="grid grid-cols-3 gap-2">
+                              <Button size="sm" variant="outline" onClick={() => handleContact(booking)}>
                                 <Phone className="w-4 h-4 mr-1" />
                                 Contact
                               </Button>
-                              <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDirections(booking)}>
+                              <Button size="sm" variant="outline" onClick={() => handleDirections(booking)}>
                                 <Navigation className="w-4 h-4 mr-1" />
                                 Directions
                               </Button>
-                              <Button size="sm" variant="ghost" className="text-primary" onClick={() => handleFeedback(booking.id)}>
+                              <Button size="sm" variant="outline" onClick={() => handleFeedback(booking.id)}>
                                 <MessageSquare className="w-4 h-4 mr-1" />
                                 Feedback
                               </Button>
@@ -254,30 +263,31 @@ const MyBookings = () => {
                       <div className="space-y-3">
                         {groupedPast[dateKey].map((booking) => (
                           <Card key={booking.id} className="p-4 shadow-md opacity-80">
-                            <div className="flex items-start gap-3 mb-3">
-                              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl">
+                            <div className="flex items-start gap-3 mb-2">
+                              <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center text-2xl flex-shrink-0">
                                 {getSportIcon(booking.sport)}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-foreground">{booking.sport || "Sports"}</p>
                                 <p className="text-sm text-muted-foreground truncate">{booking.venue_name}</p>
+                                <p className="text-xs text-muted-foreground">ID: {booking.id.slice(0, 8).toUpperCase()}</p>
                               </div>
-                              <span className="text-primary font-bold">₹{booking.price}</span>
+                              <span className="text-primary font-bold flex-shrink-0">₹{booking.price}</span>
                             </div>
 
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4">
+                            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3">
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
                                 <span>{formatTime(booking.slot_time)}</span>
                               </div>
                             </div>
 
-                            <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="flex-1" onClick={() => handleBookAgain(booking)}>
+                            <div className="grid grid-cols-2 gap-2">
+                              <Button size="sm" variant="outline" onClick={() => handleBookAgain(booking)}>
                                 <RotateCcw className="w-4 h-4 mr-1" />
                                 Book Again
                               </Button>
-                              <Button size="sm" variant="ghost" className="text-primary" onClick={() => handleFeedback(booking.id)}>
+                              <Button size="sm" variant="outline" onClick={() => handleFeedback(booking.id)}>
                                 <Star className="w-4 h-4 mr-1" />
                                 Feedback
                               </Button>
