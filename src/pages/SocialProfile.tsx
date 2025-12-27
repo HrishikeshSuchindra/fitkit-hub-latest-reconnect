@@ -1,25 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
-import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Share2, LogOut, Settings, Edit2, Calendar, MapPin, Clock, Loader2, Moon, Sun, ArrowLeft } from "lucide-react";
+import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, UserCog, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useUserBookings } from "@/hooks/useBookings";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
+import { AppSettingsSheet } from "@/components/profile/AppSettingsSheet";
+import { DeleteAccountSheet } from "@/components/profile/DeleteAccountSheet";
+import { FriendsSection } from "@/components/profile/FriendsSection";
+import { MyBookingsSection } from "@/components/profile/MyBookingsSection";
+import { MyEventsSection } from "@/components/profile/MyEventsSection";
 
 interface Profile {
   display_name: string | null;
@@ -32,15 +28,16 @@ interface Profile {
 
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const isSigningOut = useRef(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isSigningOutLoading, setIsSigningOutLoading] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showAppSettings, setShowAppSettings] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   
-  // Fetch profile from database
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -56,19 +53,13 @@ const SocialProfile = () => {
     enabled: !!user,
   });
 
-  // Fetch user bookings from database
-  const { data: bookings = [], isLoading: loadingBookings } = useUserBookings();
-
   useEffect(() => {
-    // Only redirect to auth if not currently signing out
     if (!loading && !user && !isSigningOut.current) {
-      // Don't allow navigating "back" into the protected profile when logged out
       navigate("/auth", { replace: true, state: { from: "/" } });
     }
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    // Scroll to bookings section if coming from reminder popup
     if (location.state?.scrollToBookings) {
       setTimeout(() => {
         document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth' });
@@ -79,14 +70,9 @@ const SocialProfile = () => {
   const handleSignOut = async () => {
     setIsSigningOutLoading(true);
     isSigningOut.current = true;
-    
     try {
       await signOut();
-      toast({
-        title: "Signed out",
-        description: "You have been successfully signed out.",
-      });
-      // Navigate after successful sign out
+      toast({ title: "Signed out", description: "You have been successfully signed out." });
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Sign out error:", error);
@@ -97,32 +83,24 @@ const SocialProfile = () => {
   };
 
   const handleBack = () => {
-    // Go back to the previous page
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate("/");
-    }
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/");
   };
 
-  const friends = [
-    { name: "Rahul Sharma", status: "online", time: "2m ago" },
-    { name: "Priya Patel", status: "online", time: "5m ago" },
-    { name: "Amit Desai", status: "offline", time: "2h ago" },
-    { name: "Sneha Reddy", status: "offline", time: "1d ago" },
-  ];
+  const MenuItem = ({ icon: Icon, label, onClick, danger }: { icon: any; label: string; onClick: () => void; danger?: boolean }) => (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center justify-between py-3 px-1 border-b border-border last:border-0 ${danger ? 'text-destructive' : 'text-foreground'}`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className={`w-5 h-5 ${danger ? 'text-destructive' : 'text-muted-foreground'}`} />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+    </button>
+  );
 
-  // Format slot time for display
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
-    return `${displayHour.toString().padStart(2, "0")}:${minutes} ${ampm}`;
-  };
-
-
-  if (loading || loadingProfile || loadingBookings) {
+  if (loading || loadingProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -132,85 +110,30 @@ const SocialProfile = () => {
 
   return (
     <div className="min-h-screen bg-background pb-10">
-      {/* Profile Header with Gradient */}
+      {/* Profile Header */}
       <div className="relative bg-gradient-to-br from-chip-purple-text to-chip-purple-bg pt-8 pb-20">
-        {/* Back Button & Settings & Logout */}
         <div className="absolute top-4 left-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={handleBack}
-          >
+          <Button variant="ghost" size="icon" className="text-white/80 hover:text-white hover:bg-white/10" onClick={handleBack}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </div>
-        <div className="absolute top-4 right-4 flex gap-2">
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
-            <Sun className="w-4 h-4 text-white/80" />
-            <Switch 
-              checked={theme === "dark"}
-              onCheckedChange={toggleTheme}
-              className="data-[state=checked]:bg-white/30 data-[state=unchecked]:bg-white/20"
-            />
-            <Moon className="w-4 h-4 text-white/80" />
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/80 hover:text-white hover:bg-white/10"
-          >
-            <Settings className="w-5 h-5" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="text-white/80 hover:text-white hover:bg-white/10"
-            onClick={() => setShowSignOutDialog(true)}
-            disabled={isSigningOutLoading}
-          >
-            {isSigningOutLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <LogOut className="w-5 h-5" />
-            )}
-          </Button>
-        </div>
 
-        {/* Avatar */}
         <div className="flex flex-col items-center">
           <div className="relative">
-            <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-soft flex items-center justify-center overflow-hidden">
+            <div className="w-24 h-24 bg-card rounded-full border-4 border-white shadow-soft flex items-center justify-center overflow-hidden">
               {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
+                <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <Users className="w-12 h-12 text-brand-green" />
+                <Users className="w-12 h-12 text-primary" />
               )}
             </div>
-            <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full"></div>
+            <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full" />
           </div>
           
-          {/* User Info */}
-          <h2 className="mt-4 text-2xl font-bold text-white">
-            {profile?.display_name || user?.email?.split('@')[0] || 'User'}
-          </h2>
-          <p className="text-white/80 text-sm">
-            @{profile?.username || user?.email?.split('@')[0] || 'user'}
-          </p>
+          <h2 className="mt-4 text-2xl font-bold text-white">{profile?.display_name || user?.email?.split('@')[0] || 'User'}</h2>
+          <p className="text-white/80 text-sm">@{profile?.username || user?.email?.split('@')[0] || 'user'}</p>
+          {profile?.bio && <p className="text-white/70 text-sm mt-2 max-w-xs text-center">{profile.bio}</p>}
           
-          {/* Bio */}
-          {profile?.bio && (
-            <p className="text-white/70 text-sm mt-2 max-w-xs text-center">
-              {profile.bio}
-            </p>
-          )}
-          
-          {/* Stats */}
           <div className="flex gap-8 mt-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-white">{profile?.games_played || 0}</p>
@@ -221,156 +144,75 @@ const SocialProfile = () => {
               <p className="text-xs text-white/70">Friends</p>
             </div>
           </div>
-          
-          {/* Edit Button */}
-          <Button className="mt-4 bg-white text-chip-purple-text hover:bg-white/90 rounded-full px-6">
-            <Edit2 className="w-4 h-4 mr-2" />
-            Edit Profile
-          </Button>
         </div>
       </div>
       
-      {/* Content */}
       <div className="px-5 -mt-10 space-y-5">
-        {/* My Bookings Section */}
-        <div id="my-bookings" className="bg-card rounded-2xl shadow-soft p-4">
-          <h3 className="font-bold text-lg text-foreground mb-4">My Bookings</h3>
-          
-          {bookings.length === 0 ? (
-            <div className="text-center py-6">
-              <Calendar className="w-10 h-10 text-text-tertiary mx-auto mb-2" />
-              <p className="text-text-secondary text-sm">No bookings yet</p>
-              <Button 
-                variant="outline" 
-                className="mt-3 text-brand-green border-brand-green"
-                onClick={() => navigate("/venues/courts")}
-              >
-                Book a Court
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {bookings.map((booking) => (
-                <div 
-                  key={booking.id}
-                  className="bg-muted rounded-xl p-4 flex items-center justify-between"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground">{booking.sport || 'Sports'}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(booking.slot_date), "EEEE, MMM do")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <Clock className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">{formatTime(booking.slot_time)}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <MapPin className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground truncate">{booking.venue_name}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-primary font-bold">₹{booking.price}</span>
-                    <div className="mt-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        booking.visibility === 'public' 
-                          ? 'bg-primary/10 text-primary' 
-                          : 'bg-[hsl(var(--chip-purple-bg))] text-[hsl(var(--chip-purple-text))]'
-                      }`}>
-                        {booking.visibility === 'public' ? 'Public' : 'Friends'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* App & Account */}
+        <div className="bg-card rounded-2xl shadow-soft p-4">
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">App & Account</h3>
+          <MenuItem icon={Edit2} label="Edit Profile" onClick={() => setShowEditProfile(true)} />
+          <MenuItem icon={Users} label="Friends" onClick={() => navigate("/friends")} />
+          <MenuItem icon={Settings} label="App Settings" onClick={() => setShowAppSettings(true)} />
         </div>
 
-        {/* Friends List Card */}
+        {/* My Activity */}
         <div className="bg-card rounded-2xl shadow-soft p-4">
-          <h3 className="font-bold text-lg text-foreground mb-4">Friends</h3>
-          
-          {/* Online Friends */}
-          <div className="mb-4">
-            <p className="text-xs font-semibold text-text-secondary uppercase mb-2">Online</p>
-            {friends.filter(f => f.status === "online").map((friend, idx) => (
-              <div key={idx} className="flex items-center gap-3 py-2">
-                <div className="relative">
-                  <div className="w-10 h-10 bg-brand-soft rounded-full flex items-center justify-center">
-                    <span className="text-brand-green font-bold text-sm">{friend.name[0]}</span>
-                  </div>
-                  <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{friend.name}</p>
-                  <p className="text-xs text-text-tertiary">{friend.time}</p>
-                </div>
-                <Button className="bg-brand-green hover:bg-brand-green/90 text-white h-8 px-4 text-xs rounded-lg">
-                  Invite
-                </Button>
-              </div>
-            ))}
-          </div>
-          
-          {/* Offline Friends */}
-          <div>
-            <p className="text-xs font-semibold text-text-secondary uppercase mb-2">Offline</p>
-            {friends.filter(f => f.status === "offline").map((friend, idx) => (
-              <div key={idx} className="flex items-center gap-3 py-2">
-                <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                  <span className="text-text-secondary font-bold text-sm">{friend.name[0]}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{friend.name}</p>
-                  <p className="text-xs text-text-tertiary">{friend.time}</p>
-                </div>
-                <Button variant="outline" className="h-8 px-4 text-xs rounded-lg">
-                  Message
-                </Button>
-              </div>
-            ))}
-          </div>
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">My Activity</h3>
+          <MenuItem icon={Bell} label="My Bookings" onClick={() => document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth' })} />
+          <MenuItem icon={Users} label="My Events" onClick={() => {}} />
         </div>
-        
-        {/* Invite CTA Card */}
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-          <h3 className="text-xl font-bold mb-2">Invite More Friends</h3>
-          <p className="text-sm text-white/80 mb-4">Play together and earn rewards</p>
-          <Button className="bg-white text-blue-600 hover:bg-white/90 rounded-full px-6 font-semibold">
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Invite Code
-          </Button>
+
+        <MyBookingsSection />
+        <MyEventsSection />
+        <FriendsSection onNavigate={(section) => navigate(`/${section}`)} />
+
+        {/* Support */}
+        <div className="bg-card rounded-2xl shadow-soft p-4">
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">Support</h3>
+          <MenuItem icon={HelpCircle} label="Help Centre" onClick={() => navigate("/help")} />
+          <MenuItem icon={Mail} label="Contact Us" onClick={() => navigate("/contact")} />
+          <MenuItem icon={Info} label="About Us" onClick={() => navigate("/about")} />
         </div>
+
+        {/* Legal */}
+        <div className="bg-card rounded-2xl shadow-soft p-4">
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">Legal</h3>
+          <MenuItem icon={Shield} label="Privacy Policy" onClick={() => navigate("/privacy")} />
+          <MenuItem icon={FileText} label="Terms of Service" onClick={() => navigate("/terms")} />
+        </div>
+
+        {/* Danger Zone */}
+        <div className="bg-card rounded-2xl shadow-soft p-4">
+          <MenuItem icon={UserCog} label="Delete Account" onClick={() => setShowDeleteAccount(true)} danger />
+        </div>
+
+        {/* Sign Out */}
+        <Button
+          onClick={() => setShowSignOutDialog(true)}
+          disabled={isSigningOutLoading}
+          className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground h-12"
+        >
+          {isSigningOutLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <LogOut className="w-4 h-4 mr-2" />}
+          Sign Out
+        </Button>
       </div>
 
-      {/* Sign Out Confirmation Dialog */}
+      {/* Sheets & Dialogs */}
+      <EditProfileSheet open={showEditProfile} onOpenChange={setShowEditProfile} profile={profile} />
+      <AppSettingsSheet open={showAppSettings} onOpenChange={setShowAppSettings} />
+      <DeleteAccountSheet open={showDeleteAccount} onOpenChange={setShowDeleteAccount} />
+
       <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Sign out?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to sign out of your account?
-            </AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to sign out?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSigningOutLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleSignOut}
-              disabled={isSigningOutLoading}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isSigningOutLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing out...
-                </>
-              ) : (
-                "Sign out"
-              )}
+            <AlertDialogAction onClick={handleSignOut} disabled={isSigningOutLoading} className="bg-destructive">
+              {isSigningOutLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Signing out...</> : "Sign out"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
