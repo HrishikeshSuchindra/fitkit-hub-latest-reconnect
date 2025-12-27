@@ -134,7 +134,8 @@ export const useCreateBooking = () => {
 
       if (error) throw error;
       
-      // Send push notification for booking confirmation
+      // Send device push notification for booking confirmation
+      // (Requires user to have enabled notifications in App Settings)
       try {
         await supabase.functions.invoke("send-booking-notification", {
           body: {

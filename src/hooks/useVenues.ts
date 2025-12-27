@@ -3,6 +3,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { Tables } from "@/integrations/supabase/types";
 
+// Seeded database images point to /<filename>.jpg; map them to bundled assets.
+import venueFootball from "@/assets/venue-football.jpg";
+import venueBadminton from "@/assets/venue-badminton.jpg";
+import venueCricket from "@/assets/venue-cricket.jpg";
+import venuePickleball from "@/assets/venue-pickleball.jpg";
+import venueBasketball from "@/assets/venue-basketball.jpg";
+import venueTableTennis from "@/assets/venue-tabletennis.jpg";
+import venueSquash from "@/assets/venue-squash.jpg";
+import venueTennis from "@/assets/venue-tennis.jpg";
+import recoverySwimming from "@/assets/recovery-swimming.jpg";
+import recoveryIcebath from "@/assets/recovery-icebath.jpg";
+import recoveryMassage from "@/assets/recovery-massage.jpg";
+import recoverySauna from "@/assets/recovery-sauna.jpg";
+import recoveryYoga from "@/assets/recovery-yoga.jpg";
+import studioYoga from "@/assets/studio-yoga.jpg";
+import studioGym from "@/assets/studio-gym.jpg";
+
 export type Venue = Tables<"venues">;
 
 // Fetch venues by category and optional sport filter
@@ -176,14 +193,36 @@ export const useToggleFavorite = () => {
   });
 };
 
-// Helper to get image URL (handles both local assets and database paths)
+// Helper to get image URL (handles bundled assets + direct URLs)
 export const getVenueImageUrl = (imageUrl: string | null): string => {
   if (!imageUrl) return "/placeholder.svg";
-  
-  // If it starts with http or /, it's already a valid path
-  if (imageUrl.startsWith("http") || imageUrl.startsWith("/")) {
-    return imageUrl;
-  }
-  
-  return `/${imageUrl}`;
+
+  // Seeded data uses absolute paths like /venue-football.jpg. Those files are bundled in src/assets.
+  const normalized = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
+  const mapped = SEEDED_IMAGE_MAP[normalized];
+  if (mapped) return mapped;
+
+  // If it starts with http, it's already a valid URL
+  if (imageUrl.startsWith("http")) return imageUrl;
+
+  // Otherwise serve as app-relative path
+  return normalized;
+};
+
+const SEEDED_IMAGE_MAP: Record<string, string> = {
+  "/venue-football.jpg": venueFootball,
+  "/venue-badminton.jpg": venueBadminton,
+  "/venue-cricket.jpg": venueCricket,
+  "/venue-pickleball.jpg": venuePickleball,
+  "/venue-basketball.jpg": venueBasketball,
+  "/venue-tabletennis.jpg": venueTableTennis,
+  "/venue-squash.jpg": venueSquash,
+  "/venue-tennis.jpg": venueTennis,
+  "/recovery-swimming.jpg": recoverySwimming,
+  "/recovery-icebath.jpg": recoveryIcebath,
+  "/recovery-massage.jpg": recoveryMassage,
+  "/recovery-sauna.jpg": recoverySauna,
+  "/recovery-yoga.jpg": recoveryYoga,
+  "/studio-yoga.jpg": studioYoga,
+  "/studio-gym.jpg": studioGym,
 };
