@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, CheckCircle, Calendar, Clock, MapPin, Plus, ChevronRight, Star, Phone, HelpCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import recoverySpa from "@/assets/recovery-spa.jpg";
 import recoveryPhysio from "@/assets/recovery-physio.jpg";
@@ -69,17 +69,19 @@ const BookingConfirmation = () => {
       </div>
 
       <div className="px-5 py-6 space-y-6">
-        {/* Success Icon */}
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-full bg-brand-green flex items-center justify-center mb-4">
-            <CheckCircle className="w-8 h-8 text-white" />
+        {/* Success Card */}
+        <Card className="p-6 shadow-md border-0 bg-card">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-brand-green flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Booking Confirmed!</h2>
+            <p className="text-text-secondary mt-1">Your Tennis Court session is secured</p>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Booking Confirmed!</h2>
-          <p className="text-text-secondary mt-1">Your Tennis Court session is secured</p>
-        </div>
+        </Card>
 
         {/* Booking Details Card */}
-        <div className="bg-muted rounded-2xl p-4 space-y-4">
+        <Card className="p-4 space-y-4 shadow-md border-0 bg-card">
           <div className="flex items-center justify-between text-sm">
             <span className="text-text-secondary">Booking ID</span>
             <span className="font-semibold text-brand-green">{bookingId}</span>
@@ -116,38 +118,36 @@ const BookingConfirmation = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button variant="outline" className="flex-1 border-foreground">
+        <Card className="p-4 shadow-md border-0 bg-card">
+          <Button variant="outline" className="w-full border-foreground text-foreground">
             View Booking
           </Button>
-        </div>
 
-        <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 py-2 text-text-secondary">
-            <Plus className="w-4 h-4" />
-            <span className="text-sm">Add to Calendar</span>
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-2 text-text-secondary">
-            <MapPin className="w-4 h-4" />
-            <span className="text-sm">Directions</span>
-          </button>
-        </div>
+          <div className="flex gap-3 mt-3">
+            <button className="flex-1 flex items-center justify-center gap-2 py-2 text-text-secondary">
+              <Plus className="w-4 h-4" />
+              <span className="text-sm">Add to Calendar</span>
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 py-2 text-text-secondary">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm">Directions</span>
+            </button>
+          </div>
+        </Card>
 
         {/* Prep & Recovery */}
-        <div className="space-y-3">
+        <Card className="p-4 space-y-3 shadow-md border-0 bg-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-lg">🏃</span>
-              <h3 className="font-semibold text-foreground">Prep & Recovery: Complete Your Game Day</h3>
+              <h3 className="font-semibold text-foreground">Prep & Recovery</h3>
             </div>
-          </div>
-          <p className="text-sm text-text-secondary">Pre-book your recovery now.</p>
-          <div className="flex justify-end">
             <button className="text-brand-green text-sm font-medium">View All</button>
           </div>
+          <p className="text-sm text-text-secondary">Pre-book your recovery now.</p>
 
           <div className="space-y-3">
             {recoveryServices.map((service) => (
@@ -162,7 +162,7 @@ const BookingConfirmation = () => {
                   <p className="text-xs text-text-secondary mt-1">{service.description}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-brand-green font-semibold">${service.price}</span>
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                    <Button size="sm" className="h-7 text-xs bg-primary text-white hover:bg-primary/90">
                       {service.price === 25 ? "Add to Cart" : "Book Now"}
                     </Button>
                   </div>
@@ -170,10 +170,10 @@ const BookingConfirmation = () => {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Featured Events */}
-        <div className="space-y-3">
+        <Card className="p-4 space-y-3 shadow-md border-0 bg-card">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-foreground">Featured Events</h3>
             <button className="text-brand-green text-sm font-medium">View All</button>
@@ -192,7 +192,7 @@ const BookingConfirmation = () => {
                   <p className="text-xs text-text-secondary mt-1">{event.description}</p>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-brand-green font-semibold">${event.price}</span>
-                    <Button size="sm" variant="outline" className="h-7 text-xs">
+                    <Button size="sm" className="h-7 text-xs bg-primary text-white hover:bg-primary/90">
                       {event.price === 25 ? "Add to Cart" : "Book Now"}
                     </Button>
                   </div>
@@ -200,10 +200,10 @@ const BookingConfirmation = () => {
               </div>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Need Help */}
-        <div className="space-y-2">
+        <Card className="p-4 space-y-2 shadow-md border-0 bg-card">
           <h3 className="font-semibold text-foreground">Need Help?</h3>
           <button className="w-full flex items-center justify-between py-3 border-b border-border">
             <div className="flex items-center gap-3">
@@ -219,10 +219,10 @@ const BookingConfirmation = () => {
             </div>
             <ChevronRight className="w-4 h-4 text-text-tertiary" />
           </button>
-        </div>
+        </Card>
 
         {/* Share the Love */}
-        <div className="bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-4 space-y-2">
+        <Card className="bg-gradient-to-r from-amber-100 to-orange-100 p-4 space-y-2 shadow-md border-0">
           <div className="flex items-center gap-2">
             <Gift className="w-5 h-5 text-orange-500" />
             <h3 className="font-semibold text-foreground">Share the Love!</h3>
@@ -233,10 +233,10 @@ const BookingConfirmation = () => {
           <Button className="bg-orange-500 hover:bg-orange-600 text-white mt-2">
             Refer Now
           </Button>
-        </div>
+        </Card>
 
         {/* Reviews */}
-        <div className="space-y-3">
+        <Card className="p-4 space-y-3 shadow-md border-0 bg-card">
           <h3 className="font-semibold text-foreground">What people say about {venue.name}</h3>
           <div className="flex items-center gap-2">
             <div className="flex">
@@ -253,10 +253,10 @@ const BookingConfirmation = () => {
           <p className="text-sm text-text-secondary italic">
             "Amazing courts and facilities! The staff is super friendly and the equipment is top-notch."
           </p>
-          <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full border-primary text-primary">
             Leave a Review
           </Button>
-        </div>
+        </Card>
       </div>
     </div>
   );
