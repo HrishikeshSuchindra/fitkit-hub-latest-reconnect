@@ -48,7 +48,7 @@ export const SocialEventCard = ({ id, title, date, time, location, spots, price,
       {/* Footer */}
       <div className="px-3 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-xs bg-brand-soft text-brand-green px-2 py-1 rounded-full font-medium flex items-center gap-1">
+          <span className="text-xs bg-brand-green text-white px-2 py-1 rounded-full font-medium flex items-center gap-1">
             <Users className="w-3 h-3" /> {spots}
           </span>
           <span className="text-sm font-bold text-brand-green">{price}</span>

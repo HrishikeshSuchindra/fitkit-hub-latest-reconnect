@@ -107,15 +107,22 @@ const Home = () => {
     }
   };
 
-  // Get activity icon based on booking status/type
-  const getActivityIcon = (booking: Booking) => {
-    if (booking.status === 'completed') {
-      return <Trophy className="w-5 h-5 text-brand-green" />;
-    }
-    if (booking.status === 'confirmed') {
-      return <Calendar className="w-5 h-5 text-brand-green" />;
-    }
-    return <MapPin className="w-5 h-5 text-brand-green" />;
+  // Get sport icon
+  const getSportIcon = (sport: string | null) => {
+    const s = (sport || "").toLowerCase();
+    if (s.includes("squash")) return "🎾";
+    if (s.includes("tennis")) return "🎾";
+    if (s.includes("badminton")) return "🏸";
+    if (s.includes("football")) return "⚽";
+    if (s.includes("basketball")) return "🏀";
+    if (s.includes("cricket")) return "🏏";
+    if (s.includes("table") || s.includes("ping")) return "🏓";
+    if (s.includes("pickle")) return "🥒";
+    if (s.includes("yoga")) return "🧘";
+    if (s.includes("gym")) return "🏋️";
+    if (s.includes("swim")) return "🏊";
+    if (s.includes("recovery") || s.includes("spa")) return "💆";
+    return "🎯";
   };
 
   // Get activity title based on booking status
@@ -125,6 +132,9 @@ const Home = () => {
     if (booking.status === 'cancelled') return "Booking Cancelled";
     return "Turf Booked";
   };
+
+  // Limit to 3 recent bookings
+  const displayedBookings = recentBookings.slice(0, 3);
 
   return (
     <>
@@ -196,7 +206,7 @@ const Home = () => {
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                   activeCategory === cat
                     ? "bg-brand-green text-white"
-                    : "bg-muted text-text-secondary"
+                    : "bg-muted text-foreground"
                 }`}
               >
                 {cat}
@@ -266,7 +276,17 @@ const Home = () => {
         
         {/* Recent Activity */}
         <section>
-          <h2 className="text-xl font-bold text-foreground mb-4">Recent Activity</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-foreground">Recent Activity</h2>
+            {recentBookings.length > 3 && (
+              <button 
+                onClick={() => navigate('/social/profile', { state: { scrollToBookings: true } })}
+                className="text-sm text-brand-green font-medium flex items-center gap-1"
+              >
+                See all <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
           <div className="space-y-3">
             {!user ? (
               <div 
@@ -288,14 +308,14 @@ const Home = () => {
                 <p className="text-brand-green text-sm font-medium">Book your first venue →</p>
               </div>
             ) : (
-              recentBookings.map((booking) => (
+              displayedBookings.map((booking) => (
                 <div 
                   key={booking.id} 
                   className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3 cursor-pointer"
-                  onClick={() => navigate('/social/profile')}
+                  onClick={() => navigate('/social/profile', { state: { scrollToBookings: true } })}
                 >
-                  <div className="w-12 h-12 rounded-lg bg-brand-soft flex items-center justify-center">
-                    {getActivityIcon(booking)}
+                  <div className="w-12 h-12 rounded-lg bg-brand-green flex items-center justify-center text-xl">
+                    {getSportIcon(booking.sport)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-sm text-foreground">{getActivityTitle(booking)}</h4>
@@ -309,10 +329,10 @@ const Home = () => {
                   <div className="flex flex-col items-end">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
                       booking.status === 'confirmed' 
-                        ? 'bg-green-100 text-green-700' 
+                        ? 'bg-green-500 text-white' 
                         : booking.status === 'cancelled'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-gray-100 text-gray-700'
+                        ? 'bg-red-500 text-white'
+                        : 'bg-gray-500 text-white'
                     }`}>
                       {booking.status}
                     </span>

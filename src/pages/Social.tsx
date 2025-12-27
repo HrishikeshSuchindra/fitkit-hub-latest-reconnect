@@ -137,7 +137,7 @@ const Social = () => {
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === "upcoming"
                   ? "bg-brand-green text-white"
-                  : "bg-white/80 text-text-secondary"
+                  : "bg-white/80 text-foreground"
               }`}
             >
               Upcoming
@@ -147,7 +147,7 @@ const Social = () => {
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === "past"
                   ? "bg-brand-green text-white"
-                  : "bg-white/80 text-text-secondary"
+                  : "bg-white/80 text-foreground"
               }`}
             >
               Past Events
@@ -168,8 +168,8 @@ const Social = () => {
                   <p className="text-xs text-text-secondary">{category.description}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs bg-brand-soft text-brand-green px-2 py-1 rounded-full font-medium">
-                    {category.events.length} events
+                  <span className="text-xs bg-brand-green text-white px-2 py-1 rounded-full font-medium">
+                    {category.events.length} {category.events.length === 1 ? 'event' : 'events'}
                   </span>
                   {expandedCategory === category.id ? (
                     <ChevronUp className="w-5 h-5 text-text-secondary" />
