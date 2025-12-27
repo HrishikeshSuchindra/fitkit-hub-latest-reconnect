@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Calendar, Clock, RotateCcw, MessageSquare, Loader2, ChevronRight } from "lucide-react";
+import { Calendar, Clock, RotateCcw, MessageSquare, Loader2, ChevronRight, Phone, Navigation, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUserBookings } from "@/hooks/useBookings";
 import { format, isPast, isToday, isTomorrow } from "date-fns";
@@ -11,6 +11,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+// Sport icons mapping
+const getSportIcon = (sport: string | null) => {
+  const sportLower = (sport || "").toLowerCase();
+  if (sportLower.includes("squash")) return "🎾";
+  if (sportLower.includes("tennis")) return "🎾";
+  if (sportLower.includes("badminton")) return "🏸";
+  if (sportLower.includes("football") || sportLower.includes("soccer")) return "⚽";
+  if (sportLower.includes("basketball")) return "🏀";
+  if (sportLower.includes("cricket")) return "🏏";
+  if (sportLower.includes("table") || sportLower.includes("ping")) return "🏓";
+  if (sportLower.includes("pickle")) return "🥒";
+  if (sportLower.includes("yoga")) return "🧘";
+  if (sportLower.includes("gym") || sportLower.includes("fitness")) return "🏋️";
+  if (sportLower.includes("swim")) return "🏊";
+  if (sportLower.includes("spa") || sportLower.includes("massage") || sportLower.includes("recovery")) return "💆";
+  return "🎯";
+};
 
 interface MyBookingsCollapsibleProps {
   open: boolean;
@@ -59,6 +77,17 @@ export function MyBookingsCollapsible({ open, onOpenChange }: MyBookingsCollapsi
     setShowFeedback(true);
   };
 
+  const handleContact = (booking: any) => {
+    // Open phone dialer or show contact info
+    toast.success(`Contacting ${booking.venue_name}...`);
+  };
+
+  const handleDirections = (booking: any) => {
+    // Open Google Maps with the venue address
+    const address = encodeURIComponent(booking.venue_address || booking.venue_name);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank');
+  };
+
   const submitFeedback = async () => {
     if (!user || !selectedBooking) return;
     
@@ -91,21 +120,33 @@ export function MyBookingsCollapsible({ open, onOpenChange }: MyBookingsCollapsi
     }
   };
 
-  // Group bookings by date
-  const groupedBookings = bookings.reduce((acc, booking) => {
-    const dateKey = booking.slot_date;
-    if (!acc[dateKey]) acc[dateKey] = [];
-    acc[dateKey].push(booking);
-    return acc;
-  }, {} as Record<string, typeof bookings>);
+  // Group bookings by date and separate upcoming/past
+  const now = new Date();
+  const upcomingBookings = bookings.filter(b => !isPast(new Date(b.slot_date)));
+  const pastBookings = bookings.filter(b => isPast(new Date(b.slot_date)));
 
-  const sortedDates = Object.keys(groupedBookings).sort((a, b) => 
+  const groupBookings = (bookingsList: typeof bookings) => {
+    return bookingsList.reduce((acc, booking) => {
+      const dateKey = booking.slot_date;
+      if (!acc[dateKey]) acc[dateKey] = [];
+      acc[dateKey].push(booking);
+      return acc;
+    }, {} as Record<string, typeof bookings>);
+  };
+
+  const groupedUpcoming = groupBookings(upcomingBookings);
+  const groupedPast = groupBookings(pastBookings);
+
+  const sortedUpcomingDates = Object.keys(groupedUpcoming).sort((a, b) => 
+    new Date(a).getTime() - new Date(b).getTime()
+  );
+  const sortedPastDates = Object.keys(groupedPast).sort((a, b) => 
     new Date(b).getTime() - new Date(a).getTime()
   );
 
   return (
     <>
-      <Card id="my-bookings" className="shadow-md border-0 bg-card overflow-hidden">
+      <Card id="my-bookings" className="shadow-sm border bg-muted/50 overflow-hidden">
         <Collapsible open={open} onOpenChange={onOpenChange}>
           <CollapsibleTrigger className="w-full p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -138,68 +179,159 @@ export function MyBookingsCollapsible({ open, onOpenChange }: MyBookingsCollapsi
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {sortedDates.map((dateKey) => (
-                  <div key={dateKey}>
-                    {/* Date Header - Outside booking cards */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDateHighlight(dateKey)}`}>
-                        {getDateLabel(dateKey)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(dateKey), "MMM d, yyyy")}
-                      </span>
-                    </div>
-
-                    {/* Bookings for this date */}
-                    <div className="space-y-2">
-                      {groupedBookings[dateKey].map((booking) => (
-                        <div
-                          key={booking.id}
-                          className="bg-muted rounded-xl p-3"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <p className="font-semibold text-foreground text-sm">{booking.sport || "Sports"}</p>
-                              <p className="text-xs text-muted-foreground truncate">{booking.venue_name}</p>
-                            </div>
-                            <span className="text-primary font-bold text-sm">₹{booking.price}</span>
+              <div className="space-y-6">
+                {/* Upcoming Bookings */}
+                {sortedUpcomingDates.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-3">Upcoming</h4>
+                    <div className="space-y-4">
+                      {sortedUpcomingDates.map((dateKey) => (
+                        <div key={dateKey}>
+                          {/* Date Header */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDateHighlight(dateKey)}`}>
+                              {getDateLabel(dateKey)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(dateKey), "MMM d, yyyy")}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              <span>{formatTime(booking.slot_time)}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs flex-1"
-                              onClick={() => handleBookAgain(booking)}
-                            >
-                              <RotateCcw className="w-3 h-3 mr-1" />
-                              Book Again
-                            </Button>
-                            {isPast(new Date(booking.slot_date)) && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-xs text-primary"
-                                onClick={() => handleFeedback(booking.id)}
+                          {/* Bookings for this date */}
+                          <div className="space-y-2">
+                            {groupedUpcoming[dateKey].map((booking) => (
+                              <div
+                                key={booking.id}
+                                className="bg-card rounded-xl p-3 border shadow-sm"
                               >
-                                <MessageSquare className="w-3 h-3 mr-1" />
-                                Feedback
-                              </Button>
-                            )}
+                                <div className="flex items-start gap-3 mb-2">
+                                  <div className="w-10 h-10 rounded-lg bg-brand-green flex items-center justify-center text-xl">
+                                    {getSportIcon(booking.sport)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-foreground text-sm">{booking.sport || "Sports"}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{booking.venue_name}</p>
+                                  </div>
+                                  <span className="text-primary font-bold text-sm">₹{booking.price}</span>
+                                </div>
+
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{formatTime(booking.slot_time)}</span>
+                                  </div>
+                                </div>
+
+                                {/* Action buttons for upcoming - Contact, Direction, Feedback */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs flex-1 border"
+                                    onClick={() => handleContact(booking)}
+                                  >
+                                    <Phone className="w-3 h-3 mr-1" />
+                                    Contact
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs flex-1 border"
+                                    onClick={() => handleDirections(booking)}
+                                  >
+                                    <Navigation className="w-3 h-3 mr-1" />
+                                    Directions
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 text-xs text-primary"
+                                    onClick={() => handleFeedback(booking.id)}
+                                  >
+                                    <MessageSquare className="w-3 h-3 mr-1" />
+                                    Feedback
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
+                )}
+
+                {/* Past Bookings */}
+                {sortedPastDates.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-3">Past</h4>
+                    <div className="space-y-4">
+                      {sortedPastDates.map((dateKey) => (
+                        <div key={dateKey}>
+                          {/* Date Header */}
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDateHighlight(dateKey)}`}>
+                              {getDateLabel(dateKey)}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(dateKey), "MMM d, yyyy")}
+                            </span>
+                          </div>
+
+                          {/* Bookings for this date */}
+                          <div className="space-y-2">
+                            {groupedPast[dateKey].map((booking) => (
+                              <div
+                                key={booking.id}
+                                className="bg-card rounded-xl p-3 border shadow-sm opacity-80"
+                              >
+                                <div className="flex items-start gap-3 mb-2">
+                                  <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-xl">
+                                    {getSportIcon(booking.sport)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-foreground text-sm">{booking.sport || "Sports"}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{booking.venue_name}</p>
+                                  </div>
+                                  <span className="text-primary font-bold text-sm">₹{booking.price}</span>
+                                </div>
+
+                                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{formatTime(booking.slot_time)}</span>
+                                  </div>
+                                </div>
+
+                                {/* Action buttons for past - Book Again, Feedback */}
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs flex-1 border"
+                                    onClick={() => handleBookAgain(booking)}
+                                  >
+                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                    Book Again
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 text-xs text-primary"
+                                    onClick={() => handleFeedback(booking.id)}
+                                  >
+                                    <Star className="w-3 h-3 mr-1" />
+                                    Feedback
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CollapsibleContent>

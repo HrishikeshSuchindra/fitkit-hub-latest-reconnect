@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, UserCog, Bell, UserPlus, Share2 } from "lucide-react";
+import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, UserCog, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -42,8 +42,10 @@ const SocialProfile = () => {
   const [showAppSettings, setShowAppSettings] = useState(false);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [eventsOpen, setEventsOpen] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [activityOpen, setActivityOpen] = useState(false);
   
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -68,6 +70,7 @@ const SocialProfile = () => {
 
   useEffect(() => {
     if (location.state?.scrollToBookings) {
+      setActivityOpen(true);
       setBookingsOpen(true);
       setTimeout(() => {
         document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth' });
@@ -154,26 +157,29 @@ const SocialProfile = () => {
                 <p className="text-xs text-white/70">Friends</p>
               </div>
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 bg-white/10 border-white/30 text-white hover:bg-white/20"
-              onClick={() => setShowEditProfile(true)}
-            >
-              <Edit2 className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
           </div>
         </Card>
       </div>
       
       <div className="px-5 space-y-4">
-        {/* My Bookings - Collapsible */}
-        <MyBookingsCollapsible open={bookingsOpen} onOpenChange={setBookingsOpen} />
-
-        {/* My Events */}
-        <MyEventsSection />
+        {/* Account Section - First (includes Edit Profile, App Settings, Friends) */}
+        <Card className="shadow-md border-0 bg-card overflow-hidden">
+          <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
+            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <UserCog className="w-5 h-5 text-muted-foreground" />
+                <h3 className="font-bold text-foreground">Account</h3>
+              </div>
+              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${accountOpen ? 'rotate-90' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="px-4 pb-4">
+              <MenuItem icon={Edit2} label="Edit Profile" onClick={() => setShowEditProfile(true)} />
+              <MenuItem icon={Settings} label="App Settings" onClick={() => setShowAppSettings(true)} />
+              <MenuItem icon={Bell} label="Notifications" onClick={() => setShowAppSettings(true)} />
+              <MenuItem icon={UserCog} label="Delete Account" onClick={() => setShowDeleteAccount(true)} danger />
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Friends - Collapsible List */}
         <FriendsListSection 
@@ -182,19 +188,22 @@ const SocialProfile = () => {
           onNavigate={(section) => navigate(`/${section}`)}
         />
 
-        {/* App Settings & Account - Collapsible */}
+        {/* My Activity Section (My Bookings + My Events) */}
         <Card className="shadow-md border-0 bg-card overflow-hidden">
-          <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
+          <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
             <CollapsibleTrigger className="w-full p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Settings className="w-5 h-5 text-muted-foreground" />
-                <h3 className="font-bold text-foreground">App Settings & Account</h3>
+                <h3 className="font-bold text-foreground">My Activity</h3>
               </div>
-              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${accountOpen ? 'rotate-90' : ''}`} />
+              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${activityOpen ? 'rotate-90' : ''}`} />
             </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <MenuItem icon={Settings} label="App Settings" onClick={() => setShowAppSettings(true)} />
-              <MenuItem icon={UserCog} label="Delete Account" onClick={() => setShowDeleteAccount(true)} danger />
+            <CollapsibleContent className="px-4 pb-4 space-y-4">
+              {/* My Bookings inside Activity */}
+              <MyBookingsCollapsible open={bookingsOpen} onOpenChange={setBookingsOpen} />
+              
+              {/* My Events inside Activity */}
+              <MyEventsSection />
             </CollapsibleContent>
           </Collapsible>
         </Card>
