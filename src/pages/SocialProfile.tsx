@@ -1,25 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, UserCog, Bell } from "lucide-react";
+import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, Calendar, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Collapsible, CollapsibleContent, CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
-import { AppSettingsSheet } from "@/components/profile/AppSettingsSheet";
-import { DeleteAccountSheet } from "@/components/profile/DeleteAccountSheet";
-import { FriendsListSection } from "@/components/profile/FriendsListSection";
-import { MyBookingsCollapsible } from "@/components/profile/MyBookingsCollapsible";
-import { MyEventsSection } from "@/components/profile/MyEventsSection";
 
 interface Profile {
   display_name: string | null;
@@ -33,19 +24,10 @@ interface Profile {
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const isSigningOut = useRef(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isSigningOutLoading, setIsSigningOutLoading] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [showAppSettings, setShowAppSettings] = useState(false);
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
-  const [bookingsOpen, setBookingsOpen] = useState(false);
-  const [eventsOpen, setEventsOpen] = useState(false);
-  const [friendsOpen, setFriendsOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const [activityOpen, setActivityOpen] = useState(false);
   
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -67,16 +49,6 @@ const SocialProfile = () => {
       navigate("/auth", { replace: true, state: { from: "/" } });
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (location.state?.scrollToBookings) {
-      setActivityOpen(true);
-      setBookingsOpen(true);
-      setTimeout(() => {
-        document.getElementById('my-bookings')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
-    }
-  }, [location.state]);
 
   const handleSignOut = async () => {
     setIsSigningOutLoading(true);
@@ -121,7 +93,7 @@ const SocialProfile = () => {
 
   return (
     <div className="min-h-screen bg-background pb-10">
-      {/* Profile Header - Now as a Card */}
+      {/* Profile Header */}
       <div className="px-5 pt-4 pb-6">
         <div className="flex items-center mb-4">
           <Button variant="ghost" size="icon" className="text-foreground" onClick={handleBack}>
@@ -162,50 +134,19 @@ const SocialProfile = () => {
       </div>
       
       <div className="px-5 space-y-4">
-        {/* Account Section - First (includes Edit Profile, App Settings, Friends) */}
-        <Card className="shadow-md border-0 bg-card overflow-hidden">
-          <Collapsible open={accountOpen} onOpenChange={setAccountOpen}>
-            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <UserCog className="w-5 h-5 text-muted-foreground" />
-                <h3 className="font-bold text-foreground">Account</h3>
-              </div>
-              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${accountOpen ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4">
-              <MenuItem icon={Edit2} label="Edit Profile" onClick={() => setShowEditProfile(true)} />
-              <MenuItem icon={Settings} label="App Settings" onClick={() => setShowAppSettings(true)} />
-              <MenuItem icon={Bell} label="Notifications" onClick={() => setShowAppSettings(true)} />
-              <MenuItem icon={UserCog} label="Delete Account" onClick={() => setShowDeleteAccount(true)} danger />
-            </CollapsibleContent>
-          </Collapsible>
+        {/* Account & Connections */}
+        <Card className="shadow-md border-0 bg-card p-4">
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">Account & Connections</h3>
+          <MenuItem icon={Edit2} label="Edit Profile" onClick={() => navigate("/profile/edit")} />
+          <MenuItem icon={Settings} label="App Settings" onClick={() => navigate("/profile/settings")} />
+          <MenuItem icon={Users} label="Friends" onClick={() => navigate("/profile/friends")} />
         </Card>
 
-        {/* Friends - Collapsible List */}
-        <FriendsListSection 
-          open={friendsOpen} 
-          onOpenChange={setFriendsOpen}
-          onNavigate={(section) => navigate(`/${section}`)}
-        />
-
-        {/* My Activity Section (My Bookings + My Events) */}
-        <Card className="shadow-md border-0 bg-card overflow-hidden">
-          <Collapsible open={activityOpen} onOpenChange={setActivityOpen}>
-            <CollapsibleTrigger className="w-full p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Settings className="w-5 h-5 text-muted-foreground" />
-                <h3 className="font-bold text-foreground">My Activity</h3>
-              </div>
-              <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${activityOpen ? 'rotate-90' : ''}`} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="px-4 pb-4 space-y-4">
-              {/* My Bookings inside Activity */}
-              <MyBookingsCollapsible open={bookingsOpen} onOpenChange={setBookingsOpen} />
-              
-              {/* My Events inside Activity */}
-              <MyEventsSection />
-            </CollapsibleContent>
-          </Collapsible>
+        {/* My Activity */}
+        <Card className="shadow-md border-0 bg-card p-4">
+          <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">My Activity</h3>
+          <MenuItem icon={Calendar} label="My Bookings" onClick={() => navigate("/profile/bookings")} />
+          <MenuItem icon={CalendarDays} label="My Events" onClick={() => navigate("/profile/events")} />
         </Card>
 
         {/* Support */}
@@ -233,11 +174,6 @@ const SocialProfile = () => {
           Sign Out
         </Button>
       </div>
-
-      {/* Sheets & Dialogs */}
-      <EditProfileSheet open={showEditProfile} onOpenChange={setShowEditProfile} profile={profile} />
-      <AppSettingsSheet open={showAppSettings} onOpenChange={setShowAppSettings} />
-      <DeleteAccountSheet open={showDeleteAccount} onOpenChange={setShowDeleteAccount} />
 
       <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <AlertDialogContent className="rounded-2xl">

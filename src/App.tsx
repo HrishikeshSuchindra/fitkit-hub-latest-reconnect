@@ -31,6 +31,11 @@ import ContactUs from "./pages/ContactUs";
 import AboutUs from "./pages/AboutUs";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import EditProfile from "./pages/EditProfile";
+import AppSettings from "./pages/AppSettings";
+import Friends from "./pages/Friends";
+import MyBookings from "./pages/MyBookings";
+import MyEvents from "./pages/MyEvents";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +88,11 @@ const AnimatedRoutes = () => {
         
         {/* Profile */}
         <Route path="/social/profile" element={<SocialProfile />} />
+        <Route path="/profile/edit" element={<EditProfile />} />
+        <Route path="/profile/settings" element={<AppSettings />} />
+        <Route path="/profile/friends" element={<Friends />} />
+        <Route path="/profile/bookings" element={<MyBookings />} />
+        <Route path="/profile/events" element={<MyEvents />} />
         
         {/* Support & Legal */}
         <Route path="/help" element={<HelpCentre />} />
