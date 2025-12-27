@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, HelpCircle, Mail, Info, Shield, FileText, Calendar, CalendarDays } from "lucide-react";
+import { Users, LogOut, Settings, Edit2, Loader2, ArrowLeft, ChevronRight, ChevronDown, HelpCircle, Mail, Info, Shield, FileText, Calendar, CalendarDays, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { EditProfileSheet } from "@/components/profile/EditProfileSheet";
+import { AppSettingsSheet } from "@/components/profile/AppSettingsSheet";
 
 interface Profile {
   display_name: string | null;
@@ -21,6 +24,15 @@ interface Profile {
   friends_count: number;
 }
 
+// Badge tiers based on games played
+const getBadgeTier = (gamesPlayed: number) => {
+  if (gamesPlayed >= 100) return { name: "Champion", color: "bg-yellow-500", icon: "🏆" };
+  if (gamesPlayed >= 50) return { name: "Pro", color: "bg-purple-500", icon: "⭐" };
+  if (gamesPlayed >= 25) return { name: "Regular", color: "bg-blue-500", icon: "🎯" };
+  if (gamesPlayed >= 10) return { name: "Active", color: "bg-green-500", icon: "🔥" };
+  return { name: "Starter", color: "bg-gray-500", icon: "🌱" };
+};
+
 const SocialProfile = () => {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -28,6 +40,8 @@ const SocialProfile = () => {
   const isSigningOut = useRef(false);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isSigningOutLoading, setIsSigningOutLoading] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [appSettingsOpen, setAppSettingsOpen] = useState(false);
   
   const { data: profile, isLoading: loadingProfile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -83,6 +97,8 @@ const SocialProfile = () => {
     </button>
   );
 
+  const badge = getBadgeTier(profile?.games_played || 0);
+
   if (loading || loadingProfile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -120,10 +136,14 @@ const SocialProfile = () => {
             {profile?.bio && <p className="text-white/70 text-sm mt-2 max-w-xs text-center">{profile.bio}</p>}
             
             <div className="flex gap-8 mt-4">
+              {/* Badge */}
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{profile?.games_played || 0}</p>
-                <p className="text-xs text-white/70">Games</p>
+                <div className={`w-12 h-12 ${badge.color} rounded-full flex items-center justify-center text-2xl mx-auto mb-1`}>
+                  {badge.icon}
+                </div>
+                <p className="text-xs text-white/70">{badge.name}</p>
               </div>
+              {/* Friends */}
               <div className="text-center">
                 <p className="text-2xl font-bold text-white">{profile?.friends_count || 0}</p>
                 <p className="text-xs text-white/70">Friends</p>
@@ -137,8 +157,35 @@ const SocialProfile = () => {
         {/* Account & Connections */}
         <Card className="shadow-md border-0 bg-card p-4">
           <h3 className="font-bold text-sm text-muted-foreground uppercase mb-2">Account & Connections</h3>
-          <MenuItem icon={Edit2} label="Edit Profile" onClick={() => navigate("/profile/edit")} />
-          <MenuItem icon={Settings} label="App Settings" onClick={() => navigate("/profile/settings")} />
+          
+          {/* Edit Profile Collapsible */}
+          <Collapsible open={editProfileOpen} onOpenChange={setEditProfileOpen}>
+            <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-1 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Edit2 className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium">Edit Profile</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${editProfileOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <EditProfileSheet open={editProfileOpen} onOpenChange={setEditProfileOpen} profile={profile} />
+            </CollapsibleContent>
+          </Collapsible>
+          
+          {/* App Settings Collapsible */}
+          <Collapsible open={appSettingsOpen} onOpenChange={setAppSettingsOpen}>
+            <CollapsibleTrigger className="w-full flex items-center justify-between py-3 px-1 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Settings className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm font-medium">App Settings</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${appSettingsOpen ? 'rotate-180' : ''}`} />
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <AppSettingsSheet open={appSettingsOpen} onOpenChange={setAppSettingsOpen} />
+            </CollapsibleContent>
+          </Collapsible>
+          
           <MenuItem icon={Users} label="Friends" onClick={() => navigate("/profile/friends")} />
         </Card>
 

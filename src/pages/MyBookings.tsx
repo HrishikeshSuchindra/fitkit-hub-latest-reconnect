@@ -112,9 +112,15 @@ const MyBookings = () => {
     }
   };
 
-  // Group bookings by date and separate upcoming/past
-  const upcomingBookings = bookings.filter(b => !isPast(new Date(b.slot_date)));
-  const pastBookings = bookings.filter(b => isPast(new Date(b.slot_date)));
+  // Determine if a booking slot has passed (compare date + time)
+  const isSlotPassed = (booking: typeof bookings[0]) => {
+    const slotDateTime = new Date(`${booking.slot_date}T${booking.slot_time}`);
+    return isPast(slotDateTime);
+  };
+
+  // Group bookings by date and separate upcoming/past based on slot time
+  const upcomingBookings = bookings.filter(b => !isSlotPassed(b));
+  const pastBookings = bookings.filter(b => isSlotPassed(b));
 
   const groupBookings = (bookingsList: typeof bookings) => {
     return bookingsList.reduce((acc, booking) => {
