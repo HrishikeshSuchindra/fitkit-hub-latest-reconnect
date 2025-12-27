@@ -15,11 +15,12 @@ self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
 
   let data = {
-    title: 'FitKits',
+    title: '🏸 FitKits',
     body: 'You have a new notification',
     icon: '/favicon.ico',
     badge: '/favicon.ico',
     data: {},
+    vibrate: [200, 100, 200],
   };
 
   if (event.data) {
@@ -31,6 +32,7 @@ self.addEventListener('push', (event) => {
         icon: payload.icon || data.icon,
         badge: payload.badge || data.badge,
         data: payload.data || {},
+        vibrate: payload.vibrate || data.vibrate,
       };
     } catch (e) {
       console.error('Error parsing push data:', e);
@@ -42,12 +44,14 @@ self.addEventListener('push', (event) => {
     body: data.body,
     icon: data.icon,
     badge: data.badge,
-    vibrate: [100, 50, 100],
+    vibrate: data.vibrate,
     data: data.data,
+    requireInteraction: true,
     actions: [
-      { action: 'open', title: 'Open' },
-      { action: 'close', title: 'Close' },
+      { action: 'open', title: '👀 View Booking' },
+      { action: 'close', title: '❌ Dismiss' },
     ],
+    tag: data.data?.bookingId || 'fitkits-notification',
   };
 
   event.waitUntil(
@@ -60,7 +64,11 @@ self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  let urlToOpen = '/';
+  
+  if (event.action === 'open' || !event.action) {
+    urlToOpen = event.notification.data?.url || '/social/profile?scrollToBookings=true';
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
@@ -68,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.focus();
-          if (event.notification.data?.url) {
+          if (urlToOpen) {
             client.navigate(urlToOpen);
           }
           return;

@@ -84,6 +84,13 @@ const AnimatedRoutes = () => {
         {/* Profile */}
         <Route path="/social/profile" element={<SocialProfile />} />
         
+        {/* Support & Legal */}
+        <Route path="/help" element={<HelpCentre />} />
+        <Route path="/contact" element={<ContactUs />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        
         {/* Catch-all */}
         <Route path="*" element={<NotFound />} />
       </Routes>
