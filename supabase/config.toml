@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.send-booking-reminder]
 verify_jwt = false
+
+[functions.send-host-approval-request]
+verify_jwt = false
+
+[functions.send-booking-notification]
+verify_jwt = false

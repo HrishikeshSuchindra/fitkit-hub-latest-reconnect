@@ -133,6 +133,25 @@ export const useCreateBooking = () => {
         .single();
 
       if (error) throw error;
+      
+      // Send push notification for booking confirmation
+      try {
+        await supabase.functions.invoke("send-booking-notification", {
+          body: {
+            userId: user.id,
+            bookingId: data.id,
+            venueName: bookingData.venue_name,
+            sport: bookingData.sport || "Sports",
+            slotDate: bookingData.slot_date,
+            slotTime: bookingData.slot_time,
+            price: bookingData.price,
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to send booking notification:", notifError);
+        // Don't throw - booking was still successful
+      }
+      
       return data as Booking;
     },
     onSuccess: () => {

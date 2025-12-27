@@ -1,14 +1,24 @@
+import { useState, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Calendar, MapPin, Clock, Users, ImagePlus, Send } from "lucide-react";
-import { useState } from "react";
+import { Calendar, MapPin, Clock, Users, ImagePlus, Send, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useStorage } from "@/hooks/useStorage";
+import { supabase } from "@/integrations/supabase/client";
 
 const SocialHost = () => {
+  const { user } = useAuth();
+  const { uploadEventImage, uploading } = useStorage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     title: "",
     category: "fitdates",
@@ -28,11 +38,89 @@ const SocialHost = () => {
     { id: "other", label: "Other" },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview immediately
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to storage
+    const url = await uploadEventImage(file);
+    if (url) {
+      setImageUrl(url);
+      toast.success("Image uploaded!");
+    } else {
+      toast.error("Failed to upload image");
+      setImagePreview(null);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setImageUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Host request submitted!", {
-      description: "We'll review your event and get back to you within 24 hours."
-    });
+
+    if (!formData.title || !formData.date || !formData.time || !formData.location) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Get user profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user?.id)
+        .single();
+
+      // Send approval request email
+      const { error } = await supabase.functions.invoke("send-host-approval-request", {
+        body: {
+          ...formData,
+          imageUrl: imageUrl,
+          hostName: profile?.display_name || user?.email?.split("@")[0] || "Unknown",
+          hostEmail: user?.email || "",
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Host request submitted!", {
+        description: "We'll review your event and get back to you within 24 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        title: "",
+        category: "fitdates",
+        description: "",
+        date: "",
+        time: "",
+        location: "",
+        maxParticipants: "",
+        price: "",
+      });
+      setImagePreview(null);
+      setImageUrl(null);
+    } catch (error) {
+      console.error("Error submitting host request:", error);
+      toast.error("Failed to submit request. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -48,13 +136,14 @@ const SocialHost = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Event Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Event Title</Label>
+            <Label htmlFor="title">Event Title *</Label>
             <Input
               id="title"
               placeholder="e.g., Morning Yoga & Brunch"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="bg-muted border-0"
+              required
             />
           </div>
           
@@ -69,8 +158,8 @@ const SocialHost = () => {
                   onClick={() => setFormData({ ...formData, category: cat.id })}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     formData.category === cat.id
-                      ? "bg-brand-green text-white"
-                      : "bg-muted text-text-secondary"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {cat.label}
@@ -94,7 +183,7 @@ const SocialHost = () => {
           {/* Date & Time */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">Date *</Label>
               <div className="relative">
                 <Input
                   id="date"
@@ -102,12 +191,13 @@ const SocialHost = () => {
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   className="bg-muted border-0 pl-10"
+                  required
                 />
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="time">Time</Label>
+              <Label htmlFor="time">Time *</Label>
               <div className="relative">
                 <Input
                   id="time"
@@ -115,15 +205,16 @@ const SocialHost = () => {
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
                   className="bg-muted border-0 pl-10"
+                  required
                 />
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
             </div>
           </div>
           
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">Location *</Label>
             <div className="relative">
               <Input
                 id="location"
@@ -131,8 +222,9 @@ const SocialHost = () => {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="bg-muted border-0 pl-10"
+                required
               />
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             </div>
           </div>
           
@@ -149,7 +241,7 @@ const SocialHost = () => {
                   onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
                   className="bg-muted border-0 pl-10"
                 />
-                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               </div>
             </div>
             <div className="space-y-2">
@@ -167,19 +259,63 @@ const SocialHost = () => {
           {/* Image Upload */}
           <div className="space-y-2">
             <Label>Event Image</Label>
-            <div className="border-2 border-dashed border-divider rounded-xl p-6 flex flex-col items-center justify-center">
-              <ImagePlus className="w-8 h-8 text-text-secondary mb-2" />
-              <p className="text-sm text-text-secondary">Tap to upload event image</p>
-              <p className="text-xs text-text-tertiary">JPG, PNG up to 5MB</p>
-            </div>
+            {imagePreview ? (
+              <div className="relative rounded-xl overflow-hidden">
+                <img src={imagePreview} alt="Event preview" className="w-full h-48 object-cover" />
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="destructive"
+                  className="absolute top-2 right-2 rounded-full w-8 h-8"
+                  onClick={removeImage}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                {uploading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-white" />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <ImagePlus className="w-8 h-8 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">Tap to upload event image</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG up to 5MB</p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageSelect}
+            />
           </div>
           
           {/* Submit */}
-          <Button type="submit" className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-12">
-            <Send className="w-4 h-4 mr-2" /> Submit Host Request
+          <Button
+            type="submit"
+            className="w-full bg-primary hover:bg-primary/90 h-12"
+            disabled={submitting || uploading}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Submit Host Request
+              </>
+            )}
           </Button>
           
-          <p className="text-xs text-text-tertiary text-center">
+          <p className="text-xs text-muted-foreground text-center">
             By submitting, you agree to our event hosting guidelines and terms of service.
           </p>
         </form>
