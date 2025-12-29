@@ -219,17 +219,17 @@ const MyBookings = () => {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-2">
-                              <Button size="sm" variant="outline" onClick={() => handleContact(booking)}>
-                                <Phone className="w-4 h-4 mr-1" />
+                            <div className="grid grid-cols-3 gap-1">
+                              <Button size="sm" variant="outline" className="text-xs px-2" onClick={() => handleContact(booking)}>
+                                <Phone className="w-3 h-3 mr-0.5" />
                                 Contact
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDirections(booking)}>
-                                <Navigation className="w-4 h-4 mr-1" />
+                              <Button size="sm" variant="outline" className="text-xs px-2" onClick={() => handleDirections(booking)}>
+                                <Navigation className="w-3 h-3 mr-0.5" />
                                 Directions
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleFeedback(booking.id)}>
-                                <MessageSquare className="w-4 h-4 mr-1" />
+                              <Button size="sm" variant="outline" className="text-xs px-2" onClick={() => handleFeedback(booking.id)}>
+                                <MessageSquare className="w-3 h-3 mr-0.5" />
                                 Feedback
                               </Button>
                             </div>
