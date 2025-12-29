@@ -753,7 +753,7 @@ const Auth = () => {
           <img 
             src={fitkitsBrandLogo} 
             alt="Fitkits - Wellness Reimagined" 
-            className="h-52 w-auto object-contain drop-shadow-2xl animate-fade-in"
+            className="h-60 w-auto object-contain drop-shadow-2xl animate-fade-in"
             style={{ animationDuration: '1s' }}
           />
         </div>
