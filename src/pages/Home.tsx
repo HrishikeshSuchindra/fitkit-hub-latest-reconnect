@@ -3,7 +3,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { PageTransition } from "@/components/PageTransition";
-import { ChevronRight, MapPin, Calendar, Trophy, Clock } from "lucide-react";
+import { ChevronRight, MapPin, Calendar, Trophy, Clock, Dumbbell, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -107,22 +107,10 @@ const Home = () => {
     }
   };
 
-  // Get sport icon
+  // Get sport icon as Lucide icon
   const getSportIcon = (sport: string | null) => {
-    const s = (sport || "").toLowerCase();
-    if (s.includes("squash")) return "🎾";
-    if (s.includes("tennis")) return "🎾";
-    if (s.includes("badminton")) return "🏸";
-    if (s.includes("football")) return "⚽";
-    if (s.includes("basketball")) return "🏀";
-    if (s.includes("cricket")) return "🏏";
-    if (s.includes("table") || s.includes("ping")) return "🏓";
-    if (s.includes("pickle")) return "🥒";
-    if (s.includes("yoga")) return "🧘";
-    if (s.includes("gym")) return "🏋️";
-    if (s.includes("swim")) return "🏊";
-    if (s.includes("recovery") || s.includes("spa")) return "💆";
-    return "🎯";
+    // Return icon name for use with outline icon
+    return sport || "sports";
   };
 
   // Get activity title based on booking status
@@ -131,6 +119,22 @@ const Home = () => {
     if (booking.status === 'confirmed') return "Upcoming Booking";
     if (booking.status === 'cancelled') return "Booking Cancelled";
     return "Turf Booked";
+  };
+
+  // Check if booking time has passed
+  const isBookingCompleted = (booking: Booking) => {
+    const now = new Date();
+    const bookingDate = new Date(booking.slot_date);
+    const [hours, minutes] = booking.slot_time.split(':').map(Number);
+    bookingDate.setHours(hours + 1, minutes || 0, 0, 0); // Add 1 hour for slot duration
+    return now > bookingDate;
+  };
+
+  // Get display status
+  const getDisplayStatus = (booking: Booking) => {
+    if (booking.status === 'cancelled') return 'cancelled';
+    if (isBookingCompleted(booking)) return 'completed';
+    return booking.status;
   };
 
   // Limit to 3 recent bookings
@@ -308,39 +312,42 @@ const Home = () => {
                 <p className="text-brand-green text-sm font-medium">Book your first venue →</p>
               </div>
             ) : (
-              displayedBookings.map((booking) => (
-                <div 
-                  key={booking.id} 
-                  className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3 cursor-pointer"
-                  onClick={() => navigate('/profile/bookings')}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-brand-green flex items-center justify-center text-xl text-white">
-                    {getSportIcon(booking.sport)}
+              displayedBookings.map((booking) => {
+                const displayStatus = getDisplayStatus(booking);
+                return (
+                  <div 
+                    key={booking.id} 
+                    className="bg-card rounded-xl shadow-soft p-4 flex items-center gap-3 cursor-pointer"
+                    onClick={() => navigate('/profile/bookings')}
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                      <Dumbbell className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm text-foreground">{getActivityTitle({ ...booking, status: displayStatus })}</h4>
+                      <p className="text-xs text-text-secondary truncate">
+                        {booking.venue_name} • {format(new Date(booking.slot_date), 'MMM d')}
+                      </p>
+                      {booking.sport && (
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400">{booking.sport}</p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                        displayStatus === 'confirmed' 
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' 
+                          : displayStatus === 'cancelled'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-400'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      }`}>
+                        {displayStatus}
+                      </span>
+                      <span className="text-xs text-text-tertiary mt-1">{booking.slot_time}</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-sm text-foreground">{getActivityTitle(booking)}</h4>
-                    <p className="text-xs text-text-secondary truncate">
-                      {booking.venue_name} • {format(new Date(booking.slot_date), 'MMM d')}
-                    </p>
-                    {booking.sport && (
-                      <p className="text-xs text-brand-green">{booking.sport}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      booking.status === 'confirmed' 
-                        ? 'bg-green-500 text-white' 
-                        : booking.status === 'cancelled'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-gray-500 text-white'
-                    }`}>
-                      {booking.status}
-                    </span>
-                    <span className="text-xs text-text-tertiary mt-1">{booking.slot_time}</span>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>
