@@ -53,13 +53,19 @@ export const AppHeader = () => {
       </div>
       
       {/* Center: Logo */}
-      <Link to="/">
+      <Link to="/" className="flex flex-col items-center">
         <h1 
           className="text-lg text-foreground"
           style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '0.15em' }}
         >
           FITKITS
         </h1>
+        <span 
+          className="text-[7px] text-text-secondary tracking-[0.15em] uppercase -mt-0.5"
+          style={{ fontFamily: "'Montserrat', sans-serif" }}
+        >
+          wellness reimagined +
+        </span>
       </Link>
       
       {/* Right: Notifications & Avatar */}
