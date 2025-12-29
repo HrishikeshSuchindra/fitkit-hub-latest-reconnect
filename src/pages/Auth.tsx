@@ -749,24 +749,12 @@ const Auth = () => {
 
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
-        <div className="text-center mb-8">
+        <div className="flex justify-center mb-8">
           <img 
             src={fitkitsBrandLogo} 
-            alt="Fitkits Logo" 
-            className="w-28 h-28 mx-auto mb-4 object-contain"
+            alt="Fitkits - Wellness Reimagined" 
+            className="h-24 w-auto object-contain"
           />
-          <h1 
-            className="text-2xl text-foreground font-semibold tracking-wider"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            FITKITS
-          </h1>
-          <p 
-            className="text-muted-foreground mt-1 text-[10px] tracking-[0.2em] uppercase"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
-          >
-            wellness reimagined +
-          </p>
         </div>
 
         {/* Auth Card */}
