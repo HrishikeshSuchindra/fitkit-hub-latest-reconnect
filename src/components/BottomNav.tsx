@@ -27,6 +27,7 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
   const socialNav = [
     { to: "/", label: "Home", icon: Home },
     { to: "/social", label: "Events", icon: PartyPopper },
+    { to: "/social/chat", label: "Chat", icon: MessageCircle },
     { to: "/social/host", label: "Host", icon: Coffee },
   ];
 

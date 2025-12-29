@@ -22,6 +22,8 @@ import HubGames from "./pages/HubGames";
 import HubGameDetail from "./pages/HubGameDetail";
 import HubChat from "./pages/HubChat";
 import HubChatRoom from "./pages/HubChatRoom";
+import SocialChat from "./pages/SocialChat";
+import SocialChatRoom from "./pages/SocialChatRoom";
 import HubCommunity from "./pages/HubCommunity";
 import SocialProfile from "./pages/SocialProfile";
 import Auth from "./pages/Auth";
@@ -78,6 +80,8 @@ const AnimatedRoutes = () => {
         <Route path="/social" element={<Social />} />
         <Route path="/social/event/:eventId" element={<SocialEventDetail />} />
         <Route path="/social/host" element={<SocialHost />} />
+        <Route path="/social/chat" element={<SocialChat />} />
+        <Route path="/social/chat/:chatId" element={<SocialChatRoom />} />
         
         {/* Hub Routes (Public Games, Chat, Community) */}
         <Route path="/hub" element={<HubGames />} />
