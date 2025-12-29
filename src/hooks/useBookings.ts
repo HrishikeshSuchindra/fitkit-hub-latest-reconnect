@@ -134,8 +134,35 @@ export const useCreateBooking = () => {
 
       if (error) throw error;
       
+      // If the booking is public, create a group chat room for it
+      if (bookingData.visibility === "public") {
+        try {
+          const { data: newRoom, error: roomError } = await supabase
+            .from("chat_rooms")
+            .insert({
+              type: "group",
+              name: `${bookingData.sport || "Game"} @ ${bookingData.venue_name.split(" ")[0]}`,
+              booking_id: data.id,
+              created_by: user.id,
+            })
+            .select()
+            .single();
+          
+          if (!roomError && newRoom) {
+            // Add the creator as admin
+            await supabase.from("chat_room_members").insert({
+              room_id: newRoom.id,
+              user_id: user.id,
+              role: "admin",
+            });
+          }
+        } catch (chatError) {
+          console.error("Failed to create chat room for booking:", chatError);
+          // Don't throw - booking was still successful
+        }
+      }
+      
       // Send device push notification for booking confirmation
-      // (Requires user to have enabled notifications in App Settings)
       try {
         await supabase.functions.invoke("send-booking-notification", {
           body: {
@@ -158,6 +185,8 @@ export const useCreateBooking = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["slot-availability"] });
+      queryClient.invalidateQueries({ queryKey: ["hub-chat-rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["chat-rooms"] });
     },
   });
 };
