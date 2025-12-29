@@ -545,12 +545,12 @@ const Auth = () => {
     return (
       <>
         {/* Toggle */}
-        <div className="flex bg-auth-coral/40 rounded-xl p-1 mb-6">
+        <div className="flex bg-muted rounded-xl p-1 mb-6">
           <button
             onClick={() => setMode('login')}
             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
               mode === 'login' 
-                ? "bg-white text-foreground shadow-sm" 
+                ? "bg-card text-foreground shadow-sm" 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -560,7 +560,7 @@ const Auth = () => {
             onClick={() => setMode('signup')}
             className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
               mode === 'signup' 
-                ? "bg-white text-foreground shadow-sm" 
+                ? "bg-card text-foreground shadow-sm" 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -572,16 +572,16 @@ const Auth = () => {
           {/* Display Name (Sign Up only) */}
           {mode === 'signup' && (
             <div className="space-y-2">
-              <Label htmlFor="displayName" className="text-foreground">Display Name</Label>
+              <Label htmlFor="displayName" className="text-foreground font-medium">Display Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <Input
                   id="displayName"
                   type="text"
                   placeholder="Your name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20"
+                  className="pl-10 h-12 rounded-xl border-border bg-background focus:border-primary focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -589,9 +589,9 @@ const Auth = () => {
 
           {/* Email */}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">Email</Label>
+            <Label htmlFor="email" className="text-foreground font-medium">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 id="email"
                 type="email"
@@ -601,19 +601,19 @@ const Auth = () => {
                   setEmail(e.target.value);
                   if (errors.email) setErrors({ ...errors, email: undefined });
                 }}
-                className={`pl-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20 ${
+                className={`pl-10 h-12 rounded-xl border-border bg-background focus:border-primary focus:ring-primary/20 ${
                   errors.email ? "border-destructive" : ""
                 }`}
               />
             </div>
-            {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            {errors.email && <p className="text-xs text-destructive font-medium">{errors.email}</p>}
           </div>
 
           {/* Password */}
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground">Password</Label>
+            <Label htmlFor="password" className="text-foreground font-medium">Password</Label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-auth-stone" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -623,7 +623,7 @@ const Auth = () => {
                   setPassword(e.target.value);
                   if (errors.password) setErrors({ ...errors, password: undefined });
                 }}
-                className={`pl-10 pr-10 h-12 rounded-xl border-auth-coral bg-white/50 focus:border-auth-bone focus:ring-auth-bone/20 ${
+                className={`pl-10 pr-10 h-12 rounded-xl border-border bg-background focus:border-primary focus:ring-primary/20 ${
                   errors.password ? "border-destructive" : ""
                 }`}
               />
@@ -635,14 +635,14 @@ const Auth = () => {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+            {errors.password && <p className="text-xs text-destructive font-medium">{errors.password}</p>}
           </div>
 
           {/* Submit Button */}
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-auth-bone to-auth-beige hover:from-auth-beige hover:to-auth-bone text-white font-semibold mt-2 shadow-lg"
+            className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold mt-2 shadow-lg"
           >
             {isSubmitting ? "Please wait..." : mode === 'login' ? "Log In" : "Create Account"}
           </Button>
@@ -654,7 +654,7 @@ const Auth = () => {
             Forgot your password?{" "}
             <button 
               onClick={() => setMode('forgot')}
-              className="text-auth-stone font-medium hover:underline"
+              className="text-primary font-medium hover:underline"
             >
               Reset it
             </button>
@@ -664,10 +664,10 @@ const Auth = () => {
         {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-auth-coral" />
+            <span className="w-full border-t border-border" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-muted-foreground">Or continue with</span>
+            <span className="bg-card px-3 text-muted-foreground">Or continue with</span>
           </div>
         </div>
 
@@ -679,7 +679,7 @@ const Auth = () => {
             variant="outline"
             onClick={() => handleSocialLogin('google')}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
+            className="w-full h-12 rounded-xl border-border bg-background hover:bg-muted"
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -687,7 +687,7 @@ const Auth = () => {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            Continue with Google
+            <span className="text-foreground">Continue with Google</span>
           </Button>
 
           {/* Apple Login */}
@@ -696,12 +696,12 @@ const Auth = () => {
             variant="outline"
             onClick={() => handleSocialLogin('apple')}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
+            className="w-full h-12 rounded-xl border-border bg-background hover:bg-muted"
           >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-5 h-5 mr-2 text-foreground" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
             </svg>
-            Continue with Apple
+            <span className="text-foreground">Continue with Apple</span>
           </Button>
 
           {/* Phone Login */}
@@ -709,10 +709,10 @@ const Auth = () => {
             type="button"
             variant="outline"
             onClick={() => setMode('phone')}
-            className="w-full h-12 rounded-xl border-auth-coral bg-white/50 hover:bg-auth-beige/20 hover:border-auth-bone"
+            className="w-full h-12 rounded-xl border-border bg-background hover:bg-muted"
           >
-            <Phone className="w-5 h-5 mr-2 text-auth-stone" />
-            Continue with Phone
+            <Phone className="w-5 h-5 mr-2 text-muted-foreground" />
+            <span className="text-foreground">Continue with Phone</span>
           </Button>
         </div>
       </>
@@ -738,13 +738,13 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-auth-beige/30 via-auth-coral/20 to-auth-bone/20 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-muted flex items-center justify-center p-4 relative">
       {/* Back Button */}
       <button
         onClick={handleBack}
-        className="absolute top-4 left-4 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white transition-colors z-10"
+        className="absolute top-4 left-4 p-2 rounded-full bg-card shadow-md hover:bg-muted transition-colors z-10"
       >
-        <ArrowLeft className="w-5 h-5 text-auth-stone" />
+        <ArrowLeft className="w-5 h-5 text-foreground" />
       </button>
 
       <div className="w-full max-w-md">
@@ -756,8 +756,8 @@ const Auth = () => {
             className="w-24 h-24 mx-auto mb-4 object-contain"
           />
           <h1 
-            className="text-2xl text-foreground"
-            style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 600, letterSpacing: '0.15em' }}
+            className="text-2xl text-foreground font-semibold tracking-wider"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
             FITKITS
           </h1>
@@ -765,15 +765,15 @@ const Auth = () => {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-6 border border-auth-coral/30">
+        <div className="bg-card rounded-3xl shadow-xl p-6 border border-border">
           {renderContent()}
         </div>
 
         {/* Terms */}
         <p className="text-center text-xs text-muted-foreground mt-6">
           By continuing, you agree to our{" "}
-          <span className="text-auth-stone hover:underline cursor-pointer">Terms of Service</span> and{" "}
-          <span className="text-auth-stone hover:underline cursor-pointer">Privacy Policy</span>
+          <span className="text-primary font-medium hover:underline cursor-pointer">Terms of Service</span> and{" "}
+          <span className="text-primary font-medium hover:underline cursor-pointer">Privacy Policy</span>
         </p>
       </div>
     </div>

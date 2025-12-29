@@ -16,9 +16,9 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
   const [isLiked, setIsLiked] = useState(false);
 
   return (
-    <div className="bg-card rounded-xl shadow-soft overflow-hidden flex flex-col">
+    <div className="bg-card rounded-xl shadow-soft overflow-hidden flex flex-col h-full min-h-[340px]">
       {/* Image */}
-      <div className="relative aspect-[4/3]">
+      <div className="relative h-[140px] flex-shrink-0">
         <img src={image} alt={name} className="w-full h-full object-cover" />
         <button 
           onClick={() => setIsLiked(!isLiked)}
@@ -30,7 +30,7 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
       
       {/* Content */}
       <div className="p-3 space-y-2 flex-1 flex flex-col">
-        <h3 className="font-semibold text-foreground text-base">{name}</h3>
+        <h3 className="font-semibold text-foreground text-base line-clamp-1">{name}</h3>
         
         <div className="flex items-center gap-3 text-sm">
           <div className="flex items-center gap-1">
@@ -43,21 +43,21 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
           </div>
         </div>
         
-        <div className="flex flex-wrap gap-1.5">
-          {amenities.map((amenity) => (
-            <span key={amenity} className="px-2 py-0.5 bg-chip-green-bg text-chip-green-text text-xs rounded-full">
+        <div className="flex flex-wrap gap-1.5 min-h-[24px]">
+          {amenities.slice(0, 3).map((amenity) => (
+            <span key={amenity} className="px-2 py-0.5 bg-chip-green-bg text-chip-green-text text-xs rounded-full line-clamp-1">
               {amenity}
             </span>
           ))}
         </div>
         
-        <div className="flex items-center justify-between pt-1 pb-2">
+        <div className="flex items-center justify-between pt-1 mt-auto">
           <span className="text-brand-green font-semibold text-base">{price}</span>
         </div>
       </div>
       
       {/* Cylindrical Button */}
-      <div className="px-3 pb-3">
+      <div className="px-3 pb-3 mt-auto">
         <Button 
           onClick={onBook}
           className="w-full bg-brand-green hover:bg-brand-green/90 text-white h-10 rounded-full font-semibold"

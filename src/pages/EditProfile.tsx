@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,16 +36,22 @@ const EditProfile = () => {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
 
   // Initialize form when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setDisplayName(profile.display_name || "");
       setUsername(profile.username || "");
       setBio(profile.bio || "");
       setAvatarUrl(profile.avatar_url || "");
     }
-  });
+    if (user) {
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [profile, user]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,7 +87,8 @@ const EditProfile = () => {
     setSaving(true);
 
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           display_name: displayName,
@@ -91,7 +98,25 @@ const EditProfile = () => {
         })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update email if changed
+      if (email && email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({ email });
+        if (emailError) {
+          toast.error("Failed to update email: " + emailError.message);
+        } else {
+          toast.success("Verification email sent to new address");
+        }
+      }
+
+      // Update phone if changed
+      if (phone && phone !== user.phone) {
+        const { error: phoneError } = await supabase.auth.updateUser({ phone });
+        if (phoneError) {
+          toast.error("Failed to update phone: " + phoneError.message);
+        }
+      }
 
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast.success("Profile updated!");
@@ -137,9 +162,9 @@ const EditProfile = () => {
               </div>
               <label className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer">
                 {uploading ? (
-                  <Loader2 className="w-4 h-4 text-white animate-spin" />
+                  <Loader2 className="w-4 h-4 text-primary-foreground animate-spin" />
                 ) : (
-                  <Camera className="w-4 h-4 text-white" />
+                  <Camera className="w-4 h-4 text-primary-foreground" />
                 )}
                 <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
               </label>
@@ -151,7 +176,7 @@ const EditProfile = () => {
             <div>
               <label className="text-sm font-medium text-foreground">Display Name</label>
               <Input
-                value={displayName || profile?.display_name || ""}
+                value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Your name"
                 className="mt-1"
@@ -161,7 +186,7 @@ const EditProfile = () => {
             <div>
               <label className="text-sm font-medium text-foreground">Username</label>
               <Input
-                value={username || profile?.username || ""}
+                value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="username"
                 className="mt-1"
@@ -169,9 +194,38 @@ const EditProfile = () => {
             </div>
 
             <div>
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Mail className="w-4 h-4 text-muted-foreground" />
+                Email Address
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Changing email requires verification</p>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                Mobile Number
+              </label>
+              <Input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+91 98765 43210"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
               <label className="text-sm font-medium text-foreground">Bio</label>
               <Textarea
-                value={bio || profile?.bio || ""}
+                value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell us about yourself..."
                 className="mt-1 min-h-[100px]"
@@ -182,7 +236,7 @@ const EditProfile = () => {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full mt-6 bg-primary text-white"
+            className="w-full mt-6"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
             Save Changes
