@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import fitkitsLogo from "@/assets/fitkits-logo.png";
+import fitkitsBrandLogo from "@/assets/fitkits-brand-logo.png";
 
 const emailSchema = z.string().email("Please enter a valid email");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -751,9 +751,9 @@ const Auth = () => {
         {/* Logo / Brand */}
         <div className="text-center mb-8">
           <img 
-            src={fitkitsLogo} 
+            src={fitkitsBrandLogo} 
             alt="Fitkits Logo" 
-            className="w-24 h-24 mx-auto mb-4 object-contain"
+            className="w-28 h-28 mx-auto mb-4 object-contain"
           />
           <h1 
             className="text-2xl text-foreground font-semibold tracking-wider"
@@ -761,7 +761,12 @@ const Auth = () => {
           >
             FITKITS
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm">Wellness Reimagined</p>
+          <p 
+            className="text-muted-foreground mt-1 text-[10px] tracking-[0.2em] uppercase"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            wellness reimagined +
+          </p>
         </div>
 
         {/* Auth Card */}
