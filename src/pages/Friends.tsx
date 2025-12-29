@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, UserPlus, Search, Gift, Users, Loader2, Check, X, UserCheck } from "lucide-react";
+import { ArrowLeft, UserPlus, Search, Gift, Users, Loader2, Check, X, UserCheck, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -50,6 +50,22 @@ const Friends = () => {
     enabled: !!user,
   });
 
+  // Fetch sent pending requests (to disable add button)
+  const { data: sentRequests = [] } = useQuery({
+    queryKey: ['sent-requests', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('friendships')
+        .select('addressee_id')
+        .eq('requester_id', user.id)
+        .eq('status', 'pending');
+      if (error) return [];
+      return data?.map(r => r.addressee_id) || [];
+    },
+    enabled: !!user,
+  });
+
   // Search users
   const { data: searchResults = [], isLoading: isSearching } = useQuery({
     queryKey: ['search-users', debouncedSearch],
@@ -67,6 +83,20 @@ const Friends = () => {
     enabled: !!user && debouncedSearch.length >= 2,
   });
 
+  // Check if already friends or request pending
+  const getFriendshipStatus = (profileUserId: string): 'none' | 'pending' | 'friends' => {
+    // Check if already friends
+    const isFriend = friends.some((f: any) => 
+      f.requester_id === profileUserId || f.addressee_id === profileUserId
+    );
+    if (isFriend) return 'friends';
+    
+    // Check if request sent
+    if (sentRequests.includes(profileUserId)) return 'pending';
+    
+    return 'none';
+  };
+
   // Send friend request
   const sendRequestMutation = useMutation({
     mutationFn: async (addresseeId: string) => {
@@ -76,10 +106,20 @@ const Friends = () => {
         status: 'pending',
       });
       if (error) throw error;
+      
+      // Create notification for the receiver
+      await supabase.from('notifications').insert({
+        user_id: addresseeId,
+        type: 'friend_request',
+        title: 'New Friend Request',
+        body: `You have a new friend request`,
+        data: { friend_id: user!.id },
+      });
     },
     onSuccess: () => {
       toast.success("Friend request sent!");
       queryClient.invalidateQueries({ queryKey: ['search-users'] });
+      queryClient.invalidateQueries({ queryKey: ['sent-requests'] });
     },
     onError: () => toast.error("Failed to send request"),
   });
@@ -143,20 +183,31 @@ const Friends = () => {
               ) : searchResults.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">No users found</div>
               ) : (
-                searchResults.map((profile: any) => (
-                  <div key={profile.id} className="flex items-center gap-3 p-3 hover:bg-muted/50">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                      {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <Users className="w-5 h-5 text-primary" />}
+                searchResults.map((profile: any) => {
+                  const status = getFriendshipStatus(profile.user_id);
+                  return (
+                    <div key={profile.id} className="flex items-center gap-3 p-3 hover:bg-muted/50">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                        {profile.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : <Users className="w-5 h-5 text-primary" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{profile.display_name || 'User'}</p>
+                        <p className="text-xs text-muted-foreground">@{profile.username || 'user'}</p>
+                      </div>
+                      {status === 'friends' ? (
+                        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded-full">Friends</span>
+                      ) : status === 'pending' ? (
+                        <Button size="sm" variant="secondary" disabled className="opacity-50">
+                          <Clock className="w-4 h-4 mr-1" /> Pending
+                        </Button>
+                      ) : (
+                        <Button size="sm" onClick={() => sendRequestMutation.mutate(profile.user_id)} disabled={sendRequestMutation.isPending}>
+                          <UserPlus className="w-4 h-4 mr-1" /> Add
+                        </Button>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{profile.display_name || 'User'}</p>
-                      <p className="text-xs text-muted-foreground">@{profile.username || 'user'}</p>
-                    </div>
-                    <Button size="sm" onClick={() => sendRequestMutation.mutate(profile.user_id)} disabled={sendRequestMutation.isPending}>
-                      <UserPlus className="w-4 h-4 mr-1" /> Add
-                    </Button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
