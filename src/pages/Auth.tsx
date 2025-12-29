@@ -749,11 +749,11 @@ const Auth = () => {
 
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-10">
           <img 
             src={fitkitsBrandLogo} 
             alt="Fitkits - Wellness Reimagined" 
-            className="h-24 w-auto object-contain"
+            className="h-40 w-auto object-contain drop-shadow-lg"
           />
         </div>
 
