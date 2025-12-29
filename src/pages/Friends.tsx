@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, UserPlus, Search, Gift, Users, Loader2, Check, X, UserCheck, Clock } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ArrowLeft, UserPlus, Search, Gift, Users, Loader2, Check, X, UserCheck, Clock, MessageCircle, Calendar, Trophy } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-mobile";
+
+interface FriendProfile {
+  user_id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  games_played: number;
+  friends_count: number;
+}
 
 const Friends = () => {
   const navigate = useNavigate();
@@ -16,6 +27,7 @@ const Friends = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState<FriendProfile | null>(null);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   // Fetch accepted friends
@@ -49,6 +61,45 @@ const Friends = () => {
     },
     enabled: !!user,
   });
+
+  // Real-time subscription for friend requests
+  useEffect(() => {
+    if (!user) return;
+    
+    const channel = supabase
+      .channel('friendships-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friendships',
+          filter: `addressee_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['friends'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'friendships',
+          filter: `requester_id=eq.${user.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sent-requests'] });
+          queryClient.invalidateQueries({ queryKey: ['friends'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
 
   // Fetch sent pending requests (to disable add button)
   const { data: sentRequests = [] } = useQuery({
@@ -264,7 +315,11 @@ const Friends = () => {
               {friends.map((f: any) => {
                 const friend = f.requester_id === user?.id ? f.addressee : f.requester;
                 return (
-                  <div key={f.id} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+                  <div 
+                    key={f.id} 
+                    className="flex items-center gap-3 p-3 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors"
+                    onClick={() => setSelectedFriend(friend)}
+                  >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                       {friend?.avatar_url ? <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" /> : <Users className="w-5 h-5 text-primary" />}
                     </div>
@@ -279,6 +334,60 @@ const Friends = () => {
           )}
         </Card>
       </div>
+
+      {/* Friend Profile Sheet */}
+      <Sheet open={!!selectedFriend} onOpenChange={(open) => !open && setSelectedFriend(null)}>
+        <SheetContent side="bottom" className="h-[70vh] rounded-t-3xl">
+          <SheetHeader className="text-left">
+            <SheetTitle>Profile</SheetTitle>
+          </SheetHeader>
+          {selectedFriend && (
+            <div className="mt-6 space-y-6">
+              {/* Profile Header */}
+              <div className="flex flex-col items-center">
+                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {selectedFriend.avatar_url ? (
+                    <img src={selectedFriend.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Users className="w-12 h-12 text-primary" />
+                  )}
+                </div>
+                <h3 className="mt-4 text-xl font-bold">{selectedFriend.display_name || 'User'}</h3>
+                <p className="text-muted-foreground">@{selectedFriend.username || 'user'}</p>
+                {selectedFriend.bio && (
+                  <p className="text-sm text-muted-foreground mt-2 text-center max-w-xs">{selectedFriend.bio}</p>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card className="p-4 text-center">
+                  <Trophy className="w-6 h-6 text-primary mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{selectedFriend.games_played || 0}</p>
+                  <p className="text-xs text-muted-foreground">Games Played</p>
+                </Card>
+                <Card className="p-4 text-center">
+                  <Users className="w-6 h-6 text-primary mx-auto mb-2" />
+                  <p className="text-2xl font-bold">{selectedFriend.friends_count || 0}</p>
+                  <p className="text-xs text-muted-foreground">Friends</p>
+                </Card>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <Button className="flex-1" variant="outline" onClick={() => toast.success("Message feature coming soon!")}>
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Message
+                </Button>
+                <Button className="flex-1" variant="outline" onClick={() => toast.success("Invite feature coming soon!")}>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Invite to Game
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
