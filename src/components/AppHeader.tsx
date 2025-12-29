@@ -64,7 +64,7 @@ export const AppHeader = () => {
           className="text-[7px] text-text-secondary tracking-[0.15em] uppercase -mt-0.5"
           style={{ fontFamily: "'Montserrat', sans-serif" }}
         >
-          wellness reimagined +
+          Wellness Reimagined
         </span>
       </Link>
       
