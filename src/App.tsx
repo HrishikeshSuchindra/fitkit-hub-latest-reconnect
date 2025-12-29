@@ -36,6 +36,7 @@ import AppSettings from "./pages/AppSettings";
 import Friends from "./pages/Friends";
 import MyBookings from "./pages/MyBookings";
 import MyEvents from "./pages/MyEvents";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const AnimatedRoutes = () => {
         <Route path="/profile/friends" element={<Friends />} />
         <Route path="/profile/bookings" element={<MyBookings />} />
         <Route path="/profile/events" element={<MyEvents />} />
+        <Route path="/notifications" element={<Notifications />} />
         
         {/* Support & Legal */}
         <Route path="/help" element={<HelpCentre />} />

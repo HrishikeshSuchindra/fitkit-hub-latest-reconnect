@@ -1,5 +1,5 @@
 import { MapPin, ChevronDown, Bell, User } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 export const AppHeader = () => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const from = `${location.pathname}${location.search}`;
 
   // Fetch user profile avatar
@@ -25,12 +26,29 @@ export const AppHeader = () => {
     enabled: !!user,
   });
 
+  // Fetch unread notifications count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-notifications', user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+      if (error) return 0;
+      return count || 0;
+    },
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
   return (
     <header className="h-14 bg-card border-b border-divider flex items-center justify-between px-5 sticky top-0 z-50">
       {/* Left: Location */}
       <div className="flex items-center gap-1.5">
         <MapPin className="w-5 h-5 text-brand-green" />
-        <span className="text-sm font-medium text-foreground">Mumbai</span>
+        <span className="text-sm font-medium text-foreground">Chennai</span>
         <ChevronDown className="w-4 h-4 text-text-secondary" />
       </div>
       
@@ -46,9 +64,13 @@ export const AppHeader = () => {
       
       {/* Right: Notifications & Avatar */}
       <div className="flex items-center gap-3">
-        <button className="relative">
+        <button className="relative" onClick={() => navigate('/notifications')}>
           <Bell className="w-5 h-5 text-text-secondary" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-brand-danger rounded-full"></span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-brand-danger rounded-full text-[10px] text-white font-medium flex items-center justify-center">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </button>
         <Link
           to={user ? "/social/profile" : "/auth"}
