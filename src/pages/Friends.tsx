@@ -211,7 +211,7 @@ const Friends = () => {
     onError: () => toast.error("Failed to send request"),
   });
 
-  // Accept friend request
+  // Accept friend request and create chat room
   const acceptRequestMutation = useMutation({
     mutationFn: async ({ friendshipId, requesterId }: { friendshipId: string; requesterId: string }) => {
       const { error } = await supabase
@@ -219,6 +219,24 @@ const Friends = () => {
         .update({ status: 'accepted' })
         .eq('id', friendshipId);
       if (error) throw error;
+      
+      // Create a DM chat room for the new friends
+      const { data: newRoom, error: roomError } = await supabase
+        .from('chat_rooms')
+        .insert({
+          type: 'direct',
+          created_by: user!.id,
+        })
+        .select()
+        .single();
+      
+      if (!roomError && newRoom) {
+        // Add both users as members
+        await supabase.from('chat_room_members').insert([
+          { room_id: newRoom.id, user_id: user!.id, role: 'member' },
+          { room_id: newRoom.id, user_id: requesterId, role: 'member' },
+        ]);
+      }
       
       // Notify the requester that their request was accepted
       await supabase.from('notifications').insert({
@@ -233,6 +251,7 @@ const Friends = () => {
       toast.success("Friend request accepted!");
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['pending-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['chat-rooms'] });
     },
     onError: () => toast.error("Failed to accept request"),
   });
