@@ -341,7 +341,7 @@ const Friends = () => {
     },
     onSuccess: (roomId) => {
       setSelectedFriend(null);
-      navigate(`/hub/chat/${roomId}`);
+      navigate(`/social/chat/${roomId}`);
     },
     onError: () => toast.error("Failed to start chat"),
   });
