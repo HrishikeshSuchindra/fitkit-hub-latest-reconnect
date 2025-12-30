@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       bookings: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string
           duration_minutes: number
           id: string
@@ -35,6 +37,8 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -54,6 +58,8 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -415,6 +421,9 @@ export type Database = {
           metadata: Json | null
           payment_method: string | null
           receipt_url: string | null
+          refund_amount: number | null
+          refund_status: string | null
+          refunded_at: string | null
           status: string | null
           updated_at: string
           user_id: string
@@ -433,6 +442,9 @@ export type Database = {
           metadata?: Json | null
           payment_method?: string | null
           receipt_url?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
+          refunded_at?: string | null
           status?: string | null
           updated_at?: string
           user_id: string
@@ -451,6 +463,9 @@ export type Database = {
           metadata?: Json | null
           payment_method?: string | null
           receipt_url?: string | null
+          refund_amount?: number | null
+          refund_status?: string | null
+          refunded_at?: string | null
           status?: string | null
           updated_at?: string
           user_id?: string

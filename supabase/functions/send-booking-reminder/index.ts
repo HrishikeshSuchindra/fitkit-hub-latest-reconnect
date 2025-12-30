@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Standard rate limit: 60 per minute
+const rateLimiter = createRateLimiter(RATE_LIMITS.standard);
 
 interface BookingReminder {
   id: string;
@@ -20,6 +24,16 @@ serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Apply rate limiting
+  const limitResponse = rateLimiter(req);
+  if (limitResponse) {
+    console.log("Rate limit exceeded for booking reminder");
+    return new Response(limitResponse.body, {
+      status: limitResponse.status,
+      headers: { ...corsHeaders, ...Object.fromEntries(limitResponse.headers.entries()) },
+    });
   }
 
   try {
@@ -87,7 +101,7 @@ serve(async (req) => {
       const { error: notifError } = await supabase.from("notifications").insert({
         user_id: booking.user_id,
         type: "booking_reminder",
-        title: "Booking Tomorrow!",
+        title: "⏰ Booking Tomorrow!",
         body: `Your ${booking.sport || "game"} at ${booking.venue_name} is scheduled for ${booking.slot_time}`,
         data: {
           booking_id: booking.id,
@@ -112,9 +126,9 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               user_id: booking.user_id,
-              title: "Booking Tomorrow!",
+              title: "⏰ Booking Tomorrow!",
               body: `Your ${booking.sport || "game"} at ${booking.venue_name} is scheduled for ${booking.slot_time}`,
-              data: { booking_id: booking.id },
+              data: { booking_id: booking.id, url: "/social/profile?scrollToBookings=true" },
             }),
           });
 
@@ -123,12 +137,15 @@ serve(async (req) => {
             console.log(`Push notification sent for booking ${booking.id}`);
           } else {
             failedCount++;
-            console.error(`Failed to send push for booking ${booking.id}`);
+            const errorText = await response.text();
+            console.error(`Failed to send push for booking ${booking.id}:`, errorText);
           }
         } catch (pushError) {
           failedCount++;
           console.error(`Push notification error for booking ${booking.id}:`, pushError);
         }
+      } else {
+        console.log(`No push tokens for user ${booking.user_id}, notification saved to DB only`);
       }
     }
 

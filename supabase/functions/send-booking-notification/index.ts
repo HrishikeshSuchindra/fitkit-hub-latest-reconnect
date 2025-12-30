@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Standard rate limit: 60 per minute
+const rateLimiter = createRateLimiter(RATE_LIMITS.standard);
 
 interface BookingNotificationData {
   userId: string;
@@ -21,9 +25,27 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Apply rate limiting
+  const limitResponse = rateLimiter(req);
+  if (limitResponse) {
+    console.log("Rate limit exceeded for booking notification");
+    return new Response(limitResponse.body, {
+      status: limitResponse.status,
+      headers: { ...corsHeaders, ...Object.fromEntries(limitResponse.headers.entries()) },
+    });
+  }
+
   try {
     const data: BookingNotificationData = await req.json();
     console.log("Processing booking notification for:", data.bookingId);
+
+    if (!data.userId || !data.bookingId) {
+      console.error("Missing required fields: userId or bookingId");
+      return new Response(
+        JSON.stringify({ error: "userId and bookingId are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -55,27 +77,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Send device push notification via the send-push-notification function
-    // This function handles VAPID signing and Web Push protocol
-    const pushResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({
-        user_id: data.userId,
-        title: notificationTitle,
-        body: notificationBody,
-        icon: "/favicon.ico",
-        data: {
-          url: "/social/profile?scrollToBookings=true",
-          bookingId: data.bookingId,
+    let pushResult = { success: false, message: "Not attempted" };
+    try {
+      const pushResponse = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          user_id: data.userId,
+          title: notificationTitle,
+          body: notificationBody,
+          icon: "/favicon.ico",
+          data: {
+            url: "/social/profile?scrollToBookings=true",
+            bookingId: data.bookingId,
+          },
+        }),
+      });
 
-    const pushResult = await pushResponse.json();
-    console.log("Push notification result:", pushResult);
+      pushResult = await pushResponse.json();
+      console.log("Push notification result:", pushResult);
+    } catch (pushError) {
+      console.error("Error calling push notification function:", pushError);
+      pushResult = { success: false, message: String(pushError) };
+    }
 
     return new Response(
       JSON.stringify({
