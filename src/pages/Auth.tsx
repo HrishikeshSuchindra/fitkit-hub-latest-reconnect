@@ -749,11 +749,11 @@ const Auth = () => {
 
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center mb-2">
           <img 
             src={fitkitsBrandLogo} 
             alt="Fitkits - Wellness Reimagined" 
-            className="h-72 w-auto object-contain drop-shadow-2xl animate-fade-in"
+            className="h-75 w-auto object-contain drop-shadow-2xl animate-fade-in"
             style={{ animationDuration: '1s' }}
           />
         </div>
