@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useEffect } from "react";
-import { format } from "date-fns";
+import { format, differenceInHours } from "date-fns";
+import { toast } from "sonner";
 
 export interface Booking {
   id: string;
@@ -22,6 +23,8 @@ export interface Booking {
   status: "confirmed" | "cancelled" | "completed";
   created_at: string;
   updated_at: string;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
 }
 
 export interface CreateBookingData {
@@ -114,7 +117,7 @@ export const useSlotAvailability = (venueId: string, date: Date) => {
   return query;
 };
 
-// Create a booking
+// Create a booking with server-side validation
 export const useCreateBooking = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -123,70 +126,131 @@ export const useCreateBooking = () => {
     mutationFn: async (bookingData: CreateBookingData) => {
       if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert({
-          user_id: user.id,
-          ...bookingData,
-        })
-        .select()
-        .single();
+      // Use server-side validation edge function
+      const { data, error } = await supabase.functions.invoke("validate-and-create-booking", {
+        body: bookingData,
+      });
 
-      if (error) throw error;
-      
-      // If the booking is public, create a group chat room for it
-      if (bookingData.visibility === "public") {
-        try {
-          const { data: newRoom, error: roomError } = await supabase
-            .from("chat_rooms")
-            .insert({
-              type: "group",
-              name: `${bookingData.sport || "Game"} @ ${bookingData.venue_name.split(" ")[0]}`,
-              booking_id: data.id,
-              created_by: user.id,
-            })
-            .select()
-            .single();
-          
-          if (!roomError && newRoom) {
-            // Add the creator as admin
-            await supabase.from("chat_room_members").insert({
-              room_id: newRoom.id,
-              user_id: user.id,
-              role: "admin",
-            });
-          }
-        } catch (chatError) {
-          console.error("Failed to create chat room for booking:", chatError);
-          // Don't throw - booking was still successful
+      if (error) {
+        // Handle specific error codes
+        if (error.message?.includes("SLOT_UNAVAILABLE")) {
+          throw new Error("This slot is fully booked. Please choose another time.");
         }
+        if (error.message?.includes("DUPLICATE_BOOKING")) {
+          throw new Error("You already have a booking for this slot.");
+        }
+        throw error;
       }
-      
-      // Send device push notification for booking confirmation
-      try {
-        await supabase.functions.invoke("send-booking-notification", {
-          body: {
-            userId: user.id,
-            bookingId: data.id,
-            venueName: bookingData.venue_name,
-            sport: bookingData.sport || "Sports",
-            slotDate: bookingData.slot_date,
-            slotTime: bookingData.slot_time,
-            price: bookingData.price,
-          },
-        });
-      } catch (notifError) {
-        console.error("Failed to send booking notification:", notifError);
-        // Don't throw - booking was still successful
+
+      if (!data?.success) {
+        throw new Error(data?.message || data?.error || "Failed to create booking");
       }
-      
-      return data as Booking;
+
+      return data.booking as Booking;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["slot-availability"] });
       queryClient.invalidateQueries({ queryKey: ["hub-chat-rooms"] });
       queryClient.invalidateQueries({ queryKey: ["chat-rooms"] });
+    },
+  });
+};
+
+// Cancel a booking
+export const useCancelBooking = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ bookingId, reason }: { bookingId: string; reason?: string }) => {
+      if (!user) throw new Error("User not authenticated");
+
+      // Get the booking to check cancellation eligibility
+      const { data: booking, error: fetchError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .eq("user_id", user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!booking) throw new Error("Booking not found");
+
+      // Check if booking can be cancelled (must be confirmed and in the future)
+      if (booking.status !== "confirmed") {
+        throw new Error("Only confirmed bookings can be cancelled");
+      }
+
+      const bookingDateTime = new Date(`${booking.slot_date}T${booking.slot_time}`);
+      const now = new Date();
+
+      if (bookingDateTime <= now) {
+        throw new Error("Cannot cancel past or ongoing bookings");
+      }
+
+      // Calculate refund based on hours until booking
+      const hoursUntilBooking = differenceInHours(bookingDateTime, now);
+      let refundPercentage = 0;
+      let refundAmount = 0;
+
+      if (hoursUntilBooking >= 24) {
+        refundPercentage = 100;
+      } else if (hoursUntilBooking >= 12) {
+        refundPercentage = 75;
+      } else if (hoursUntilBooking >= 6) {
+        refundPercentage = 50;
+      } else if (hoursUntilBooking >= 2) {
+        refundPercentage = 25;
+      }
+
+      refundAmount = (booking.price * refundPercentage) / 100;
+
+      // Update booking status
+      const { error: updateError } = await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          cancellation_reason: reason || "User requested cancellation",
+        })
+        .eq("id", bookingId);
+
+      if (updateError) throw updateError;
+
+      // Create cancellation notification
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        type: "booking_cancelled",
+        title: "Booking Cancelled",
+        body: `Your booking at ${booking.venue_name} on ${booking.slot_date} has been cancelled. ${refundPercentage > 0 ? `Refund: ₹${refundAmount} (${refundPercentage}%)` : "No refund applicable."}`,
+        data: {
+          bookingId: booking.id,
+          venueName: booking.venue_name,
+          refundAmount,
+          refundPercentage,
+        },
+      });
+
+      return { 
+        success: true, 
+        refundAmount, 
+        refundPercentage,
+        hoursUntilBooking 
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["slot-availability"] });
+      
+      if (data.refundPercentage > 0) {
+        toast.success(`Booking cancelled. Refund: ₹${data.refundAmount} (${data.refundPercentage}%)`);
+      } else {
+        toast.success("Booking cancelled. No refund applicable for late cancellations.");
+      }
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to cancel booking");
     },
   });
 };
@@ -223,5 +287,32 @@ export const usePublicGames = () => {
       if (error) throw error;
       return data as unknown as BookingWithProfile[];
     },
+  });
+};
+
+// Fetch a single booking by ID
+export const useBookingById = (bookingId: string | undefined) => {
+  return useQuery({
+    queryKey: ["booking", bookingId],
+    queryFn: async () => {
+      if (!bookingId) return null;
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          profiles (
+            display_name,
+            username,
+            avatar_url
+          )
+        `)
+        .eq("id", bookingId)
+        .single();
+
+      if (error) throw error;
+      return data as BookingWithProfile;
+    },
+    enabled: !!bookingId,
   });
 };

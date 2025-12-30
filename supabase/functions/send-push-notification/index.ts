@@ -1,10 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Push notification rate limit: 100 per minute
+const rateLimiter = createRateLimiter(RATE_LIMITS.push);
 
 // VAPID keys for Web Push
 const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
@@ -115,15 +119,26 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Apply rate limiting
+  const limitResponse = rateLimiter(req);
+  if (limitResponse) {
+    console.log('Rate limit exceeded for push notifications');
+    return new Response(limitResponse.body, {
+      status: limitResponse.status,
+      headers: { ...corsHeaders, ...Object.fromEntries(limitResponse.headers.entries()) },
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload: PushPayload = await req.json();
-    console.log('Push notification request:', payload);
+    console.log('Push notification request:', JSON.stringify(payload));
 
     if (!payload.title || !payload.body) {
+      console.error('Missing required fields: title and body');
       return new Response(
         JSON.stringify({ error: 'title and body are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -140,11 +155,14 @@ serve(async (req) => {
     }
 
     if (userIds.length === 0) {
+      console.error('No user IDs provided');
       return new Response(
         JSON.stringify({ error: 'user_id or user_ids required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log(`Fetching push tokens for ${userIds.length} users`);
 
     // Fetch push tokens for users
     const { data: tokens, error: tokensError } = await supabase
@@ -176,12 +194,14 @@ serve(async (req) => {
       tokens.map(async (token) => {
         try {
           const subscription = JSON.parse(token.token);
-          return await sendPushNotification(subscription, {
+          const result = await sendPushNotification(subscription, {
             title: payload.title,
             body: payload.body,
             icon: payload.icon || '/favicon.ico',
             data: payload.data,
           });
+          console.log(`Push result for user ${token.user_id}:`, result);
+          return result;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Error processing token:', error);
@@ -195,7 +215,7 @@ serve(async (req) => {
 
     // Store notification in database
     for (const userId of userIds) {
-      await supabase.from('notifications').insert({
+      const { error: insertError } = await supabase.from('notifications').insert({
         user_id: userId,
         title: payload.title,
         body: payload.body,
@@ -203,6 +223,9 @@ serve(async (req) => {
         data: payload.data,
         is_read: false,
       });
+      if (insertError) {
+        console.error(`Error inserting notification for user ${userId}:`, insertError);
+      }
     }
 
     console.log(`Sent ${successCount} notifications, ${failureCount} failed`);

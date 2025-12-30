@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -7,6 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Standard rate limit: 60 per minute
+const rateLimiter = createRateLimiter(RATE_LIMITS.standard);
 
 interface HostRequestData {
   title: string;
@@ -28,9 +32,27 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Apply rate limiting
+  const limitResponse = rateLimiter(req);
+  if (limitResponse) {
+    console.log("Rate limit exceeded for host approval request");
+    return new Response(limitResponse.body, {
+      status: limitResponse.status,
+      headers: { ...corsHeaders, ...Object.fromEntries(limitResponse.headers.entries()) },
+    });
+  }
+
   try {
     const data: HostRequestData = await req.json();
-    console.log("Received host approval request:", data);
+    console.log("Received host approval request:", JSON.stringify(data));
+
+    if (!data.title || !data.hostEmail) {
+      console.error("Missing required fields: title or hostEmail");
+      return new Response(
+        JSON.stringify({ error: "title and hostEmail are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
     const formatCategory = (cat: string) => {
       const categories: Record<string, string> = {
@@ -156,6 +178,8 @@ const handler = async (req: Request): Promise<Response> => {
 </body>
 </html>
     `;
+
+    console.log("Sending host approval email...");
 
     const emailResponse = await resend.emails.send({
       from: "Fitkits Events <onboarding@resend.dev>",

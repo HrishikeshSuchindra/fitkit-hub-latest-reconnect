@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createRateLimiter, RATE_LIMITS, getRateLimitKey } from "../_shared/rate-limiter.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string);
 
@@ -7,6 +8,9 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// OTP rate limit: 3 requests per 5 minutes per email
+const rateLimiter = createRateLimiter(RATE_LIMITS.otp);
 
 interface EmailRequest {
   to: string;
@@ -21,6 +25,18 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { to, otp, type }: EmailRequest = await req.json();
+
+    // Rate limit by email address
+    const limitResponse = rateLimiter(req, to);
+    if (limitResponse) {
+      console.log(`Rate limit exceeded for email: ${to}`);
+      return new Response(limitResponse.body, {
+        status: limitResponse.status,
+        headers: { ...corsHeaders, ...Object.fromEntries(limitResponse.headers.entries()) },
+      });
+    }
+
+    console.log(`Sending ${type} OTP email to: ${to}`);
 
     const subject = type === "recovery" 
       ? "Reset Your Fitkits Password" 
