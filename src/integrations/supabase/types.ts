@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           cancellation_reason: string | null
@@ -605,10 +635,13 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          deactivated_at: string | null
+          deactivation_reason: string | null
           display_name: string | null
           friends_count: number | null
           games_played: number | null
           id: string
+          is_active: boolean | null
           updated_at: string
           user_id: string
           username: string | null
@@ -617,10 +650,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
           display_name?: string | null
           friends_count?: number | null
           games_played?: number | null
           id?: string
+          is_active?: boolean | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -629,10 +665,13 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          deactivated_at?: string | null
+          deactivation_reason?: string | null
           display_name?: string | null
           friends_count?: number | null
           games_played?: number | null
           id?: string
+          is_active?: boolean | null
           updated_at?: string
           user_id?: string
           username?: string | null

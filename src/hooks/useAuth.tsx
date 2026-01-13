@@ -1,11 +1,13 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAccountActive: boolean;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
@@ -26,26 +28,113 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAccountActive, setIsAccountActive] = useState(true);
+
+  // Check if user account is active
+  const checkAccountStatus = useCallback(async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        // If profile doesn't exist yet, treat as active (new user)
+        if (error.code === 'PGRST116') {
+          setIsAccountActive(true);
+          return true;
+        }
+        console.error('Error checking account status:', error);
+        return true;
+      }
+      
+      const isActive = profile?.is_active !== false;
+      setIsAccountActive(isActive);
+      
+      if (!isActive) {
+        // Account is deactivated - sign out immediately
+        toast.error('Your account has been deactivated. Please contact support.');
+        await supabase.auth.signOut();
+        setUser(null);
+        setSession(null);
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error in checkAccountStatus:', err);
+      return true;
+    }
+  }, []);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Check account status when user signs in
+          // Use setTimeout to avoid potential Supabase deadlock
+          setTimeout(() => {
+            checkAccountStatus(session.user.id);
+          }, 0);
+        } else {
+          setIsAccountActive(true);
+        }
+        
         setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        await checkAccountStatus(session.user.id);
+      }
+      
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkAccountStatus]);
+
+  // Set up realtime listener for profile changes (account deactivation)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('profile-status')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`
+        },
+        async (payload) => {
+          // Check if account was deactivated
+          if (payload.new && payload.new.is_active === false) {
+            toast.error('Your account has been deactivated. Please contact support.');
+            setIsAccountActive(false);
+            await supabase.auth.signOut();
+            setUser(null);
+            setSession(null);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     const redirectUrl = `${window.location.origin}/`;
@@ -186,7 +275,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{ 
       user, 
       session, 
-      loading, 
+      loading,
+      isAccountActive,
       signUp, 
       signIn, 
       signInWithPhone,
