@@ -10,9 +10,9 @@ const corsHeaders = {
 // Push notification rate limit: 100 per minute
 const rateLimiter = createRateLimiter(RATE_LIMITS.push);
 
-// VAPID keys for Web Push
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
-const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || 'your-vapid-private-key';
+// VAPID keys for Web Push - NO insecure defaults
+const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY');
+const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
 const VAPID_SUBJECT = 'mailto:hello@fitkits.app';
 
 interface PushPayload {
@@ -47,7 +47,7 @@ async function importVapidKey(privateKey: string): Promise<CryptoKey> {
 }
 
 // Create JWT for VAPID
-async function createVapidJWT(audience: string): Promise<string> {
+async function createVapidJWT(audience: string, privateKey: string): Promise<string> {
   const header = { alg: 'ES256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
   const payload = {
@@ -61,7 +61,7 @@ async function createVapidJWT(audience: string): Promise<string> {
   const unsignedToken = `${encodedHeader}.${encodedPayload}`;
 
   try {
-    const key = await importVapidKey(VAPID_PRIVATE_KEY);
+    const key = await importVapidKey(privateKey);
     const signature = await crypto.subtle.sign(
       { name: 'ECDSA', hash: 'SHA-256' },
       key,
@@ -80,13 +80,15 @@ async function createVapidJWT(audience: string): Promise<string> {
 // Send push notification to a subscription
 async function sendPushNotification(
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
-  payload: { title: string; body: string; icon?: string; data?: Record<string, unknown> }
+  payload: { title: string; body: string; icon?: string; data?: Record<string, unknown> },
+  vapidPublicKey: string,
+  vapidPrivateKey: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const url = new URL(subscription.endpoint);
     const audience = `${url.protocol}//${url.host}`;
     
-    const vapidJWT = await createVapidJWT(audience);
+    const vapidJWT = await createVapidJWT(audience, vapidPrivateKey);
     
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
@@ -94,7 +96,7 @@ async function sendPushNotification(
         'Content-Type': 'application/json',
         'Content-Encoding': 'aes128gcm',
         'TTL': '86400',
-        'Authorization': `vapid t=${vapidJWT}, k=${VAPID_PUBLIC_KEY}`,
+        'Authorization': `vapid t=${vapidJWT}, k=${vapidPublicKey}`,
       },
       body: JSON.stringify(payload),
     });
@@ -119,6 +121,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate VAPID configuration
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.error("VAPID keys not configured - push notifications unavailable");
+    return new Response(
+      JSON.stringify({ error: "Push notifications not configured. VAPID keys required." }),
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   // Apply rate limiting
   const limitResponse = rateLimiter(req);
   if (limitResponse) {
@@ -132,6 +143,17 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Validate this is an internal service call (service role key required)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.includes(supabaseServiceKey)) {
+      console.error('Unauthorized call to send-push-notification');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - internal function only' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const payload: PushPayload = await req.json();
@@ -194,12 +216,17 @@ serve(async (req) => {
       tokens.map(async (token) => {
         try {
           const subscription = JSON.parse(token.token);
-          const result = await sendPushNotification(subscription, {
-            title: payload.title,
-            body: payload.body,
-            icon: payload.icon || '/favicon.ico',
-            data: payload.data,
-          });
+          const result = await sendPushNotification(
+            subscription,
+            {
+              title: payload.title,
+              body: payload.body,
+              icon: payload.icon || '/favicon.ico',
+              data: payload.data,
+            },
+            VAPID_PUBLIC_KEY,
+            VAPID_PRIVATE_KEY
+          );
           console.log(`Push result for user ${token.user_id}:`, result);
           return result;
         } catch (error) {
