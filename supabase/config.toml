@@ -17,3 +17,21 @@ verify_jwt = false
 
 [functions.validate-and-create-booking]
 verify_jwt = false
+
+[functions.create-notification]
+verify_jwt = false
+
+[functions.admin-users]
+verify_jwt = false
+
+[functions.admin-bookings]
+verify_jwt = false
+
+[functions.admin-venues]
+verify_jwt = false
+
+[functions.admin-events]
+verify_jwt = false
+
+[functions.admin-analytics]
+verify_jwt = false
