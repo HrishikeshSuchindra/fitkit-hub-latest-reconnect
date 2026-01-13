@@ -194,14 +194,19 @@ const Friends = () => {
       });
       if (error) throw error;
       
-      // Create notification for the receiver
-      await supabase.from('notifications').insert({
-        user_id: addresseeId,
-        type: 'friend_request',
-        title: 'New Friend Request',
-        body: `You have a new friend request`,
-        data: { friend_id: user!.id },
-      });
+      // Create notification via edge function (secure server-side)
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.access_token) {
+        await supabase.functions.invoke('create-notification', {
+          body: {
+            recipientUserId: addresseeId,
+            type: 'friend_request',
+            title: 'New Friend Request',
+            body: 'You have a new friend request',
+            data: { friend_id: user!.id },
+          },
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Friend request sent!");
@@ -238,14 +243,19 @@ const Friends = () => {
         ]);
       }
       
-      // Notify the requester that their request was accepted
-      await supabase.from('notifications').insert({
-        user_id: requesterId,
-        type: 'friend_accepted',
-        title: 'Friend Request Accepted',
-        body: `Your friend request has been accepted!`,
-        data: { friend_id: user!.id },
-      });
+      // Notify the requester via edge function (secure server-side)
+      const { data: session } = await supabase.auth.getSession();
+      if (session?.session?.access_token) {
+        await supabase.functions.invoke('create-notification', {
+          body: {
+            recipientUserId: requesterId,
+            type: 'friend_accepted',
+            title: 'Friend Request Accepted',
+            body: 'Your friend request has been accepted!',
+            data: { friend_id: user!.id },
+          },
+        });
+      }
     },
     onSuccess: () => {
       toast.success("Friend request accepted!");

@@ -36,6 +36,19 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Validate this is an internal service call (service role key required)
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.includes(supabaseServiceKey)) {
+      console.error("Unauthorized call to send-booking-notification");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - internal function only" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+    
     const data: BookingNotificationData = await req.json();
     console.log("Processing booking notification for:", data.bookingId);
 
@@ -47,9 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Create in-app notification (always)
     const notificationTitle = "🎉 Booking Confirmed!";
@@ -83,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
+          "Authorization": `Bearer ${supabaseServiceKey}`,
         },
         body: JSON.stringify({
           user_id: data.userId,

@@ -39,6 +39,17 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    // Validate this is an internal service call (service role key required)
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.includes(supabaseServiceKey)) {
+      console.error("Unauthorized call to send-booking-reminder");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - internal function only" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get current time and time 24 hours from now
