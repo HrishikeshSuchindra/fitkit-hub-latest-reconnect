@@ -67,7 +67,7 @@ export const HubGameCard = ({ id, image, sport, title, host, date, location, spo
           <Button 
             size="sm" 
             className="bg-brand-green hover:bg-brand-green/90 text-white h-8 px-4 rounded-lg"
-            onClick={() => navigate(`/hub/game/${id}`)}
+            onClick={() => navigate(type === "tournament" ? `/hub/tournament/${id}` : `/hub/game/${id}`)}
           >
             {type === "tournament" ? "Register" : "Join Game"}
           </Button>
