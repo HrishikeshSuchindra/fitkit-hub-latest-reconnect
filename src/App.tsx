@@ -39,6 +39,9 @@ import Friends from "./pages/Friends";
 import MyBookings from "./pages/MyBookings";
 import MyEvents from "./pages/MyEvents";
 import Notifications from "./pages/Notifications";
+import BookingCancellation from "./pages/BookingCancellation";
+import EventRegistrationPreview from "./pages/EventRegistrationPreview";
+import EventRegistrationConfirmation from "./pages/EventRegistrationConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -75,10 +78,13 @@ const AnimatedRoutes = () => {
         {/* Booking Routes */}
         <Route path="/booking/preview" element={<BookingPreview />} />
         <Route path="/booking/confirmation" element={<BookingConfirmation />} />
+        <Route path="/booking/cancel/:bookingId" element={<BookingCancellation />} />
         
         {/* Social Routes (Fun Events) */}
         <Route path="/social" element={<Social />} />
         <Route path="/social/event/:eventId" element={<SocialEventDetail />} />
+        <Route path="/social/event/:eventId/register" element={<EventRegistrationPreview />} />
+        <Route path="/social/event/:eventId/confirmation" element={<EventRegistrationConfirmation />} />
         <Route path="/social/host" element={<SocialHost />} />
         <Route path="/social/chat" element={<SocialChat />} />
         <Route path="/social/chat/:chatId" element={<SocialChatRoom />} />
