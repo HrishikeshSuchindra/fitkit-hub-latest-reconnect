@@ -30,6 +30,7 @@ serve(async (req) => {
     .eq("user_id", auth.userId);
 
   const isAdmin = userRoles?.some(r => r.role === "admin");
+  const hasVenueOwnerRole = userRoles?.some(r => r.role === "venue_owner");
 
   // For non-admins, check if they own any venues
   const { data: ownedVenues } = await supabase
@@ -39,8 +40,8 @@ serve(async (req) => {
 
   const isVenueOwner = (ownedVenues?.length || 0) > 0;
 
-  // Must be either admin or venue owner to access
-  if (!isAdmin && !isVenueOwner) {
+  // Must be either admin, have venue_owner role, or own venues to access
+  if (!isAdmin && !hasVenueOwnerRole && !isVenueOwner) {
     return new Response(
       JSON.stringify({ error: "Access denied. You must be an admin or venue owner." }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
