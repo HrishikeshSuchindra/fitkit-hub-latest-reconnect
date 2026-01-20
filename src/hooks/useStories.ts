@@ -44,12 +44,40 @@ export function useStories() {
   const { data: groupedStories = [], isLoading, refetch } = useQuery({
     queryKey: ['stories', user?.id],
     queryFn: async () => {
-      // Get all active stories
-      const { data: stories, error } = await supabase
+      // Get friends list if user is logged in
+      let friendIds: string[] = [];
+      if (user) {
+        const { data: friendships } = await supabase
+          .from('friendships')
+          .select('requester_id, addressee_id')
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .eq('status', 'accepted');
+        
+        if (friendships) {
+          friendIds = friendships.map(f => 
+            f.requester_id === user.id ? f.addressee_id : f.requester_id
+          );
+        }
+      }
+
+      // Get all active stories (own + friends only)
+      let storiesQuery = supabase
         .from('stories')
         .select('*')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
+
+      // Filter to only own and friends' stories
+      if (user && friendIds.length > 0) {
+        storiesQuery = storiesQuery.or(`user_id.eq.${user.id},user_id.in.(${friendIds.join(',')})`);
+      } else if (user) {
+        storiesQuery = storiesQuery.eq('user_id', user.id);
+      } else {
+        // If not logged in, don't show any stories
+        return [];
+      }
+
+      const { data: stories, error } = await storiesQuery;
 
       if (error) throw error;
       if (!stories?.length) return [];
