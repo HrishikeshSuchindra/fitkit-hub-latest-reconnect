@@ -2,22 +2,26 @@ import { AppHeader } from "@/components/AppHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar, Clock, MapPin, Users, Trophy, Loader2, Edit2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Trophy, Loader2, Edit2, Minus, Plus, Ticket } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useEventById, useEventRegistration, useRegisterForEvent } from "@/hooks/useEvents";
+import { useEventById, useEventRegistration } from "@/hooks/useEvents";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const EventRegistrationPreview = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [agreedToRefund, setAgreedToRefund] = useState(false);
+  const [ticketCount, setTicketCount] = useState(1);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   const { data: event, isLoading } = useEventById(eventId);
   const { data: registration } = useEventRegistration(eventId);
-  const registerMutation = useRegisterForEvent();
 
   const isAlreadyRegistered = !!registration && registration.status === "registered";
 
@@ -36,19 +40,95 @@ const EventRegistrationPreview = () => {
     return formatTime(startTime);
   };
 
-  const handleRegister = () => {
-    if (!eventId) return;
+  const handleRegister = async () => {
+    if (!eventId || !user) {
+      toast.error("Please sign in to register");
+      return;
+    }
     
-    registerMutation.mutate(eventId, {
-      onSuccess: () => {
-        navigate(`/social/event/${eventId}/confirmation`, {
-          state: { eventData: event }
+    setIsRegistering(true);
+    
+    try {
+      // 1. Create event registration with ticket count
+      const { error: regError } = await supabase
+        .from("event_registrations")
+        .insert({
+          event_id: eventId,
+          user_id: user.id,
+          status: "registered",
+          payment_status: event?.entry_fee === 0 ? "completed" : "pending",
+          tickets_count: ticketCount,
         });
-      },
-      onError: (error) => {
-        toast.error(error instanceof Error ? error.message : "Failed to register");
-      },
-    });
+
+      if (regError) throw regError;
+
+      // 2. Check if chat room exists for this event
+      const { data: existingRoom } = await supabase
+        .from("chat_rooms")
+        .select("id")
+        .eq("event_id", eventId)
+        .maybeSingle();
+
+      let chatRoomId = existingRoom?.id;
+
+      // 3. If no chat room, create one (first registrant creates it)
+      if (!chatRoomId) {
+        const { data: newRoom, error: roomError } = await supabase
+          .from("chat_rooms")
+          .insert({
+            type: "group",
+            name: `${event?.title || "Event"} Chat`,
+            event_id: eventId,
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (!roomError && newRoom) {
+          chatRoomId = newRoom.id;
+        }
+      }
+
+      // 4. Add user to chat room if room exists
+      if (chatRoomId) {
+        // Check if already a member
+        const { data: existingMember } = await supabase
+          .from("chat_room_members")
+          .select("id")
+          .eq("room_id", chatRoomId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!existingMember) {
+          await supabase.from("chat_room_members").insert({
+            room_id: chatRoomId,
+            user_id: user.id,
+            role: "member",
+          });
+        }
+      }
+
+      // Navigate to confirmation
+      navigate(`/social/event/${eventId}/confirmation`, {
+        state: { eventData: event, ticketCount }
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to register");
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleTicketChange = (delta: number) => {
+    const newCount = ticketCount + delta;
+    const spotsLeft = event?.max_participants 
+      ? event.max_participants - (event.current_participants || 0) 
+      : 10;
+    
+    if (newCount >= 1 && newCount <= Math.min(spotsLeft, 10)) {
+      setTicketCount(newCount);
+    }
   };
 
   if (isLoading) {
@@ -79,10 +159,10 @@ const EventRegistrationPreview = () => {
     return null;
   }
 
-  const eventDate = format(new Date(event.event_date), "EEEE, MMMM d, yyyy");
   const eventTime = formatEventTime(event.start_time, event.end_time);
   const spotsLeft = event.max_participants ? event.max_participants - (event.current_participants || 0) : null;
   const canProceed = agreedToTerms && (event.entry_fee === 0 || agreedToRefund);
+  const totalAmount = event.entry_fee * ticketCount;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -127,6 +207,44 @@ const EventRegistrationPreview = () => {
                 onClick={() => navigate(`/social/event/${eventId}`)}
               >
                 <Edit2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Ticket Selection */}
+        <div className="bg-card rounded-xl shadow-soft p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-green/10 rounded-lg flex items-center justify-center">
+                <Ticket className="w-5 h-5 text-brand-green" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Number of Tickets</h3>
+                <p className="text-xs text-muted-foreground">
+                  {spotsLeft ? `${spotsLeft} spots available` : "Limited availability"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => handleTicketChange(-1)}
+                disabled={ticketCount <= 1}
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="text-lg font-bold w-6 text-center">{ticketCount}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => handleTicketChange(1)}
+                disabled={spotsLeft ? ticketCount >= Math.min(spotsLeft, 10) : ticketCount >= 10}
+              >
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
           </div>
@@ -195,9 +313,11 @@ const EventRegistrationPreview = () => {
           
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Registration Fee</span>
+              <span className="text-muted-foreground">
+                Registration Fee × {ticketCount}
+              </span>
               <span className="font-medium">
-                {event.entry_fee > 0 ? `₹${event.entry_fee}` : "Free"}
+                {event.entry_fee > 0 ? `₹${event.entry_fee} × ${ticketCount}` : "Free"}
               </span>
             </div>
             {event.entry_fee > 0 && (
@@ -209,7 +329,7 @@ const EventRegistrationPreview = () => {
                 <div className="border-t border-divider pt-3">
                   <div className="flex justify-between">
                     <span className="font-semibold text-foreground">Total</span>
-                    <span className="font-bold text-lg text-brand-green">₹{event.entry_fee}</span>
+                    <span className="font-bold text-lg text-brand-green">₹{totalAmount}</span>
                   </div>
                 </div>
               </>
@@ -253,20 +373,22 @@ const EventRegistrationPreview = () => {
       <div className="fixed bottom-16 left-0 right-0 bg-background border-t border-divider p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-xs text-muted-foreground">Total Amount</p>
+            <p className="text-xs text-muted-foreground">
+              {ticketCount} {ticketCount === 1 ? "ticket" : "tickets"}
+            </p>
             <p className="text-xl font-bold text-brand-green">
-              {event.entry_fee > 0 ? `₹${event.entry_fee}` : "Free"}
+              {totalAmount > 0 ? `₹${totalAmount}` : "Free"}
             </p>
           </div>
           <Button
             className="bg-brand-green hover:bg-brand-green/90 text-white px-8"
             onClick={handleRegister}
-            disabled={!canProceed || registerMutation.isPending}
+            disabled={!canProceed || isRegistering}
           >
-            {registerMutation.isPending ? (
+            {isRegistering ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />
             ) : null}
-            {event.entry_fee > 0 ? "Pay & Register" : "Confirm Registration"}
+            {totalAmount > 0 ? "Pay & Register" : "Confirm Registration"}
           </Button>
         </div>
       </div>
