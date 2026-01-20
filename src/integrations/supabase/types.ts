@@ -158,6 +158,7 @@ export type Database = {
           booking_id: string | null
           created_at: string
           created_by: string | null
+          event_id: string | null
           id: string
           name: string | null
           type: string
@@ -167,6 +168,7 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           name?: string | null
           type?: string
@@ -176,6 +178,7 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           name?: string | null
           type?: string
@@ -189,6 +192,13 @@ export type Database = {
             referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_rooms_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_registrations: {
@@ -198,6 +208,7 @@ export type Database = {
           payment_status: string | null
           registered_at: string
           status: string | null
+          tickets_count: number
           user_id: string
         }
         Insert: {
@@ -206,6 +217,7 @@ export type Database = {
           payment_status?: string | null
           registered_at?: string
           status?: string | null
+          tickets_count?: number
           user_id: string
         }
         Update: {
@@ -214,6 +226,7 @@ export type Database = {
           payment_status?: string | null
           registered_at?: string
           status?: string | null
+          tickets_count?: number
           user_id?: string
         }
         Relationships: [
