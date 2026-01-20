@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 
 const HubTournamentConfirmation = () => {
-  const { eventId } = useParams();
+  const { tournamentId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -27,8 +27,8 @@ const HubTournamentConfirmation = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [invitingFriends, setInvitingFriends] = useState<Record<string, boolean>>({});
   
-  const { data: event } = useEventById(eventId);
-  const { data: attendees = [] } = useEventAttendees(eventId);
+  const { data: event } = useEventById(tournamentId);
+  const { data: attendees = [] } = useEventAttendees(tournamentId);
   
   const eventData = location.state?.eventData || event;
   const registrationType = location.state?.registrationType || "individual";
@@ -102,7 +102,7 @@ const HubTournamentConfirmation = () => {
     const shareData = {
       title: eventData.title,
       text: `Join me at ${eventData.title} tournament on ${format(new Date(eventData.event_date), "MMM d, yyyy")}!`,
-      url: window.location.origin + `/hub/tournament/${eventId}`,
+      url: window.location.origin + `/hub/tournament/${tournamentId}`,
     };
 
     if (navigator.share) {
@@ -129,7 +129,7 @@ const HubTournamentConfirmation = () => {
         title: "🏆 Tournament Invitation",
         body: `You've been invited to join ${eventData.title}`,
         data: {
-          event_id: eventId,
+          event_id: tournamentId,
           event_title: eventData.title,
           event_date: eventData.event_date,
           invited_by: user?.id,
@@ -146,12 +146,12 @@ const HubTournamentConfirmation = () => {
   };
 
   const handleGoToChat = async () => {
-    if (!eventId) return;
+    if (!tournamentId) return;
     
     const { data: room } = await supabase
       .from("chat_rooms")
       .select("id")
-      .eq("event_id", eventId)
+      .eq("event_id", tournamentId)
       .maybeSingle();
     
     if (room) {
@@ -303,7 +303,7 @@ const HubTournamentConfirmation = () => {
 
         {/* Go to Chat Button */}
         <Button
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
           onClick={handleGoToChat}
         >
           <MessageCircle className="w-4 h-4 mr-2" />
@@ -398,7 +398,7 @@ const HubTournamentConfirmation = () => {
             Share
           </Button>
           <Button
-            className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={() => navigate("/hub/games")}
           >
             Back to Hub
