@@ -17,7 +17,7 @@ const HubGames = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch tournaments from database
-  const { data: dbTournaments = [] } = useQuery({
+  const { data: dbTournaments = [], isLoading: tournamentsLoading } = useQuery({
     queryKey: ["hub-tournaments"],
     queryFn: async () => {
       const today = format(new Date(), "yyyy-MM-dd");
@@ -25,15 +25,34 @@ const HubGames = () => {
         .from("events")
         .select(`
           id, title, event_date, start_time, location, image_url, sport, 
-          current_participants, max_participants, entry_fee, prize_pool,
-          profiles:host_id (display_name, username)
+          current_participants, max_participants, entry_fee, prize_pool, host_id
         `)
         .eq("event_type", "tournament")
         .neq("status", "cancelled")
         .gte("event_date", today)
         .order("event_date", { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tournaments:", error);
+        throw error;
+      }
+      
+      // Fetch host profiles separately
+      if (data && data.length > 0) {
+        const hostIds = [...new Set(data.map(t => t.host_id))];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, display_name, username")
+          .in("user_id", hostIds);
+        
+        const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+        
+        return data.map(t => ({
+          ...t,
+          host_profile: profileMap.get(t.host_id) || null
+        }));
+      }
+      
       return data || [];
     },
   });
@@ -62,8 +81,8 @@ const HubGames = () => {
     };
   });
 
-  const tournaments = dbTournaments.map(t => {
-    const hostProfile = t.profiles as { display_name?: string; username?: string } | null;
+  const tournaments = dbTournaments.map((t: any) => {
+    const hostProfile = t.host_profile as { display_name?: string; username?: string } | null;
     const hostName = hostProfile?.display_name || hostProfile?.username || "Tournament Host";
     return {
       id: t.id,
