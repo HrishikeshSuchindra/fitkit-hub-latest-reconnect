@@ -18,30 +18,42 @@ serve(async (req) => {
 
   // Authenticate user
   const auth = await authenticateUser(req);
-  if (auth.error) return auth.error;
+  if (auth.error) {
+    console.log("[admin-venues] Auth failed");
+    return auth.error;
+  }
+  
+  console.log("[admin-venues] Authenticated user:", auth.userId);
 
   const supabase = createServiceClient();
   const url = new URL(req.url);
 
   // Check if user is admin or venue owner
-  const { data: userRoles } = await supabase
+  const { data: userRoles, error: rolesError } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", auth.userId);
 
+  console.log("[admin-venues] User roles:", JSON.stringify(userRoles), "Error:", rolesError);
+
   const isAdmin = userRoles?.some(r => r.role === "admin");
   const hasVenueOwnerRole = userRoles?.some(r => r.role === "venue_owner");
 
+  console.log("[admin-venues] isAdmin:", isAdmin, "hasVenueOwnerRole:", hasVenueOwnerRole);
+
   // For non-admins, check if they own any venues
-  const { data: ownedVenues } = await supabase
+  const { data: ownedVenues, error: venuesError } = await supabase
     .from("venues")
     .select("id")
     .eq("owner_id", auth.userId);
+
+  console.log("[admin-venues] Owned venues:", JSON.stringify(ownedVenues), "Error:", venuesError);
 
   const isVenueOwner = (ownedVenues?.length || 0) > 0;
 
   // Must be either admin, have venue_owner role, or own venues to access
   if (!isAdmin && !hasVenueOwnerRole && !isVenueOwner) {
+    console.log("[admin-venues] Access denied - no valid role or ownership");
     return new Response(
       JSON.stringify({ error: "Access denied. You must be an admin or venue owner." }),
       { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -92,6 +104,8 @@ serve(async (req) => {
         .order("created_at", { ascending: false });
 
       const { data: venues, error, count } = await query;
+
+      console.log("[admin-venues] GET result - count:", count, "venues:", venues?.length, "error:", error);
 
       if (error) {
         console.error("Error fetching venues:", error);
