@@ -34,7 +34,7 @@ export const useVenues = (category?: string, sport?: string) => {
       }
 
       if (sport && sport !== "all") {
-        query = query.eq("sport", sport);
+        query = query.ilike("sport", sport); // Case-insensitive match
       }
 
       const { data, error } = await query.order("rating", { ascending: false });

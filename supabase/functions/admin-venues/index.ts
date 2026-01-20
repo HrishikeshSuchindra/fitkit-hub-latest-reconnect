@@ -151,7 +151,7 @@ serve(async (req) => {
         .insert({
           name: venueData.name,
           slug: venueData.slug,
-          sport: venueData.sport,
+          sport: venueData.sport?.toLowerCase(), // Normalize to lowercase
           category: venueData.category || "courts",
           description: venueData.description,
           address: venueData.address,
@@ -219,7 +219,12 @@ serve(async (req) => {
         if (value !== undefined) {
           // Non-admins cannot change owner_id
           if (key === "owner_id" && !isAdmin) continue;
-          cleanUpdateData[key] = value;
+          // Normalize sport to lowercase
+          if (key === "sport" && typeof value === "string") {
+            cleanUpdateData[key] = value.toLowerCase();
+          } else {
+            cleanUpdateData[key] = value;
+          }
         }
       }
 
