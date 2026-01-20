@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Bell, Calendar, Users, Gamepad2, Check, Loader2 } from "lucide-react";
@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, formatDistanceToNow } from "date-fns";
-
 interface Notification {
   id: string;
   type: string;
@@ -38,6 +37,20 @@ const Notifications = () => {
     },
     enabled: !!user,
   });
+
+  // Mark all notifications as read when page is viewed
+  useEffect(() => {
+    if (!user || isLoading) return;
+    
+    const unreadNotifications = notifications.filter(n => !n.is_read);
+    if (unreadNotifications.length > 0) {
+      // Mark all as read after a short delay to let user see them
+      const timeout = setTimeout(() => {
+        markAllAsReadMutation.mutate();
+      }, 1500);
+      return () => clearTimeout(timeout);
+    }
+  }, [user, isLoading, notifications]);
 
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {

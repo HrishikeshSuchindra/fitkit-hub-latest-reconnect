@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
+import { StoriesBar } from "@/components/stories/StoriesBar";
 import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, MapPin, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Post {
   id: string;
@@ -116,12 +118,36 @@ const SocialCommunity = () => {
     }
   ]);
 
+  // Double tap tracking
+  const lastTapRef = useRef<{ postId: string; time: number } | null>(null);
+  const [showHeartAnimation, setShowHeartAnimation] = useState<string | null>(null);
+
   const toggleLike = (postId: string) => {
     setPosts(posts.map(post => 
       post.id === postId 
         ? { ...post, isLiked: !post.isLiked, likes: post.isLiked ? post.likes - 1 : post.likes + 1 }
         : post
     ));
+  };
+
+  const handleDoubleTap = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post && !post.isLiked) {
+      toggleLike(postId);
+    }
+    // Show heart animation
+    setShowHeartAnimation(postId);
+    setTimeout(() => setShowHeartAnimation(null), 800);
+  };
+
+  const handlePostTap = (postId: string) => {
+    const now = Date.now();
+    if (lastTapRef.current?.postId === postId && now - lastTapRef.current.time < 300) {
+      handleDoubleTap(postId);
+      lastTapRef.current = null;
+    } else {
+      lastTapRef.current = { postId, time: now };
+    }
   };
 
   const toggleSave = (postId: string) => {
@@ -153,76 +179,120 @@ const SocialCommunity = () => {
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
-      <div className="px-4 py-4 space-y-4">
-        <SearchBar placeholder="Search community..." />
-        
-        {/* Stories/Quick Actions Row */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-          <div className="flex flex-col items-center gap-1 min-w-[70px]">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white border-2 border-white shadow-soft">
-              <span className="text-2xl">+</span>
-            </div>
-            <span className="text-xs text-text-secondary">Your Story</span>
-          </div>
-          {['Rahul', 'Priya', 'Amit', 'Sneha', 'Vikram'].map((name, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-1 min-w-[70px]">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 p-0.5">
-                <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-sm font-semibold text-text-secondary">{name[0]}</span>
-                </div>
-              </div>
-              <span className="text-xs text-text-secondary">{name}</span>
-            </div>
-          ))}
+      <div className="space-y-0">
+        <div className="px-4 py-4">
+          <SearchBar placeholder="Search community..." />
         </div>
+        
+        {/* Stories Bar */}
+        <StoriesBar />
 
-        {/* Feed Posts */}
-        <div className="space-y-4">
+        {/* Feed Posts - Instagram Style */}
+        <div className="divide-y divide-border/50">
           {posts.map((post) => (
-            <div key={post.id} className="bg-card rounded-2xl shadow-soft overflow-hidden">
+            <div key={post.id} className="bg-card">
               {/* Post Header */}
-              <div className="p-4 flex items-center justify-between">
+              <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-10 h-10">
+                  <Avatar className="w-8 h-8 ring-2 ring-primary/20">
                     <AvatarImage src={post.user.avatar} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold text-xs">
                       {post.user.name[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-foreground text-sm">{post.user.name}</p>
-                    <p className="text-xs text-text-tertiary">@{post.user.username} · {post.timeAgo}</p>
+                    <p className="font-semibold text-foreground text-sm">{post.user.username}</p>
+                    {post.activity?.venue && (
+                      <p className="text-xs text-text-tertiary">{post.activity.venue}</p>
+                    )}
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="text-text-tertiary">
+                <Button variant="ghost" size="icon" className="text-text-tertiary h-8 w-8">
                   <MoreHorizontal className="w-5 h-5" />
                 </Button>
               </div>
 
-              {/* Activity Badge */}
-              {post.activity && (
-                <div className="px-4 pb-2">
-                  {getActivityBadge(post.activity)}
+              {/* Post Image with Double Tap */}
+              {post.image && (
+                <div 
+                  className="relative w-full aspect-square bg-muted cursor-pointer select-none"
+                  onClick={() => handlePostTap(post.id)}
+                >
+                  <img 
+                    src={post.image} 
+                    alt="Post" 
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                  {/* Heart Animation */}
+                  <AnimatePresence>
+                    {showHeartAnimation === post.id && (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      >
+                        <Heart className="w-24 h-24 fill-white text-white drop-shadow-lg" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               )}
 
-              {/* Post Content */}
-              <div className="px-4 pb-3">
-                <p className="text-foreground text-sm leading-relaxed">{post.content}</p>
+              {/* Actions Row */}
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <button 
+                    onClick={() => toggleLike(post.id)}
+                    className="active:scale-90 transition-transform"
+                  >
+                    <Heart 
+                      className={`w-6 h-6 transition-colors ${
+                        post.isLiked ? 'fill-red-500 text-red-500' : 'text-foreground'
+                      }`} 
+                    />
+                  </button>
+                  <button className="active:scale-90 transition-transform">
+                    <MessageCircle className="w-6 h-6 text-foreground" />
+                  </button>
+                  <button className="active:scale-90 transition-transform">
+                    <Share2 className="w-6 h-6 text-foreground" />
+                  </button>
+                </div>
+                <button 
+                  onClick={() => toggleSave(post.id)}
+                  className="active:scale-90 transition-transform"
+                >
+                  <Bookmark 
+                    className={`w-6 h-6 transition-colors ${
+                      post.isSaved ? 'fill-foreground text-foreground' : 'text-foreground'
+                    }`} 
+                  />
+                </button>
+              </div>
+
+              {/* Likes Count */}
+              <div className="px-4">
+                <p className="text-sm font-semibold text-foreground">{post.likes.toLocaleString()} likes</p>
+              </div>
+
+              {/* Caption */}
+              <div className="px-4 pt-1 pb-2">
+                <p className="text-sm text-foreground">
+                  <span className="font-semibold">{post.user.username}</span>{' '}
+                  {post.content}
+                </p>
               </div>
 
               {/* Activity Details */}
               {post.activity && (post.activity.venue || post.activity.date || post.activity.players) && (
-                <div className="mx-4 mb-3 p-3 bg-muted rounded-xl space-y-2">
+                <div className="mx-4 mb-2 p-3 bg-muted/50 rounded-xl space-y-1.5">
                   {post.activity.sport && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="font-medium text-foreground">{post.activity.sport}</span>
-                    </div>
-                  )}
-                  {post.activity.venue && (
-                    <div className="flex items-center gap-2 text-xs text-text-secondary">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>{post.activity.venue}</span>
+                    <div className="flex items-center gap-2">
+                      {getActivityBadge(post.activity)}
+                      <span className="text-xs font-medium text-foreground">{post.activity.sport}</span>
                     </div>
                   )}
                   {post.activity.date && (
@@ -240,49 +310,18 @@ const SocialCommunity = () => {
                 </div>
               )}
 
-              {/* Post Image */}
-              {post.image && (
-                <div className="w-full aspect-video bg-muted">
-                  <img 
-                    src={post.image} 
-                    alt="Post" 
-                    className="w-full h-full object-cover"
-                  />
+              {/* View Comments */}
+              {post.comments > 0 && (
+                <div className="px-4 pb-1">
+                  <button className="text-sm text-text-secondary">
+                    View all {post.comments} comments
+                  </button>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="p-4 flex items-center justify-between border-t border-border/50">
-                <div className="flex items-center gap-4">
-                  <button 
-                    onClick={() => toggleLike(post.id)}
-                    className="flex items-center gap-1.5 text-sm"
-                  >
-                    <Heart 
-                      className={`w-5 h-5 transition-colors ${
-                        post.isLiked ? 'fill-red-500 text-red-500' : 'text-text-secondary'
-                      }`} 
-                    />
-                    <span className={post.isLiked ? 'text-red-500 font-medium' : 'text-text-secondary'}>
-                      {post.likes}
-                    </span>
-                  </button>
-                  <button className="flex items-center gap-1.5 text-sm text-text-secondary">
-                    <MessageCircle className="w-5 h-5" />
-                    <span>{post.comments}</span>
-                  </button>
-                  <button className="flex items-center gap-1.5 text-sm text-text-secondary">
-                    <Share2 className="w-5 h-5" />
-                    <span>{post.shares}</span>
-                  </button>
-                </div>
-                <button onClick={() => toggleSave(post.id)}>
-                  <Bookmark 
-                    className={`w-5 h-5 transition-colors ${
-                      post.isSaved ? 'fill-foreground text-foreground' : 'text-text-secondary'
-                    }`} 
-                  />
-                </button>
+              {/* Timestamp */}
+              <div className="px-4 pb-3">
+                <p className="text-xs text-text-tertiary uppercase">{post.timeAgo}</p>
               </div>
             </div>
           ))}
