@@ -169,17 +169,26 @@ export function useStories() {
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
 
+      console.log('Uploading story to storage:', fileName);
+      
       // Upload to storage
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('stories')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('stories')
         .getPublicUrl(fileName);
+
+      console.log('Public URL:', publicUrl);
 
       // Create story record
       const { data: story, error: insertError } = await supabase
@@ -193,14 +202,19 @@ export function useStories() {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        throw insertError;
+      }
+
+      console.log('Story created:', story);
 
       queryClient.invalidateQueries({ queryKey: ['stories'] });
       toast.success('Story added!');
       return story;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading story:', error);
-      toast.error('Failed to upload story');
+      toast.error(error.message || 'Failed to upload story');
       return null;
     } finally {
       setUploading(false);

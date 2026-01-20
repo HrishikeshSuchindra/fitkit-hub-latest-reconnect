@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
-type BucketName = 'avatars' | 'venue-images' | 'post-media' | 'event-images' | 'documents';
+type BucketName = 'avatars' | 'venue-images' | 'post-media' | 'event-images' | 'documents' | 'stories';
 
 interface UploadOptions {
   bucket: BucketName;
