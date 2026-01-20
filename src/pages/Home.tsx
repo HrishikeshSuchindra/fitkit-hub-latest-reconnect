@@ -239,10 +239,10 @@ const Home = () => {
             ))}
           </div>
           
-          {/* Venues Horizontal Scroll */}
+          {/* Venues Horizontal Scroll - Max 4 */}
           {venuesLoading ? (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {[1, 2, 3].map((i) => (
+              {[1, 2, 3, 4].map((i) => (
                 <Skeleton key={i} className="min-w-[280px] h-64 rounded-xl" />
               ))}
             </div>
@@ -251,7 +251,7 @@ const Home = () => {
               {currentVenues.length === 0 ? (
                 <p className="text-text-secondary text-sm">No venues found</p>
               ) : (
-                currentVenues.map((venue) => (
+                currentVenues.slice(0, 4).map((venue) => (
                   <div key={venue.id} className="min-w-[280px]">
                     <VenueCard
                       image={getVenueImageUrl(venue.image_url)}
@@ -282,17 +282,17 @@ const Home = () => {
           </div>
           
           {eventsLoading ? (
-            <div className="grid grid-cols-2 gap-3">
-              {[1, 2].map((i) => (
-                <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {[1, 2, 3, 4].map((i) => (
+                <Skeleton key={i} className="min-w-[160px] aspect-[3/4] rounded-xl" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {(socialEvents || []).slice(0, 2).map((event) => (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {(socialEvents || []).slice(0, 4).map((event) => (
                 <div 
                   key={event.id} 
-                  className="aspect-[3/4] rounded-xl relative overflow-hidden cursor-pointer group"
+                  className="min-w-[160px] aspect-[3/4] rounded-xl relative overflow-hidden cursor-pointer group"
                   onClick={() => navigate(`/social/event/${event.id}`)}
                 >
                   <img 
@@ -345,7 +345,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {(tournaments || []).map((tournament) => (
+              {(tournaments || []).slice(0, 4).map((tournament) => (
                 <div 
                   key={tournament.id} 
                   className="min-w-[260px] bg-card rounded-xl overflow-hidden shadow-soft cursor-pointer group"

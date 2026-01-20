@@ -8,11 +8,35 @@ import venueTennis from "@/assets/venue-tennis.jpg";
 import { usePublicGames } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const HubGames = () => {
   const { data: publicGames = [], isLoading } = usePublicGames();
   const [expandedSection, setExpandedSection] = useState<string | null>("public");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch tournaments from database
+  const { data: dbTournaments = [] } = useQuery({
+    queryKey: ["hub-tournaments"],
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const { data, error } = await supabase
+        .from("events")
+        .select(`
+          id, title, event_date, start_time, location, image_url, sport, 
+          current_participants, max_participants, entry_fee, prize_pool,
+          profiles:host_id (display_name, username)
+        `)
+        .eq("event_type", "tournament")
+        .neq("status", "cancelled")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(":");
@@ -38,17 +62,23 @@ const HubGames = () => {
     };
   });
 
-  const tournaments: Array<{
-    id: string;
-    image: string;
-    sport: string;
-    title: string;
-    host: string;
-    date: string;
-    location: string;
-    spotsLeft: string;
-    type: "tournament";
-  }> = [];
+  const tournaments = dbTournaments.map(t => {
+    const hostProfile = t.profiles as { display_name?: string; username?: string } | null;
+    const hostName = hostProfile?.display_name || hostProfile?.username || "Tournament Host";
+    return {
+      id: t.id,
+      image: t.image_url || venueTennis,
+      sport: t.sport,
+      title: t.title,
+      host: hostName,
+      date: `${format(new Date(t.event_date), "MMM do")} ${formatTime(t.start_time)}`,
+      location: t.location,
+      spotsLeft: `${t.current_participants || 0}/${t.max_participants || "∞"}`,
+      type: "tournament" as const,
+      prizePool: t.prize_pool,
+      entryFee: t.entry_fee
+    };
+  });
 
   const filteredPublicGames = userCreatedGames.filter(game => 
     game.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
