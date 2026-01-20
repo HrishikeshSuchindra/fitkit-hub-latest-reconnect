@@ -193,17 +193,18 @@ export const useToggleFavorite = () => {
   });
 };
 
-// Helper to get image URL (handles bundled assets + direct URLs)
+// Helper to get image URL (handles storage URLs, bundled assets, and legacy paths)
 export const getVenueImageUrl = (imageUrl: string | null): string => {
   if (!imageUrl) return "/placeholder.svg";
 
-  // Seeded data uses absolute paths like /venue-football.jpg. Those files are bundled in src/assets.
+  // If it's already a full URL (from storage or external), use it directly
+  if (imageUrl.startsWith("http")) return imageUrl;
+
+  // Legacy: Seeded data uses absolute paths like /venue-football.jpg
+  // Those files are bundled in src/assets - map them for backward compatibility
   const normalized = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
   const mapped = SEEDED_IMAGE_MAP[normalized];
   if (mapped) return mapped;
-
-  // If it starts with http, it's already a valid URL
-  if (imageUrl.startsWith("http")) return imageUrl;
 
   // Otherwise serve as app-relative path
   return normalized;
