@@ -7,7 +7,8 @@ export interface SlotData {
   total_courts: number;
   booked_courts: number;
   available_courts: number;
-  status: "available" | "limited" | "full";
+  status: "available" | "limited" | "full" | "blocked";
+  blockReason?: string | null;
 }
 
 interface SlotCardProps {
@@ -18,6 +19,8 @@ interface SlotCardProps {
 
 const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
   const isFullyBooked = slot.status === "full";
+  const isBlocked = slot.status === "blocked";
+  const isUnavailable = isFullyBooked || isBlocked;
 
   // Format time to display format (e.g., "07:30 AM")
   const formatTime = (time: string) => {
@@ -38,11 +41,11 @@ const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
           key={i}
           className={cn(
             "w-2.5 h-2.5 rounded-full",
-            isFullyBooked
-              ? "bg-gray-300"
+            isUnavailable
+              ? "bg-muted-foreground/30"
               : isAvailable
               ? "bg-primary"
-              : "bg-gray-300"
+              : "bg-muted-foreground/30"
           )}
         />
       );
@@ -53,12 +56,12 @@ const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
   return (
     <button
       onClick={onSelect}
-      disabled={isFullyBooked}
-      aria-label={`${formatTime(slot.start_time)}, ${slot.duration_minutes} minutes, ${slot.available_courts} of ${slot.total_courts} courts available, ₹${slot.price}, ${slot.status}`}
+      disabled={isUnavailable}
+      aria-label={`${formatTime(slot.start_time)}, ${slot.duration_minutes} minutes, ${slot.available_courts} of ${slot.total_courts} courts available, ₹${slot.price}, ${slot.status}${isBlocked && slot.blockReason ? ` - ${slot.blockReason}` : ''}`}
       className={cn(
         "flex flex-col items-center px-2 py-2.5 rounded-xl border-2 transition-all w-full aspect-[4/3]",
-        isFullyBooked
-          ? "bg-gray-100 border-gray-200 cursor-not-allowed opacity-60"
+        isUnavailable
+          ? "bg-muted border-muted cursor-not-allowed opacity-60"
           : isSelected
           ? "bg-[hsl(var(--chip-green-bg))] border-primary shadow-md scale-[1.02]"
           : "bg-[hsl(var(--chip-green-bg))] border-transparent hover:border-primary/50"
@@ -67,7 +70,7 @@ const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
       {/* Time and Duration - single line */}
       <p className={cn(
         "text-[10px] font-semibold leading-tight text-center whitespace-nowrap",
-        isFullyBooked ? "text-gray-400" : "text-foreground"
+        isUnavailable ? "text-muted-foreground" : "text-foreground"
       )}>
         {formatTime(slot.start_time)} • {slot.duration_minutes}m
       </p>
@@ -77,24 +80,24 @@ const SlotCard = ({ slot, isSelected, onSelect }: SlotCardProps) => {
         {renderAvailabilityCircles()}
       </div>
 
-      {/* Availability Fraction */}
+      {/* Availability Fraction or Blocked indicator */}
       <p className={cn(
         "text-xs font-bold",
-        isFullyBooked ? "text-gray-400" : "text-primary"
+        isUnavailable ? "text-muted-foreground" : "text-primary"
       )}>
-        {slot.available_courts}/{slot.total_courts}
+        {isBlocked ? "Blocked" : `${slot.available_courts}/${slot.total_courts}`}
       </p>
 
       {/* Price */}
       <div className={cn(
         "w-full py-1 rounded-lg text-center mt-auto",
-        isFullyBooked
-          ? "bg-gray-200"
+        isUnavailable
+          ? "bg-muted"
           : "bg-[hsl(var(--brand-primary-soft)/0.3)]"
       )}>
         <p className={cn(
           "text-xs font-bold",
-          isFullyBooked ? "text-gray-400" : "text-foreground"
+          isUnavailable ? "text-muted-foreground" : "text-foreground"
         )}>
           ₹{slot.price.toFixed(2)}
         </p>

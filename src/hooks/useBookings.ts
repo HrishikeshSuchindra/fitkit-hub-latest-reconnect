@@ -4,6 +4,7 @@ import { useAuth } from "./useAuth";
 import { useEffect } from "react";
 import { format, differenceInHours } from "date-fns";
 import { toast } from "sonner";
+import { useSlotBlocks } from "./useSlotBlocks";
 
 export interface Booking {
   id: string;
@@ -64,9 +65,12 @@ export const useUserBookings = () => {
   });
 };
 
-// Fetch slot availability for a venue on a specific date
+// Fetch slot availability for a venue on a specific date (including blocked slots)
 export const useSlotAvailability = (venueId: string, date: Date) => {
   const formattedDate = format(date, "yyyy-MM-dd");
+
+  // Fetch blocked slots
+  const { data: blockedSlots } = useSlotBlocks(venueId, date);
 
   const query = useQuery({
     queryKey: ["slot-availability", venueId, formattedDate],
@@ -114,7 +118,12 @@ export const useSlotAvailability = (venueId: string, date: Date) => {
     };
   }, [venueId, formattedDate, query]);
 
-  return query;
+  // Combine booking counts with blocked slots info
+  return {
+    ...query,
+    data: query.data,
+    blockedSlots: blockedSlots || {},
+  };
 };
 
 // Create a booking with server-side validation

@@ -46,18 +46,31 @@ const SlotSelectionSheet = ({
   
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
-  // Fetch real availability data from database
-  const { data: bookedCounts } = useSlotAvailability(venue.id, selectedDate);
+  // Fetch real availability data from database (includes blocked slots)
+  const { data: bookedCounts, blockedSlots } = useSlotAvailability(venue.id, selectedDate);
 
   // Generate slots using the slot generator with real availability
   const allSlots = useMemo(() => {
-    return generateTimeSlots(defaultTurfConfig, bookedCounts);
-  }, [selectedDate, bookedCounts]);
+    const slots = generateTimeSlots(defaultTurfConfig, bookedCounts);
+    
+    // Mark blocked slots as unavailable
+    return slots.map(slot => {
+      if (blockedSlots && blockedSlots[slot.start_time]) {
+        return {
+          ...slot,
+          status: "blocked" as const,
+          available_courts: 0,
+          blockReason: blockedSlots[slot.start_time]
+        };
+      }
+      return slot;
+    });
+  }, [selectedDate, bookedCounts, blockedSlots]);
 
   // Filter slots based on toggle
   const displayedSlots = useMemo(() => {
     if (showAvailableOnly) {
-      return allSlots.filter(slot => slot.status !== "full");
+      return allSlots.filter(slot => slot.status !== "full" && slot.status !== "blocked");
     }
     return allSlots;
   }, [allSlots, showAvailableOnly]);
@@ -180,7 +193,7 @@ const SlotSelectionSheet = ({
                 key={slot.start_time}
                 slot={slot}
                 isSelected={selectedSlots.includes(slot.start_time)}
-                onSelect={() => slot.status !== "full" && toggleSlot(slot.start_time)}
+                onSelect={() => slot.status !== "full" && slot.status !== "blocked" && toggleSlot(slot.start_time)}
               />
             ))}
           </div>
