@@ -108,6 +108,35 @@ const EventRegistrationPreview = () => {
         }
       }
 
+      // 5. Get the registration ID for the email
+      const { data: regData } = await supabase
+        .from("event_registrations")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("user_id", user.id)
+        .single();
+
+      // 6. Send confirmation email
+      try {
+        await supabase.functions.invoke("send-event-registration-email", {
+          body: {
+            userEmail: user.email,
+            userName: user.user_metadata?.display_name || user.email?.split("@")[0] || "Guest",
+            eventName: event.title,
+            eventDate: format(new Date(event.event_date), "EEEE, MMMM d, yyyy"),
+            eventTime: formatEventTime(event.start_time, event.end_time),
+            eventLocation: event.location,
+            registrationId: regData?.id || eventId,
+            ticketCount,
+            totalAmount: totalAmount,
+            eventId,
+          },
+        });
+      } catch (emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // Don't fail the registration if email fails
+      }
+
       // Navigate to confirmation
       navigate(`/social/event/${eventId}/confirmation`, {
         state: { eventData: event, ticketCount }

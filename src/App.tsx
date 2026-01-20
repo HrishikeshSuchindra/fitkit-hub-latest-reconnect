@@ -42,6 +42,9 @@ import Notifications from "./pages/Notifications";
 import BookingCancellation from "./pages/BookingCancellation";
 import EventRegistrationPreview from "./pages/EventRegistrationPreview";
 import EventRegistrationConfirmation from "./pages/EventRegistrationConfirmation";
+import HubTournamentDetail from "./pages/HubTournamentDetail";
+import HubTournamentRegister from "./pages/HubTournamentRegister";
+import HubTournamentConfirmation from "./pages/HubTournamentConfirmation";
 
 const queryClient = new QueryClient();
 
@@ -89,10 +92,13 @@ const AnimatedRoutes = () => {
         <Route path="/social/chat" element={<SocialChat />} />
         <Route path="/social/chat/:chatId" element={<SocialChatRoom />} />
         
-        {/* Hub Routes (Public Games, Chat, Community) */}
+        {/* Hub Routes (Public Games, Chat, Community, Tournaments) */}
         <Route path="/hub" element={<HubGames />} />
         <Route path="/hub/games" element={<HubGames />} />
         <Route path="/hub/game/:gameId" element={<HubGameDetail />} />
+        <Route path="/hub/tournament/:tournamentId" element={<HubTournamentDetail />} />
+        <Route path="/hub/tournament/:tournamentId/register" element={<HubTournamentRegister />} />
+        <Route path="/hub/tournament/:tournamentId/confirmation" element={<HubTournamentConfirmation />} />
         <Route path="/hub/chat" element={<HubChat />} />
         <Route path="/hub/chat/:chatId" element={<HubChatRoom />} />
         <Route path="/hub/community" element={<HubCommunity />} />
