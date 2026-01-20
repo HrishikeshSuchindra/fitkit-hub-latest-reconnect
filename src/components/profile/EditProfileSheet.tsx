@@ -113,22 +113,24 @@ export function EditProfileSheet({ open, onOpenChange, profile }: EditProfileShe
     return () => clearTimeout(timeoutId);
   };
 
-  // Handle file upload
+  // Handle file upload - uploads to Supabase storage and stores URL in DB
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
     
+    // Upload using useStorage hook which uploads to 'avatars' bucket
     const url = await uploadAvatar(file);
     if (url) {
+      // The URL is a public Supabase storage URL that persists
       setAvatarUrl(url);
       setShowAvatarPicker(false);
       toast.success("Avatar uploaded!");
     }
   };
 
-  // Handle preset avatar selection
+  // Handle preset avatar selection - store as static asset path
   const handlePresetSelect = async (src: string) => {
-    // For preset avatars, we store the static path
+    // For preset avatars, we store the static path which works across sessions
     setAvatarUrl(src);
     setShowAvatarPicker(false);
   };

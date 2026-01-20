@@ -60,7 +60,9 @@ const EditProfile = () => {
     setUploading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      // Use timestamp to ensure unique filename and avoid caching issues
+      const timestamp = Date.now();
+      const filePath = `${user.id}/${timestamp}-avatar.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -72,6 +74,7 @@ const EditProfile = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
+      // Store the full public URL - this persists across sessions
       setAvatarUrl(publicUrl);
       toast.success("Photo uploaded!");
     } catch (error) {
