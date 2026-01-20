@@ -1012,7 +1012,7 @@ export type Database = {
       mark_chat_room_read: { Args: { _room_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "venue_owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1140,7 +1140,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "venue_owner"],
     },
   },
 } as const
