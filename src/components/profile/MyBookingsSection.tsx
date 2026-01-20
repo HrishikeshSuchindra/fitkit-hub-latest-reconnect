@@ -208,7 +208,7 @@ export function MyBookingsSection() {
                         size="sm"
                         variant="outline"
                         className="h-8 text-xs text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => handleCancelClick(booking)}
+                        onClick={() => navigate(`/booking/cancel/${booking.id}`)}
                       >
                         <X className="w-3 h-3 mr-1" />
                         Cancel

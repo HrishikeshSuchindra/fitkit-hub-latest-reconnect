@@ -5,7 +5,7 @@ import { Calendar, MapPin, Clock, Users, Share2, Heart, CheckCircle2, Loader2 } 
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useEventById, useEventRegistration, useEventAttendees, useRegisterForEvent } from "@/hooks/useEvents";
+import { useEventById, useEventRegistration, useEventAttendees } from "@/hooks/useEvents";
 import { format } from "date-fns";
 
 const SocialEventDetail = () => {
@@ -16,23 +16,12 @@ const SocialEventDetail = () => {
   const { data: event, isLoading: eventLoading } = useEventById(eventId);
   const { data: registration } = useEventRegistration(eventId);
   const { data: attendees = [] } = useEventAttendees(eventId);
-  const registerMutation = useRegisterForEvent();
 
   const isRegistered = !!registration && registration.status === "registered";
 
   const handleRegister = () => {
     if (!eventId) return;
-    
-    registerMutation.mutate(eventId, {
-      onSuccess: () => {
-        toast.success("Successfully registered!", {
-          description: "You've been added to the event. Check your email for details."
-        });
-      },
-      onError: (error) => {
-        toast.error(error instanceof Error ? error.message : "Failed to register");
-      },
-    });
+    navigate(`/social/event/${eventId}/register`);
   };
 
   const formatEventTime = (startTime: string, endTime: string | null) => {
@@ -250,13 +239,8 @@ const SocialEventDetail = () => {
             <Button 
               className="bg-brand-green hover:bg-brand-green/90 text-white px-6"
               onClick={handleRegister}
-              disabled={registerMutation.isPending}
             >
-              {registerMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Register Now"
-              )}
+              Register Now
             </Button>
           )}
         </div>
