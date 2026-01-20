@@ -1,0 +1,329 @@
+import { AppHeader } from "@/components/AppHeader";
+import { BottomNav } from "@/components/BottomNav";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, MapPin, Clock, Users, Share2, Heart, Trophy, CheckCircle2, Loader2, Award, BookOpen, AlertCircle } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useEventById, useEventRegistration, useEventAttendees } from "@/hooks/useEvents";
+import { format } from "date-fns";
+
+const HubTournamentDetail = () => {
+  const { eventId } = useParams();
+  const navigate = useNavigate();
+  const [isLiked, setIsLiked] = useState(false);
+
+  const { data: event, isLoading: eventLoading } = useEventById(eventId);
+  const { data: registration } = useEventRegistration(eventId);
+  const { data: attendees = [] } = useEventAttendees(eventId);
+
+  const isRegistered = !!registration && registration.status === "registered";
+
+  const handleRegister = () => {
+    if (!eventId) return;
+    navigate(`/hub/tournament/${eventId}/register`);
+  };
+
+  const formatEventTime = (startTime: string, endTime: string | null) => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(":");
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
+    
+    if (endTime) {
+      return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    }
+    return formatTime(startTime);
+  };
+
+  if (eventLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <AppHeader />
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <Trophy className="w-12 h-12 text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">Tournament not found</p>
+          <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+        </div>
+        <BottomNav mode="hub" />
+      </div>
+    );
+  }
+
+  const eventDate = format(new Date(event.event_date), "MMM d, yyyy");
+  const eventTime = formatEventTime(event.start_time, event.end_time);
+  const spotsLeft = event.max_participants ? event.max_participants - (event.current_participants || 0) : null;
+  
+  // Type assertions for tournament-specific fields
+  const tournamentEvent = event as typeof event & {
+    team_type?: string;
+    team_size?: number;
+    min_team_size?: number;
+    max_team_size?: number;
+    rules?: string;
+    guidelines?: string;
+    format?: string;
+  };
+
+  const teamType = tournamentEvent.team_type || "individual";
+  const teamTypeLabel = teamType === "both" ? "Individual & Team" : teamType === "team" ? "Team Only" : "Individual";
+
+  return (
+    <div className="min-h-screen bg-background pb-24">
+      <AppHeader />
+      
+      {/* Hero Image */}
+      <div className="relative aspect-video">
+        <img 
+          src={event.image_url || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800"} 
+          alt={event.title} 
+          className="w-full h-full object-cover" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+        <div className="absolute bottom-4 left-4 right-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Badge className="bg-amber-500 text-white border-0">
+              <Trophy className="w-3 h-3 mr-1" />
+              Tournament
+            </Badge>
+            <Badge variant="outline" className="bg-white/20 text-white border-white/30">
+              {event.sport}
+            </Badge>
+          </div>
+          <h1 className="text-xl font-bold text-white mb-1">{event.title}</h1>
+        </div>
+        <button 
+          onClick={() => setIsLiked(!isLiked)}
+          className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center"
+        >
+          <Heart className={`w-5 h-5 ${isLiked ? "fill-red-500 text-red-500" : "text-white"}`} />
+        </button>
+      </div>
+      
+      <div className="px-5 py-4 space-y-5">
+        {/* Prize Pool Highlight */}
+        {event.prize_pool && (
+          <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
+                <Award className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Prize Pool</p>
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{event.prize_pool}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Info */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-muted rounded-xl p-3 flex items-center gap-3">
+            <div className="w-10 h-10 bg-brand-soft rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-brand-green" />
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Date</p>
+              <p className="text-sm font-semibold text-foreground">{eventDate}</p>
+            </div>
+          </div>
+          <div className="bg-muted rounded-xl p-3 flex items-center gap-3">
+            <div className="w-10 h-10 bg-brand-soft rounded-lg flex items-center justify-center">
+              <Clock className="w-5 h-5 text-brand-green" />
+            </div>
+            <div>
+              <p className="text-xs text-text-secondary">Time</p>
+              <p className="text-sm font-semibold text-foreground">{eventTime}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-muted rounded-xl p-3 flex items-center gap-3">
+          <div className="w-10 h-10 bg-brand-soft rounded-lg flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-brand-green" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs text-text-secondary">Location</p>
+            <p className="text-sm font-semibold text-foreground">{event.location}</p>
+          </div>
+          <Button variant="outline" size="sm" className="text-xs">
+            View Map
+          </Button>
+        </div>
+
+        {/* Tournament Format */}
+        <div className="bg-card rounded-xl shadow-soft p-4">
+          <h3 className="font-bold text-foreground mb-3 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-primary" />
+            Tournament Format
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-muted rounded-lg p-3">
+              <p className="text-xs text-text-secondary mb-1">Participation</p>
+              <p className="text-sm font-semibold text-foreground">{teamTypeLabel}</p>
+            </div>
+            {tournamentEvent.format && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-text-secondary mb-1">Format</p>
+                <p className="text-sm font-semibold text-foreground">{tournamentEvent.format}</p>
+              </div>
+            )}
+            {teamType === "team" && tournamentEvent.team_size && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-text-secondary mb-1">Team Size</p>
+                <p className="text-sm font-semibold text-foreground">{tournamentEvent.team_size} players</p>
+              </div>
+            )}
+            {event.skill_level && (
+              <div className="bg-muted rounded-lg p-3">
+                <p className="text-xs text-text-secondary mb-1">Skill Level</p>
+                <p className="text-sm font-semibold text-foreground capitalize">{event.skill_level}</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Description */}
+        <div>
+          <h3 className="font-bold text-foreground mb-2">About this Tournament</h3>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {event.description || "Join this exciting tournament and compete against players from across the city. Show your skills, make new friends, and win amazing prizes!"}
+          </p>
+        </div>
+
+        {/* Rules & Guidelines */}
+        {(tournamentEvent.rules || tournamentEvent.guidelines) && (
+          <div className="bg-card rounded-xl shadow-soft p-4 space-y-4">
+            {tournamentEvent.rules && (
+              <div>
+                <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-primary" />
+                  Rules
+                </h3>
+                <div className="text-sm text-text-secondary whitespace-pre-line">
+                  {tournamentEvent.rules}
+                </div>
+              </div>
+            )}
+            {tournamentEvent.guidelines && (
+              <div>
+                <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  Guidelines
+                </h3>
+                <div className="text-sm text-text-secondary whitespace-pre-line">
+                  {tournamentEvent.guidelines}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Participants */}
+        {event.max_participants && (
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-foreground">Registered</h3>
+              <span className="text-xs text-text-secondary">
+                {event.current_participants || 0}/{event.max_participants} spots filled
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {attendees.slice(0, 4).map((attendee: any, idx: number) => (
+                  <div key={idx} className="w-8 h-8 bg-brand-soft rounded-full flex items-center justify-center border-2 border-background">
+                    {attendee.profiles?.avatar_url ? (
+                      <img src={attendee.profiles.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-semibold text-brand-green">
+                        {(attendee.profiles?.display_name || "U").charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {attendees.length > 4 && (
+                <span className="text-xs text-text-secondary">+{attendees.length - 4} more</span>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Host */}
+        {(event as any).profiles && (
+          <div className="bg-card rounded-xl shadow-soft p-4">
+            <h3 className="font-bold text-foreground mb-3">Tournament Organizer</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center overflow-hidden">
+                {(event as any).profiles.avatar_url ? (
+                  <img src={(event as any).profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold">
+                    {((event as any).profiles.display_name || "H").charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">{(event as any).profiles.display_name || "Organizer"}</p>
+                {(event as any).profiles.username && (
+                  <p className="text-xs text-text-secondary">@{(event as any).profiles.username}</p>
+                )}
+              </div>
+              <Button variant="outline" size="sm">View Profile</Button>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Fixed Bottom CTA */}
+      <div className="fixed bottom-16 left-0 right-0 bg-background border-t border-divider p-4 flex items-center justify-between">
+        <div>
+          <p className="text-xs text-text-secondary">Entry fee</p>
+          <p className="text-xl font-bold text-primary">
+            {event.entry_fee > 0 ? `₹${event.entry_fee}` : "Free"}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" className="w-10 h-10">
+            <Share2 className="w-4 h-4" />
+          </Button>
+          {isRegistered ? (
+            <Button disabled className="bg-muted text-text-secondary px-6">
+              <CheckCircle2 className="w-4 h-4 mr-2" /> Registered
+            </Button>
+          ) : spotsLeft !== null && spotsLeft <= 0 ? (
+            <Button disabled className="bg-muted text-text-secondary px-6">
+              Tournament Full
+            </Button>
+          ) : (
+            <Button 
+              className="bg-amber-500 hover:bg-amber-600 text-white px-6"
+              onClick={handleRegister}
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Register Now
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      <BottomNav mode="hub" />
+    </div>
+  );
+};
+
+export default HubTournamentDetail;

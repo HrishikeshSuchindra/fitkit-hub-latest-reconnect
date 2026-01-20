@@ -248,17 +248,25 @@ export type Database = {
           entry_fee: number | null
           event_date: string
           event_type: string
+          format: string | null
+          guidelines: string | null
           host_id: string
           id: string
           image_url: string | null
           is_featured: boolean | null
           location: string
           max_participants: number | null
+          max_team_size: number | null
+          min_team_size: number | null
           prize_pool: string | null
+          registration_deadline: string | null
+          rules: string | null
           skill_level: string | null
           sport: string
           start_time: string
           status: string | null
+          team_size: number | null
+          team_type: string | null
           title: string
           updated_at: string
           venue_id: string | null
@@ -271,17 +279,25 @@ export type Database = {
           entry_fee?: number | null
           event_date: string
           event_type?: string
+          format?: string | null
+          guidelines?: string | null
           host_id: string
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
           location: string
           max_participants?: number | null
+          max_team_size?: number | null
+          min_team_size?: number | null
           prize_pool?: string | null
+          registration_deadline?: string | null
+          rules?: string | null
           skill_level?: string | null
           sport: string
           start_time: string
           status?: string | null
+          team_size?: number | null
+          team_type?: string | null
           title: string
           updated_at?: string
           venue_id?: string | null
@@ -294,17 +310,25 @@ export type Database = {
           entry_fee?: number | null
           event_date?: string
           event_type?: string
+          format?: string | null
+          guidelines?: string | null
           host_id?: string
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
           location?: string
           max_participants?: number | null
+          max_team_size?: number | null
+          min_team_size?: number | null
           prize_pool?: string | null
+          registration_deadline?: string | null
+          rules?: string | null
           skill_level?: string | null
           sport?: string
           start_time?: string
           status?: string | null
+          team_size?: number | null
+          team_type?: string | null
           title?: string
           updated_at?: string
           venue_id?: string | null
