@@ -187,6 +187,19 @@ const HubChatRoom = () => {
     scrollToBottom();
   }, [messages]);
 
+  // Mark chat as read when entering
+  useEffect(() => {
+    if (!chatId || !user) return;
+    
+    const markAsRead = async () => {
+      await supabase.rpc('mark_chat_room_read', { _room_id: chatId });
+      // Invalidate hub chat list to update unread counts
+      queryClient.invalidateQueries({ queryKey: ['hub-chat-rooms'] });
+    };
+    
+    markAsRead();
+  }, [chatId, user, queryClient]);
+
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
