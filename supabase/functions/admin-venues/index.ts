@@ -1,9 +1,10 @@
 // Admin Venues API - Venue management for admin dashboard
 // Endpoints: GET (list venues), POST (create), PATCH (update), DELETE (deactivate)
+// Supports owner-based filtering for venue owners
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { 
-  requireAdmin, 
+  authenticateUser,
   createServiceClient, 
   logAdminAction,
   corsHeaders 
@@ -15,12 +16,36 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require admin role for all operations
-  const auth = await requireAdmin(req);
+  // Authenticate user
+  const auth = await authenticateUser(req);
   if (auth.error) return auth.error;
 
   const supabase = createServiceClient();
   const url = new URL(req.url);
+
+  // Check if user is admin or venue owner
+  const { data: userRoles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", auth.userId);
+
+  const isAdmin = userRoles?.some(r => r.role === "admin");
+
+  // For non-admins, check if they own any venues
+  const { data: ownedVenues } = await supabase
+    .from("venues")
+    .select("id")
+    .eq("owner_id", auth.userId);
+
+  const isVenueOwner = (ownedVenues?.length || 0) > 0;
+
+  // Must be either admin or venue owner to access
+  if (!isAdmin && !isVenueOwner) {
+    return new Response(
+      JSON.stringify({ error: "Access denied. You must be an admin or venue owner." }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     if (req.method === "GET") {
@@ -29,6 +54,7 @@ serve(async (req) => {
       const sport = url.searchParams.get("sport");
       const isActive = url.searchParams.get("is_active");
       const search = url.searchParams.get("search");
+      const ownerId = url.searchParams.get("owner_id");
       const page = parseInt(url.searchParams.get("page") || "1");
       const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
       const offset = (page - 1) * limit;
@@ -36,6 +62,14 @@ serve(async (req) => {
       let query = supabase
         .from("venues")
         .select("*", { count: "exact" });
+
+      // Non-admins can only see their own venues
+      if (!isAdmin) {
+        query = query.eq("owner_id", auth.userId);
+      } else if (ownerId) {
+        // Admins can filter by owner_id
+        query = query.eq("owner_id", ownerId);
+      }
 
       // Apply filters
       if (category) {
@@ -94,6 +128,9 @@ serve(async (req) => {
         }
       }
 
+      // Set owner_id - if admin can specify, otherwise set to current user
+      const ownerId = isAdmin && venueData.owner_id ? venueData.owner_id : auth.userId;
+
       const { data: venue, error } = await supabase
         .from("venues")
         .insert({
@@ -113,7 +150,8 @@ serve(async (req) => {
           amenities: venueData.amenities,
           opening_time: venueData.opening_time || "06:00",
           closing_time: venueData.closing_time || "22:00",
-          is_active: venueData.is_active !== false
+          is_active: venueData.is_active !== false,
+          owner_id: ownerId
         })
         .select()
         .single();
@@ -144,10 +182,28 @@ serve(async (req) => {
         );
       }
 
-      // Remove undefined values
+      // Verify ownership (unless admin)
+      if (!isAdmin) {
+        const { data: venue } = await supabase
+          .from("venues")
+          .select("owner_id")
+          .eq("id", venueId)
+          .single();
+
+        if (venue?.owner_id !== auth.userId) {
+          return new Response(
+            JSON.stringify({ error: "You can only update venues you own" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // Remove undefined values and prevent non-admins from changing owner
       const cleanUpdateData: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(updateData)) {
         if (value !== undefined) {
+          // Non-admins cannot change owner_id
+          if (key === "owner_id" && !isAdmin) continue;
           cleanUpdateData[key] = value;
         }
       }
@@ -185,6 +241,30 @@ serve(async (req) => {
           JSON.stringify({ error: "venueId is required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      }
+
+      // Verify ownership (unless admin)
+      if (!isAdmin) {
+        const { data: venue } = await supabase
+          .from("venues")
+          .select("owner_id")
+          .eq("id", venueId)
+          .single();
+
+        if (venue?.owner_id !== auth.userId) {
+          return new Response(
+            JSON.stringify({ error: "You can only delete venues you own" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Non-admins cannot permanently delete
+        if (permanent) {
+          return new Response(
+            JSON.stringify({ error: "Only admins can permanently delete venues" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
       }
 
       if (permanent) {

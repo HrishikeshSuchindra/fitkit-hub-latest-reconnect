@@ -1,9 +1,10 @@
-// Admin Bookings API - Booking management for admin dashboard
-// Endpoints: GET (list all bookings), PATCH (cancel/refund)
+// Admin Bookings API - Booking management for admin dashboard and venue owners
+// Endpoints: GET (list bookings), PATCH (cancel/refund)
+// Supports owner-based filtering for venue owners
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { 
-  requireAdmin, 
+  authenticateUser, 
   createServiceClient, 
   logAdminAction,
   corsHeaders 
@@ -15,12 +16,37 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Require admin role for all operations
-  const auth = await requireAdmin(req);
+  // Authenticate user
+  const auth = await authenticateUser(req);
   if (auth.error) return auth.error;
 
   const supabase = createServiceClient();
   const url = new URL(req.url);
+
+  // Check if user is admin
+  const { data: userRoles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", auth.userId);
+
+  const isAdmin = userRoles?.some(r => r.role === "admin");
+
+  // Get venues owned by user
+  const { data: ownedVenues } = await supabase
+    .from("venues")
+    .select("id")
+    .eq("owner_id", auth.userId);
+
+  const ownedVenueIds = ownedVenues?.map(v => v.id) || [];
+  const isVenueOwner = ownedVenueIds.length > 0;
+
+  // Must be either admin or venue owner to access
+  if (!isAdmin && !isVenueOwner) {
+    return new Response(
+      JSON.stringify({ error: "Access denied. You must be an admin or venue owner." }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     if (req.method === "GET") {
@@ -38,12 +64,31 @@ serve(async (req) => {
         .from("bookings")
         .select("*", { count: "exact" });
 
-      // Apply filters
+      // Non-admins can only see bookings for venues they own
+      if (!isAdmin) {
+        if (venueId) {
+          // If requesting specific venue, verify ownership
+          if (!ownedVenueIds.includes(venueId)) {
+            return new Response(
+              JSON.stringify({ error: "You can only view bookings for venues you own" }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          query = query.eq("venue_id", venueId);
+        } else {
+          // Filter to only owned venues
+          query = query.in("venue_id", ownedVenueIds);
+        }
+      } else {
+        // Admins can filter by venue
+        if (venueId) {
+          query = query.eq("venue_id", venueId);
+        }
+      }
+
+      // Apply other filters
       if (status) {
         query = query.eq("status", status);
-      }
-      if (venueId) {
-        query = query.eq("venue_id", venueId);
       }
       if (userId) {
         query = query.eq("user_id", userId);
@@ -108,13 +153,35 @@ serve(async (req) => {
         );
       }
 
+      // Get the booking first
+      const { data: booking, error: fetchError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+
+      if (fetchError || !booking) {
+        return new Response(
+          JSON.stringify({ error: "Booking not found" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verify ownership (unless admin)
+      if (!isAdmin && !ownedVenueIds.includes(booking.venue_id)) {
+        return new Response(
+          JSON.stringify({ error: "You can only manage bookings for venues you own" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       if (action === "cancel") {
         const { error } = await supabase
           .from("bookings")
           .update({
             status: "cancelled",
             cancelled_at: new Date().toISOString(),
-            cancellation_reason: reason || "Cancelled by admin"
+            cancellation_reason: reason || "Cancelled by venue owner"
           })
           .eq("id", bookingId);
 
@@ -126,6 +193,19 @@ serve(async (req) => {
           );
         }
 
+        // Send notification to user
+        await supabase.from("notifications").insert({
+          user_id: booking.user_id,
+          type: "booking_cancelled",
+          title: "Booking Cancelled by Venue",
+          body: `Your booking at ${booking.venue_name} on ${booking.slot_date} at ${booking.slot_time} has been cancelled. ${reason || "Please contact the venue for details."}`,
+          data: {
+            bookingId: booking.id,
+            venueName: booking.venue_name,
+            reason: reason || "Cancelled by venue owner"
+          }
+        });
+
         await logAdminAction(auth.userId!, "booking_cancelled", "booking", bookingId, { reason });
 
         return new Response(
@@ -135,17 +215,11 @@ serve(async (req) => {
       }
 
       if (action === "refund") {
-        // Get the booking first
-        const { data: booking, error: fetchError } = await supabase
-          .from("bookings")
-          .select("*")
-          .eq("id", bookingId)
-          .single();
-
-        if (fetchError || !booking) {
+        // Only admins can process refunds
+        if (!isAdmin) {
           return new Response(
-            JSON.stringify({ error: "Booking not found" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            JSON.stringify({ error: "Only admins can process refunds" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
 

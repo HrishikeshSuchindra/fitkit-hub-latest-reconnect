@@ -793,6 +793,44 @@ export type Database = {
           },
         ]
       }
+      slot_blocks: {
+        Row: {
+          blocked_by: string
+          created_at: string | null
+          id: string
+          reason: string | null
+          slot_date: string
+          slot_time: string
+          venue_id: string
+        }
+        Insert: {
+          blocked_by: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          slot_date: string
+          slot_time: string
+          venue_id: string
+        }
+        Update: {
+          blocked_by?: string
+          created_at?: string | null
+          id?: string
+          reason?: string | null
+          slot_date?: string
+          slot_time?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slot_blocks_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stories: {
         Row: {
           caption: string | null
@@ -890,6 +928,7 @@ export type Database = {
           longitude: number | null
           name: string
           opening_time: string | null
+          owner_id: string | null
           price_per_hour: number
           rating: number | null
           reviews_count: number | null
@@ -914,6 +953,7 @@ export type Database = {
           longitude?: number | null
           name: string
           opening_time?: string | null
+          owner_id?: string | null
           price_per_hour: number
           rating?: number | null
           reviews_count?: number | null
@@ -938,6 +978,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           opening_time?: string | null
+          owner_id?: string | null
           price_per_hour?: number
           rating?: number | null
           reviews_count?: number | null
