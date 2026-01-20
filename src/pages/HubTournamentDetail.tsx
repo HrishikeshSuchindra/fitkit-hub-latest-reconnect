@@ -10,19 +10,19 @@ import { useEventById, useEventRegistration, useEventAttendees } from "@/hooks/u
 import { format } from "date-fns";
 
 const HubTournamentDetail = () => {
-  const { eventId } = useParams();
+  const { tournamentId } = useParams();
   const navigate = useNavigate();
   const [isLiked, setIsLiked] = useState(false);
 
-  const { data: event, isLoading: eventLoading } = useEventById(eventId);
-  const { data: registration } = useEventRegistration(eventId);
-  const { data: attendees = [] } = useEventAttendees(eventId);
+  const { data: event, isLoading: eventLoading } = useEventById(tournamentId);
+  const { data: registration } = useEventRegistration(tournamentId);
+  const { data: attendees = [] } = useEventAttendees(tournamentId);
 
   const isRegistered = !!registration && registration.status === "registered";
 
   const handleRegister = () => {
-    if (!eventId) return;
-    navigate(`/hub/tournament/${eventId}/register`);
+    if (!tournamentId) return;
+    navigate(`/hub/tournament/${tournamentId}/register`);
   };
 
   const formatEventTime = (startTime: string, endTime: string | null) => {
@@ -96,7 +96,7 @@ const HubTournamentDetail = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4">
           <div className="flex items-center gap-2 mb-2">
-            <Badge className="bg-amber-500 text-white border-0">
+            <Badge className="bg-primary text-primary-foreground border-0">
               <Trophy className="w-3 h-3 mr-1" />
               Tournament
             </Badge>
@@ -117,14 +117,14 @@ const HubTournamentDetail = () => {
       <div className="px-5 py-4 space-y-5">
         {/* Prize Pool Highlight */}
         {event.prize_pool && (
-          <div className="bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl p-4">
+          <div className="bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
-                <Award className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                <Award className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Prize Pool</p>
-                <p className="text-xl font-bold text-amber-600 dark:text-amber-400">{event.prize_pool}</p>
+                <p className="text-xs text-primary font-medium">Prize Pool</p>
+                <p className="text-xl font-bold text-primary">{event.prize_pool}</p>
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ const HubTournamentDetail = () => {
             {tournamentEvent.guidelines && (
               <div>
                 <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  <AlertCircle className="w-4 h-4 text-destructive" />
                   Guidelines
                 </h3>
                 <div className="text-sm text-text-secondary whitespace-pre-line">
@@ -268,11 +268,11 @@ const HubTournamentDetail = () => {
           <div className="bg-card rounded-xl shadow-soft p-4">
             <h3 className="font-bold text-foreground mb-3">Tournament Organizer</h3>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center overflow-hidden">
+              <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center overflow-hidden">
                 {(event as any).profiles.avatar_url ? (
                   <img src={(event as any).profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-white font-bold">
+                  <span className="text-primary-foreground font-bold">
                     {((event as any).profiles.display_name || "H").charAt(0).toUpperCase()}
                   </span>
                 )}
@@ -311,7 +311,7 @@ const HubTournamentDetail = () => {
             </Button>
           ) : (
             <Button 
-              className="bg-amber-500 hover:bg-amber-600 text-white px-6"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6"
               onClick={handleRegister}
             >
               <Trophy className="w-4 h-4 mr-2" />

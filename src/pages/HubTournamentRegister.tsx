@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar, Clock, MapPin, Users, Trophy, Loader2, Edit2, Minus, Plus, Ticket, User, UsersRound, BookOpen, AlertCircle } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Trophy, Loader2, Edit2, Minus, Plus, User, UsersRound, BookOpen, AlertCircle } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useEventById, useEventRegistration } from "@/hooks/useEvents";
@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 const HubTournamentRegister = () => {
-  const { eventId } = useParams();
+  const { tournamentId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [agreedToRules, setAgreedToRules] = useState(false);
@@ -26,8 +26,8 @@ const HubTournamentRegister = () => {
   const [teamMembers, setTeamMembers] = useState<string[]>([""]);
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const { data: event, isLoading } = useEventById(eventId);
-  const { data: registration } = useEventRegistration(eventId);
+  const { data: event, isLoading } = useEventById(tournamentId);
+  const { data: registration } = useEventRegistration(tournamentId);
 
   const isAlreadyRegistered = !!registration && registration.status === "registered";
 
@@ -80,7 +80,7 @@ const HubTournamentRegister = () => {
   };
 
   const handleRegister = async () => {
-    if (!eventId || !user || !event) {
+    if (!tournamentId || !user || !event) {
       toast.error("Please sign in to register");
       return;
     }
@@ -105,7 +105,7 @@ const HubTournamentRegister = () => {
       const { data: regData, error: regError } = await supabase
         .from("event_registrations")
         .insert({
-          event_id: eventId,
+          event_id: tournamentId,
           user_id: user.id,
           status: "registered",
           payment_status: event.entry_fee === 0 ? "completed" : "pending",
@@ -120,7 +120,7 @@ const HubTournamentRegister = () => {
       const { data: existingRoom } = await supabase
         .from("chat_rooms")
         .select("id")
-        .eq("event_id", eventId)
+        .eq("event_id", tournamentId)
         .maybeSingle();
 
       let chatRoomId = existingRoom?.id;
@@ -132,7 +132,7 @@ const HubTournamentRegister = () => {
           .insert({
             type: "group",
             name: `${event.title} - Tournament Chat`,
-            event_id: eventId,
+            event_id: tournamentId,
             created_by: user.id,
           })
           .select()
@@ -166,7 +166,7 @@ const HubTournamentRegister = () => {
         await supabase.functions.invoke("send-event-registration-email", {
           body: {
             userId: user.id,
-            eventId: eventId,
+            eventId: tournamentId,
             registrationId: regData.id,
             eventTitle: event.title,
             eventType: event.event_type,
@@ -179,11 +179,10 @@ const HubTournamentRegister = () => {
         });
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
-        // Don't block registration if email fails
       }
 
       // Navigate to confirmation
-      navigate(`/hub/tournament/${eventId}/confirmation`, {
+      navigate(`/hub/tournament/${tournamentId}/confirmation`, {
         state: { 
           eventData: event, 
           registrationType,
@@ -213,9 +212,10 @@ const HubTournamentRegister = () => {
       <div className="min-h-screen bg-background pb-24">
         <AppHeader />
         <div className="flex flex-col items-center justify-center h-[60vh]">
+          <Trophy className="w-12 h-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground">Tournament not found</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate(-1)}>
-            Go Back
+          <Button variant="outline" className="mt-4" onClick={() => navigate("/hub/games")}>
+            Go to Hub
           </Button>
         </div>
         <BottomNav mode="hub" />
@@ -224,7 +224,7 @@ const HubTournamentRegister = () => {
   }
 
   if (isAlreadyRegistered) {
-    navigate(`/hub/tournament/${eventId}`);
+    navigate(`/hub/tournament/${tournamentId}`);
     return null;
   }
 
@@ -242,8 +242,8 @@ const HubTournamentRegister = () => {
       <div className="px-5 py-4 space-y-5">
         {/* Header */}
         <div className="text-center">
-          <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Trophy className="w-8 h-8 text-amber-500" />
+          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
+            <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-xl font-bold text-foreground">Tournament Registration</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -262,7 +262,7 @@ const HubTournamentRegister = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                <span className="text-xs bg-amber-500 text-white px-2 py-1 rounded-full font-medium">
+                <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full font-medium">
                   Tournament
                 </span>
                 {event.prize_pool && (
@@ -275,15 +275,15 @@ const HubTournamentRegister = () => {
           )}
           <div className="p-4">
             <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h2 className="font-bold text-lg text-foreground">{event.title}</h2>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-bold text-lg text-foreground truncate">{event.title}</h2>
                 <p className="text-sm text-muted-foreground">{event.sport}</p>
               </div>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-muted-foreground"
-                onClick={() => navigate(`/hub/tournament/${eventId}`)}
+                className="text-muted-foreground flex-shrink-0"
+                onClick={() => navigate(`/hub/tournament/${tournamentId}`)}
               >
                 <Edit2 className="w-4 h-4" />
               </Button>
@@ -300,10 +300,10 @@ const HubTournamentRegister = () => {
               onValueChange={(value) => setRegistrationType(value as "individual" | "team")}
               className="grid grid-cols-2 gap-3"
             >
-              <div className={`relative flex items-center gap-3 p-4 rounded-xl border-2 transition-colors cursor-pointer ${registrationType === "individual" ? "border-amber-500 bg-amber-500/5" : "border-muted bg-muted"}`}>
+              <div className={`relative flex items-center gap-3 p-4 rounded-xl border-2 transition-colors cursor-pointer ${registrationType === "individual" ? "border-primary bg-primary/5" : "border-muted bg-muted"}`}>
                 <RadioGroupItem value="individual" id="individual" className="sr-only" />
                 <Label htmlFor="individual" className="flex items-center gap-3 cursor-pointer flex-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${registrationType === "individual" ? "bg-amber-500 text-white" : "bg-muted-foreground/20"}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${registrationType === "individual" ? "bg-primary text-primary-foreground" : "bg-muted-foreground/20"}`}>
                     <User className="w-5 h-5" />
                   </div>
                   <div>
@@ -312,10 +312,10 @@ const HubTournamentRegister = () => {
                   </div>
                 </Label>
               </div>
-              <div className={`relative flex items-center gap-3 p-4 rounded-xl border-2 transition-colors cursor-pointer ${registrationType === "team" ? "border-amber-500 bg-amber-500/5" : "border-muted bg-muted"}`}>
+              <div className={`relative flex items-center gap-3 p-4 rounded-xl border-2 transition-colors cursor-pointer ${registrationType === "team" ? "border-primary bg-primary/5" : "border-muted bg-muted"}`}>
                 <RadioGroupItem value="team" id="team" className="sr-only" />
                 <Label htmlFor="team" className="flex items-center gap-3 cursor-pointer flex-1">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${registrationType === "team" ? "bg-amber-500 text-white" : "bg-muted-foreground/20"}`}>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${registrationType === "team" ? "bg-primary text-primary-foreground" : "bg-muted-foreground/20"}`}>
                     <UsersRound className="w-5 h-5" />
                   </div>
                   <div>
@@ -332,7 +332,7 @@ const HubTournamentRegister = () => {
         {(teamType === "team" || (teamType === "both" && registrationType === "team")) && (
           <div className="bg-card rounded-xl shadow-soft p-4 space-y-4">
             <h3 className="font-semibold text-foreground flex items-center gap-2">
-              <UsersRound className="w-4 h-4 text-amber-500" />
+              <UsersRound className="w-4 h-4 text-primary" />
               Team Details
             </h3>
             
@@ -397,33 +397,33 @@ const HubTournamentRegister = () => {
           
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-amber-500" />
-              <div>
+              <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Date</p>
-                <p className="text-sm font-medium">{format(new Date(event.event_date), "EEE, MMM d")}</p>
+                <p className="text-sm font-medium truncate">{format(new Date(event.event_date), "EEE, MMM d")}</p>
               </div>
             </div>
             <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-500" />
-              <div>
+              <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+              <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">Time</p>
-                <p className="text-sm font-medium">{eventTime}</p>
+                <p className="text-sm font-medium truncate">{eventTime}</p>
               </div>
             </div>
           </div>
 
           <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-amber-500" />
-            <div className="flex-1">
+            <MapPin className="w-4 h-4 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">Location</p>
-              <p className="text-sm font-medium">{event.location}</p>
+              <p className="text-sm font-medium truncate">{event.location}</p>
             </div>
           </div>
 
           {event.max_participants && (
             <div className="bg-muted rounded-lg p-3 flex items-center gap-2">
-              <Users className="w-4 h-4 text-amber-500" />
-              <div className="flex-1">
+              <Users className="w-4 h-4 text-primary flex-shrink-0" />
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted-foreground">Availability</p>
                 <p className="text-sm font-medium">
                   {spotsLeft} spots left out of {event.max_participants}
@@ -450,10 +450,10 @@ const HubTournamentRegister = () => {
             {tournamentEvent.guidelines && (
               <div>
                 <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-amber-500" />
-                  Important Guidelines
+                  <AlertCircle className="w-4 h-4 text-destructive" />
+                  Guidelines
                 </h3>
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-sm text-foreground whitespace-pre-line max-h-40 overflow-y-auto">
+                <div className="bg-muted rounded-lg p-3 text-sm text-muted-foreground whitespace-pre-line max-h-40 overflow-y-auto">
                   {tournamentEvent.guidelines}
                 </div>
               </div>
@@ -468,10 +468,10 @@ const HubTournamentRegister = () => {
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
-                Entry Fee {registrationType === "team" ? `× ${ticketCount} players` : ""}
+                Entry Fee × {ticketCount} {ticketCount === 1 ? "entry" : "entries"}
               </span>
               <span className="font-medium">
-                {event.entry_fee > 0 ? `₹${event.entry_fee}${registrationType === "team" ? ` × ${ticketCount}` : ""}` : "Free"}
+                {event.entry_fee > 0 ? `₹${event.entry_fee} × ${ticketCount}` : "Free"}
               </span>
             </div>
             {event.entry_fee > 0 && (
@@ -483,7 +483,7 @@ const HubTournamentRegister = () => {
                 <div className="border-t border-divider pt-3">
                   <div className="flex justify-between">
                     <span className="font-semibold text-foreground">Total</span>
-                    <span className="font-bold text-lg text-amber-500">₹{totalAmount}</span>
+                    <span className="font-bold text-lg text-primary">₹{totalAmount}</span>
                   </div>
                 </div>
               </>
@@ -502,7 +502,7 @@ const HubTournamentRegister = () => {
               onCheckedChange={(checked) => setAgreedToRules(checked as boolean)}
             />
             <label htmlFor="rules" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-              I have read and agree to follow the <span className="text-primary font-medium">tournament rules</span> and accept any decisions made by the organizers.
+              I have read and agree to the <span className="text-primary underline">tournament rules</span> and regulations.
             </label>
           </div>
 
@@ -513,7 +513,8 @@ const HubTournamentRegister = () => {
               onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
             />
             <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-              I agree to the <span className="text-primary font-medium">terms of service</span> and understand the tournament format and schedule.
+              I agree to the <span className="text-primary underline">terms of service</span>. 
+              I understand that the organizer reserves the right to modify or cancel the tournament.
             </label>
           </div>
 
@@ -525,7 +526,8 @@ const HubTournamentRegister = () => {
                 onCheckedChange={(checked) => setAgreedToRefund(checked as boolean)}
               />
               <label htmlFor="refund" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                I understand the <span className="text-primary font-medium">refund policy</span>. Cancellations made 48+ hours before the tournament are eligible for a full refund.
+                I understand the <span className="text-primary underline">refund policy</span>. 
+                Cancellations made 48+ hours before the tournament are eligible for a full refund.
               </label>
             </div>
           )}
@@ -539,12 +541,12 @@ const HubTournamentRegister = () => {
             <p className="text-xs text-muted-foreground">
               {registrationType === "team" ? `Team of ${ticketCount}` : "Individual entry"}
             </p>
-            <p className="text-xl font-bold text-amber-500">
+            <p className="text-xl font-bold text-primary">
               {totalAmount > 0 ? `₹${totalAmount}` : "Free"}
             </p>
           </div>
           <Button
-            className="bg-amber-500 hover:bg-amber-600 text-white px-8"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground px-8"
             onClick={handleRegister}
             disabled={!canProceed || isRegistering}
           >
