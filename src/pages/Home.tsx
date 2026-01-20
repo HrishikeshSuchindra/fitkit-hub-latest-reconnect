@@ -3,14 +3,13 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { PageTransition } from "@/components/PageTransition";
-import { ChevronRight, MapPin, Calendar, Trophy, Clock, Dumbbell, CheckCircle2 } from "lucide-react";
+import { OffersCarousel } from "@/components/OffersCarousel";
+import { ChevronRight, Dumbbell } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
-import promoGreen from "@/assets/promo-green-bg.jpg";
-import promoPurple from "@/assets/promo-purple-bg.jpg";
 import eventBadminton from "@/assets/event-badminton-championship.jpg";
 import eventFootball from "@/assets/event-football-league.jpg";
 import { useVenues, getVenueImageUrl } from "@/hooks/useVenues";
@@ -150,44 +149,8 @@ const Home = () => {
         {/* Search */}
         <SearchBar context="master" />
         
-        {/* Special Offers */}
-        <section>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {/* Green Promo */}
-            <div 
-              className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden cursor-pointer"
-              style={{ backgroundImage: `url(${promoGreen})`, backgroundSize: 'cover' }}
-              onClick={() => navigate('/venues/courts')}
-            >
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-1">20% OFF</h3>
-                <p className="text-sm opacity-90">First booking discount</p>
-              </div>
-              <button className="relative z-10 self-start px-5 py-2 bg-white text-brand-green rounded-lg font-semibold text-sm">
-                Claim Now
-              </button>
-            </div>
-            
-            {/* Purple Promo */}
-            <div 
-              className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden cursor-pointer"
-              style={{ backgroundImage: `url(${promoPurple})`, backgroundSize: 'cover' }}
-              onClick={() => navigate('/venues/recovery')}
-            >
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-1">Premium Access</h3>
-                <p className="text-sm opacity-90">Unlock all venues</p>
-              </div>
-              <button className="relative z-10 self-start px-5 py-2 bg-white text-chip-purple-text rounded-lg font-semibold text-sm">
-                Book Now
-              </button>
-            </div>
-          </div>
-          <div className="flex justify-center gap-1.5 mt-3">
-            <div className="w-2 h-2 rounded-full bg-brand-green"></div>
-            <div className="w-2 h-2 rounded-full bg-divider"></div>
-          </div>
-        </section>
+        {/* Special Offers - Auto-scrolling Carousel */}
+        <OffersCarousel />
         
         {/* Nearby Venues */}
         <section>
