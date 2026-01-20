@@ -1,3 +1,4 @@
+import React from "react";
 import { Home, MapPin, Calendar, Users, ArrowLeft, Heart, Laptop, MessageCircle, Globe, Flower2, Gamepad2, Coffee, PartyPopper } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { CourtsIcon } from "./icons/CourtsIcon";
@@ -27,7 +28,6 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
   const socialNav = [
     { to: "/", label: "Home", icon: Home },
     { to: "/social", label: "Events", icon: PartyPopper },
-    { to: "/social/chat", label: "Chat", icon: MessageCircle },
     { to: "/social/host", label: "Host", icon: Coffee },
   ];
 
@@ -60,9 +60,8 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
           const isCustomIcon = 'isCustom' in item && item.isCustom;
           
           return (
-            <>
+            <React.Fragment key={item.to}>
               <NavLink
-                key={item.to}
                 to={item.to}
                 end={item.to === "/" || item.to === getDefaultRoute()}
                 className="flex flex-col items-center justify-center gap-1 py-2 px-4 rounded-xl transition-all duration-200 active:scale-[0.97]"
@@ -85,7 +84,7 @@ export const BottomNav = ({ mode }: BottomNavProps) => {
               {mode !== "home" && index === 0 && (
                 <div className="h-10 w-px bg-divider mx-1" />
               )}
-            </>
+            </React.Fragment>
           );
         })}
       </div>
