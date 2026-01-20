@@ -50,13 +50,16 @@ const Social = () => {
   const [expandedCategory, setExpandedCategory] = useState<string | null>("fitdates");
   const { data: events, isLoading } = useEventsWithHost(activeTab);
 
-  // Group events by event_type
+  // Group events by event_type - EXCLUDE tournaments (they go to Hub)
   const eventCategories = useMemo(() => {
     if (!events || events.length === 0) return [];
 
+    // Filter out tournaments - they belong in Hub section
+    const socialEvents = events.filter(event => event.event_type !== "tournament");
+    
     const grouped: Record<string, (EventWithHost | Event)[]> = {};
     
-    events.forEach((event) => {
+    socialEvents.forEach((event) => {
       const category = event.event_type || "other";
       if (!grouped[category]) {
         grouped[category] = [];
