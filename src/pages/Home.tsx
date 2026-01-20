@@ -3,6 +3,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
 import { PageTransition } from "@/components/PageTransition";
+import { StoriesBar } from "@/components/stories/StoriesBar";
 import { ChevronRight, MapPin, Calendar, Trophy, Clock, Dumbbell, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -150,6 +151,10 @@ const Home = () => {
         {/* Search */}
         <SearchBar context="master" />
         
+        {/* Stories */}
+        <section className="-mx-5">
+          <StoriesBar />
+        </section>
         {/* Special Offers */}
         <section>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
