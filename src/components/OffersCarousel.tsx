@@ -42,85 +42,151 @@ const offers: OfferSlide[] = [
     buttonClass: "text-brand-green",
     route: "/venues/courts",
   },
+  {
+    id: 3,
+    image: promoPurple,
+    title: "Refer & Earn",
+    subtitle: "Get ₹200 for every friend",
+    buttonText: "Share Now",
+    buttonClass: "text-chip-purple-text",
+    route: "/social",
+  },
+  {
+    id: 4,
+    image: promoGreen,
+    title: "Recovery Zone",
+    subtitle: "Spa & wellness packages",
+    buttonText: "Discover",
+    buttonClass: "text-brand-green",
+    route: "/venues/recovery",
+  },
 ];
 
 export function OffersCarousel() {
   const navigate = useNavigate();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const autoScrollRef = useRef<NodeJS.Timeout | null>(null);
-  const isUserScrolling = useRef(false);
+  const autoScrollIntervalRef = useRef<number | null>(null);
+  const isManualScrolling = useRef(false);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   const totalSlides = offers.length;
 
-  // Auto-scroll functionality
-  const startAutoScroll = useCallback(() => {
-    if (autoScrollRef.current) {
-      clearInterval(autoScrollRef.current);
-    }
-    autoScrollRef.current = setInterval(() => {
-      if (!isUserScrolling.current) {
-        setActiveIndex((prev) => (prev + 1) % totalSlides);
-      }
-    }, 4000); // 4 seconds per slide
-  }, [totalSlides]);
+  // Scroll to specific index
+  const scrollToIndex = useCallback((index: number) => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const slideWidth = container.firstElementChild?.clientWidth || 0;
+    const gap = 12; // gap-3 = 12px
+    const scrollPosition = index * (slideWidth + gap);
+    
+    container.scrollTo({
+      left: scrollPosition,
+      behavior: "smooth",
+    });
+  }, []);
 
+  // Start auto-scroll
+  const startAutoScroll = useCallback(() => {
+    if (autoScrollIntervalRef.current) {
+      window.clearInterval(autoScrollIntervalRef.current);
+    }
+    
+    autoScrollIntervalRef.current = window.setInterval(() => {
+      if (!isManualScrolling.current) {
+        setActiveIndex((prev) => {
+          const nextIndex = (prev + 1) % totalSlides;
+          scrollToIndex(nextIndex);
+          return nextIndex;
+        });
+      }
+    }, 4000);
+  }, [totalSlides, scrollToIndex]);
+
+  // Stop auto-scroll
   const stopAutoScroll = useCallback(() => {
-    if (autoScrollRef.current) {
-      clearInterval(autoScrollRef.current);
-      autoScrollRef.current = null;
+    if (autoScrollIntervalRef.current) {
+      window.clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
     }
   }, []);
 
-  // Scroll to active index
-  useEffect(() => {
-    if (scrollRef.current && !isUserScrolling.current) {
-      const slideWidth = scrollRef.current.scrollWidth / totalSlides;
-      scrollRef.current.scrollTo({
-        left: slideWidth * activeIndex,
-        behavior: "smooth",
-      });
-    }
-  }, [activeIndex, totalSlides]);
-
-  // Start auto-scroll on mount
+  // Initialize auto-scroll on mount
   useEffect(() => {
     startAutoScroll();
-    return () => stopAutoScroll();
+    return () => {
+      stopAutoScroll();
+      if (scrollTimeoutRef.current) {
+        window.clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, [startAutoScroll, stopAutoScroll]);
 
-  // Handle scroll events to sync indicators
+  // Handle scroll events to detect current slide
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
     
-    const scrollLeft = scrollRef.current.scrollLeft;
-    const slideWidth = scrollRef.current.scrollWidth / totalSlides;
-    const newIndex = Math.round(scrollLeft / slideWidth);
+    const container = scrollRef.current;
+    const slideWidth = container.firstElementChild?.clientWidth || 0;
+    const gap = 12;
+    const scrollLeft = container.scrollLeft;
+    const newIndex = Math.round(scrollLeft / (slideWidth + gap));
     
     if (newIndex !== activeIndex && newIndex >= 0 && newIndex < totalSlides) {
       setActiveIndex(newIndex);
     }
   }, [activeIndex, totalSlides]);
 
-  // Handle touch/mouse interactions
-  const handleInteractionStart = () => {
-    isUserScrolling.current = true;
+  // Handle touch/interaction start
+  const handleInteractionStart = useCallback(() => {
+    isManualScrolling.current = true;
     stopAutoScroll();
-  };
+    
+    if (scrollTimeoutRef.current) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+  }, [stopAutoScroll]);
 
-  const handleInteractionEnd = () => {
-    // Delay to allow scroll to settle
-    setTimeout(() => {
-      isUserScrolling.current = false;
+  // Handle touch/interaction end
+  const handleInteractionEnd = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      window.clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      isManualScrolling.current = false;
       startAutoScroll();
-    }, 100);
+    }, 500);
+  }, [startAutoScroll]);
+
+  // Click on indicator
+  const handleIndicatorClick = useCallback((index: number) => {
+    setActiveIndex(index);
+    scrollToIndex(index);
+    
+    // Reset auto-scroll timer
+    stopAutoScroll();
+    isManualScrolling.current = false;
+    startAutoScroll();
+  }, [scrollToIndex, stopAutoScroll, startAutoScroll]);
+
+  // Calculate which 3 indicators to show (centered on active)
+  const getVisibleIndicators = () => {
+    const indicators: number[] = [];
+    
+    // Always show 3 indicators centered around active
+    for (let i = -1; i <= 1; i++) {
+      let idx = activeIndex + i;
+      // Wrap around
+      if (idx < 0) idx = totalSlides + idx;
+      if (idx >= totalSlides) idx = idx - totalSlides;
+      indicators.push(idx);
+    }
+    
+    return indicators;
   };
 
-  // Click on indicator to navigate
-  const handleIndicatorClick = (index: number) => {
-    setActiveIndex(index);
-    isUserScrolling.current = false;
-  };
+  const visibleIndicators = getVisibleIndicators();
 
   return (
     <section>
@@ -138,7 +204,7 @@ export function OffersCarousel() {
         {offers.map((offer) => (
           <div
             key={offer.id}
-            className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden cursor-pointer snap-center"
+            className="min-w-[85%] h-56 rounded-2xl p-5 flex flex-col justify-between text-white relative overflow-hidden cursor-pointer snap-center flex-shrink-0"
             style={{
               backgroundImage: `url(${offer.image})`,
               backgroundSize: "cover",
@@ -161,40 +227,25 @@ export function OffersCarousel() {
         ))}
       </div>
 
-      {/* Bubble Indicators */}
+      {/* Bubble Indicators - Always show 3 */}
       <div className="flex justify-center items-center gap-2 mt-3">
-        {offers.map((_, index) => {
-          // Calculate distance from active index for diminishing effect
-          const distance = Math.abs(index - activeIndex);
+        {visibleIndicators.map((indicatorIndex, position) => {
+          const isActive = indicatorIndex === activeIndex;
+          const isSide = position === 0 || position === 2;
           
-          // Determine size and opacity based on distance
-          let sizeClass = "w-2 h-2";
-          let opacityClass = "opacity-100";
-          
-          if (distance === 0) {
-            sizeClass = "w-2.5 h-2.5";
-            opacityClass = "opacity-100";
-          } else if (distance === 1) {
-            sizeClass = "w-2 h-2";
-            opacityClass = "opacity-60";
-          } else {
-            sizeClass = "w-1.5 h-1.5";
-            opacityClass = "opacity-30";
-          }
-
           return (
             <button
-              key={index}
-              onClick={() => handleIndicatorClick(index)}
+              key={`indicator-${indicatorIndex}-${position}`}
+              onClick={() => handleIndicatorClick(indicatorIndex)}
               className={cn(
                 "rounded-full transition-all duration-300 ease-out",
-                sizeClass,
-                opacityClass,
-                index === activeIndex
-                  ? "bg-primary scale-110"
-                  : "bg-muted-foreground/50"
+                isActive
+                  ? "w-2.5 h-2.5 bg-primary"
+                  : isSide
+                  ? "w-1.5 h-1.5 bg-muted-foreground/40"
+                  : "w-2 h-2 bg-muted-foreground/60"
               )}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={`Go to slide ${indicatorIndex + 1}`}
             />
           );
         })}
