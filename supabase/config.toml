@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.admin-slot-blocks]
 verify_jwt = false
+
+[functions.seed-venue-images]
+verify_jwt = false
