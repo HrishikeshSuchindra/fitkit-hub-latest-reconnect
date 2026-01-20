@@ -103,6 +103,54 @@ export const useUpcomingEvents = () => {
   });
 };
 
+// Fetch all upcoming events with host profile info
+export const useEventsWithHost = (filter: "upcoming" | "past" = "upcoming") => {
+  return useQuery({
+    queryKey: ["events-with-host", filter],
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      
+      let query = supabase
+        .from("events")
+        .select(`
+          *,
+          profiles!events_host_id_fkey (
+            display_name,
+            username,
+            avatar_url
+          )
+        `)
+        .neq("status", "cancelled");
+
+      if (filter === "upcoming") {
+        query = query.gte("event_date", today);
+      } else {
+        query = query.lt("event_date", today);
+      }
+
+      const { data, error } = await query
+        .order("event_date", { ascending: filter === "upcoming" })
+        .order("start_time", { ascending: true });
+
+      if (error) {
+        // If join fails, fetch without host info
+        const { data: eventsOnly, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .neq("status", "cancelled")
+          .gte("event_date", filter === "upcoming" ? today : "1970-01-01")
+          .lt("event_date", filter === "past" ? today : "2100-01-01")
+          .order("event_date", { ascending: filter === "upcoming" });
+        
+        if (eventsError) throw eventsError;
+        return eventsOnly as Event[];
+      }
+      
+      return data as unknown as EventWithHost[];
+    },
+  });
+};
+
 // Check if user is registered for an event
 export const useEventRegistration = (eventId: string | undefined) => {
   const { user } = useAuth();
