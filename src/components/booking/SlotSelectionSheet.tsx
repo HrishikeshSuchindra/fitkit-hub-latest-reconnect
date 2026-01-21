@@ -5,18 +5,29 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Users, Globe, Lock, Minus, Plus, Calendar } from "lucide-react";
 import { format, addDays } from "date-fns";
-import SlotCard, { SlotData } from "./SlotCard";
-import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
+import SlotCard from "./SlotCard";
+import { generateVenueSlots } from "@/utils/slotGenerator";
 import { useSlotAvailability } from "@/hooks/useBookings";
+
+interface VenueData {
+  id: string;
+  name: string;
+  price: number;
+  opening_time?: string | null;
+  closing_time?: string | null;
+  total_courts?: number | null;
+  min_booking_duration?: number | null;
+  peak_price?: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  peak_hours?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  day_schedules?: any;
+}
 
 interface SlotSelectionSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  venue: {
-    id: string;
-    name: string;
-    price: number;
-  };
+  venue: VenueData;
   selectedSlots: string[];
   setSelectedSlots: (slots: string[]) => void;
   selectedDate: Date;
@@ -49,9 +60,9 @@ const SlotSelectionSheet = ({
   // Fetch real availability data from database (includes blocked slots)
   const { data: bookedCounts, blockedSlots } = useSlotAvailability(venue.id, selectedDate);
 
-  // Generate slots using the slot generator with real availability
+  // Generate slots using venue data from database with real availability
   const allSlots = useMemo(() => {
-    const slots = generateTimeSlots(defaultTurfConfig, bookedCounts);
+    const slots = generateVenueSlots(venue, selectedDate, bookedCounts || undefined);
     
     // Mark blocked slots as unavailable
     return slots.map(slot => {
@@ -65,7 +76,7 @@ const SlotSelectionSheet = ({
       }
       return slot;
     });
-  }, [selectedDate, bookedCounts, blockedSlots]);
+  }, [venue, selectedDate, bookedCounts, blockedSlots]);
 
   // Filter slots based on toggle
   const displayedSlots = useMemo(() => {

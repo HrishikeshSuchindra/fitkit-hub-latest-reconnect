@@ -5,11 +5,11 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, MapPin, Navigation, Phone, Heart, Share2, CheckCircle } from "lucide-react";
+import { Star, MapPin, Navigation, Phone, Heart, Share2, CheckCircle, Globe, Instagram } from "lucide-react";
 import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
-import { generateTimeSlots, defaultTurfConfig } from "@/utils/slotGenerator";
+import { generateVenueSlots } from "@/utils/slotGenerator";
 import { useVenueById, getVenueImageUrl } from "@/hooks/useVenues";
-
+import { toast } from "sonner";
 const VenueDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,10 +43,11 @@ const VenueDetail = () => {
     }
   }, [shouldOpenSlots, returnState?.returnFromPreview]);
 
-  // Generate slots to get pricing info
+  // Generate slots using venue data from database
   const allSlots = useMemo(() => {
-    return generateTimeSlots(defaultTurfConfig);
-  }, [selectedDate]);
+    if (!venue) return [];
+    return generateVenueSlots(venue, selectedDate);
+  }, [venue, selectedDate]);
 
   // Helper to format time for display
   const formatTime = (time: string) => {
@@ -62,6 +63,42 @@ const VenueDetail = () => {
     selectedSlots.includes(slot.start_time)
   );
 
+  // Action handlers
+  const handleOpenDirections = () => {
+    if (venue?.latitude && venue?.longitude) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+        '_blank'
+      );
+    } else if (venue?.address) {
+      window.open(
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address + ', ' + venue.city)}`,
+        '_blank'
+      );
+    }
+  };
+
+  const handleCall = () => {
+    if (venue?.phone_number) {
+      window.location.href = `tel:${venue.phone_number}`;
+    } else {
+      toast.error("Phone number not available for this venue");
+    }
+  };
+
+  const handleOpenInstagram = () => {
+    if (venue?.instagram_handle) {
+      const handle = venue.instagram_handle.replace('@', '');
+      window.open(`https://instagram.com/${handle}`, '_blank');
+    }
+  };
+
+  const handleOpenWebsite = () => {
+    if (venue?.website_url) {
+      window.open(venue.website_url, '_blank');
+    }
+  };
+
   const handleProceed = () => {
     if (selectedSlots.length === 0 || !venue) return;
     
@@ -72,15 +109,16 @@ const VenueDetail = () => {
       name: venue.name,
       image: getVenueImageUrl(venue.image_url),
       rating: venue.rating || 0,
-      distance: "1.5 km",
       amenities: venue.amenities || [],
       price: venue.price_per_hour,
       verified: true,
       timing: `Today - ${venue.opening_time} – ${venue.closing_time}`,
-      lastSlot: `Last slot available`,
-      phone: "+91 9874563125",
+      phone: venue.phone_number,
       address: venue.address,
-      instagram: "@" + venue.slug,
+      city: venue.city,
+      instagram: venue.instagram_handle,
+      website: venue.website_url,
+      sport: venue.sport,
     };
     
     const bookingData = {
@@ -135,17 +173,14 @@ const VenueDetail = () => {
   const venueForSheet = {
     id: venue.id,
     name: venue.name,
-    image: getVenueImageUrl(venue.image_url),
-    rating: venue.rating || 0,
-    distance: "1.5 km",
-    amenities: venue.amenities || [],
     price: venue.price_per_hour,
-    verified: true,
-    timing: `Today - ${venue.opening_time} – ${venue.closing_time}`,
-    lastSlot: `Last slot available`,
-    phone: "+91 9874563125",
-    address: venue.address,
-    instagram: "@" + venue.slug,
+    opening_time: venue.opening_time,
+    closing_time: venue.closing_time,
+    total_courts: venue.total_courts,
+    min_booking_duration: venue.min_booking_duration,
+    peak_price: venue.peak_price,
+    peak_hours: venue.peak_hours,
+    day_schedules: venue.day_schedules,
   };
 
   return (
@@ -204,13 +239,19 @@ const VenueDetail = () => {
 
           {/* Action Buttons */}
           <div className="grid grid-cols-4 gap-3 py-3">
-            <button className="flex flex-col items-center gap-1 text-text-secondary">
+            <button 
+              onClick={handleOpenDirections}
+              className="flex flex-col items-center gap-1 text-text-secondary"
+            >
               <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center">
                 <Navigation className="w-5 h-5" />
               </div>
               <span className="text-xs">Direction</span>
             </button>
-            <button className="flex flex-col items-center gap-1 text-text-secondary">
+            <button 
+              onClick={handleCall}
+              className="flex flex-col items-center gap-1 text-text-secondary"
+            >
               <div className="w-12 h-12 rounded-full border border-border flex items-center justify-center">
                 <Phone className="w-5 h-5" />
               </div>
@@ -248,7 +289,7 @@ const VenueDetail = () => {
                     {formatTime(slot.start_time)} | {slot.duration_minutes} mins
                   </p>
                   <p className="text-primary/70 text-xs mt-0.5">
-                    {slot.available_courts}/{slot.total_courts} courts • ₹{slot.price}
+                    1 court booked • ₹{slot.price}
                   </p>
                 </div>
               ))}
@@ -262,38 +303,64 @@ const VenueDetail = () => {
             <CheckCircle className="w-5 h-5 text-brand-green flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">Today - {venue.opening_time} – {venue.closing_time}</p>
-              <p className="text-sm text-text-secondary">Last slot available</p>
+              <p className="text-sm text-text-secondary capitalize">{venue.sport} • {venue.total_courts || 1} court(s)</p>
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Phone className="w-5 h-5 text-text-secondary" />
-              <span className="text-foreground">+91 9874563125</span>
-            </div>
-            <span className="text-brand-green font-medium">Call</span>
-          </div>
+          {venue.phone_number && (
+            <button 
+              onClick={handleCall}
+              className="flex items-center justify-between w-full"
+            >
+              <div className="flex items-center gap-3">
+                <Phone className="w-5 h-5 text-text-secondary" />
+                <span className="text-foreground">{venue.phone_number}</span>
+              </div>
+              <span className="text-brand-green font-medium">Call</span>
+            </button>
+          )}
           
-          <div className="flex items-center justify-between">
+          <button 
+            onClick={handleOpenDirections}
+            className="flex items-center justify-between w-full"
+          >
             <div className="flex items-center gap-3">
               <MapPin className="w-5 h-5 text-text-secondary" />
-              <span className="text-foreground">{venue.address}</span>
+              <span className="text-foreground truncate max-w-[200px]">{venue.address}</span>
             </div>
             <span className="text-brand-green font-medium">View on map</span>
-          </div>
+          </button>
           
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-5 h-5 text-text-secondary text-center">@</span>
-              <span className="text-foreground">@{venue.slug}</span>
-            </div>
-            <span className="text-brand-green font-medium">Open</span>
-          </div>
+          {venue.instagram_handle && (
+            <button 
+              onClick={handleOpenInstagram}
+              className="flex items-center justify-between w-full"
+            >
+              <div className="flex items-center gap-3">
+                <Instagram className="w-5 h-5 text-text-secondary" />
+                <span className="text-foreground">@{venue.instagram_handle.replace('@', '')}</span>
+              </div>
+              <span className="text-brand-green font-medium">Open</span>
+            </button>
+          )}
+
+          {venue.website_url && (
+            <button 
+              onClick={handleOpenWebsite}
+              className="flex items-center justify-between w-full"
+            >
+              <div className="flex items-center gap-3">
+                <Globe className="w-5 h-5 text-text-secondary" />
+                <span className="text-foreground truncate max-w-[200px]">{venue.website_url.replace(/^https?:\/\//, '')}</span>
+              </div>
+              <span className="text-brand-green font-medium">Visit</span>
+            </button>
+          )}
           
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="w-5 h-5 text-text-secondary text-center">₹</span>
-              <span className="text-foreground">Amount</span>
+              <span className="text-foreground">Price per hour</span>
             </div>
             <span className="text-brand-green font-medium">₹{venue.price_per_hour}/hr</span>
           </div>

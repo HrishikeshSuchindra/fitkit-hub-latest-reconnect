@@ -924,17 +924,25 @@ export type Database = {
           category: string
           city: string
           closing_time: string | null
+          country: string | null
           created_at: string
+          day_schedules: Json | null
           description: string | null
           gallery_urls: string[] | null
           id: string
           image_url: string | null
+          instagram_handle: string | null
           is_active: boolean | null
           latitude: number | null
           longitude: number | null
+          min_booking_duration: number | null
           name: string
           opening_time: string | null
           owner_id: string | null
+          peak_hours: Json | null
+          peak_price: number | null
+          phone_number: string | null
+          postal_code: string | null
           price_per_hour: number
           rating: number | null
           reviews_count: number | null
@@ -942,6 +950,7 @@ export type Database = {
           sport: string
           total_courts: number | null
           updated_at: string
+          website_url: string | null
         }
         Insert: {
           address: string
@@ -949,17 +958,25 @@ export type Database = {
           category?: string
           city: string
           closing_time?: string | null
+          country?: string | null
           created_at?: string
+          day_schedules?: Json | null
           description?: string | null
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
+          instagram_handle?: string | null
           is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          min_booking_duration?: number | null
           name: string
           opening_time?: string | null
           owner_id?: string | null
+          peak_hours?: Json | null
+          peak_price?: number | null
+          phone_number?: string | null
+          postal_code?: string | null
           price_per_hour: number
           rating?: number | null
           reviews_count?: number | null
@@ -967,6 +984,7 @@ export type Database = {
           sport: string
           total_courts?: number | null
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
           address?: string
@@ -974,17 +992,25 @@ export type Database = {
           category?: string
           city?: string
           closing_time?: string | null
+          country?: string | null
           created_at?: string
+          day_schedules?: Json | null
           description?: string | null
           gallery_urls?: string[] | null
           id?: string
           image_url?: string | null
+          instagram_handle?: string | null
           is_active?: boolean | null
           latitude?: number | null
           longitude?: number | null
+          min_booking_duration?: number | null
           name?: string
           opening_time?: string | null
           owner_id?: string | null
+          peak_hours?: Json | null
+          peak_price?: number | null
+          phone_number?: string | null
+          postal_code?: string | null
           price_per_hour?: number
           rating?: number | null
           reviews_count?: number | null
@@ -992,6 +1018,7 @@ export type Database = {
           sport?: string
           total_courts?: number | null
           updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }

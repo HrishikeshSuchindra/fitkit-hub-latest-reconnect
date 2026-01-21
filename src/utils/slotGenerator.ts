@@ -1,4 +1,5 @@
 import { SlotData } from "@/components/booking/SlotCard";
+import { format } from "date-fns";
 
 interface TurfConfig {
   open_time: string; // "07:00"
@@ -9,6 +10,20 @@ interface TurfConfig {
   base_price: number;
   peak_price?: number;
   peak_hours?: { start: number; end: number }[];
+}
+
+interface VenueData {
+  opening_time?: string | null;
+  closing_time?: string | null;
+  total_courts?: number | null;
+  price_per_hour?: number | null;
+  price?: number | null;
+  min_booking_duration?: number | null;
+  peak_price?: number | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  peak_hours?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  day_schedules?: any;
 }
 
 // Parse time string to minutes from midnight
@@ -25,7 +40,7 @@ const minutesToTime = (minutes: number): string => {
 };
 
 // Check if a time is in peak hours
-const isPeakHour = (hour: number, peakHours?: { start: number; end: number }[]): boolean => {
+const isPeakHour = (hour: number, peakHours?: { start: number; end: number }[] | null): boolean => {
   if (!peakHours) return false;
   return peakHours.some(peak => hour >= peak.start && hour < peak.end);
 };
@@ -110,7 +125,40 @@ export const generateTimeSlots = (
   return slots;
 };
 
-// Default turf configuration
+// Generate slots using venue data from database
+export const generateVenueSlots = (
+  venue: VenueData,
+  selectedDate: Date,
+  bookedCounts?: Record<string, number>
+): SlotData[] => {
+  // Check if venue is open on this day using day_schedules
+  const dayKey = format(selectedDate, 'EEE').toLowerCase();
+  const daySchedules = venue.day_schedules as Record<string, { enabled: boolean; open: string; close: string }> | null | undefined;
+  const daySchedule = daySchedules?.[dayKey];
+  
+  // If day_schedules exists and this day is disabled, return empty
+  if (daySchedule && !daySchedule.enabled) {
+    return [];
+  }
+  
+  // Parse peak_hours if it's a valid array
+  const peakHours = Array.isArray(venue.peak_hours) ? venue.peak_hours as { start: number; end: number }[] : undefined;
+  
+  // Build config from venue data
+  const config: TurfConfig = {
+    open_time: daySchedule?.open || venue.opening_time || "06:00",
+    close_time: daySchedule?.close || venue.closing_time || "22:00",
+    slot_duration: venue.min_booking_duration || 30,
+    total_courts: venue.total_courts || 1,
+    base_price: venue.price_per_hour || venue.price || 500,
+    peak_price: venue.peak_price || undefined,
+    peak_hours: peakHours,
+  };
+  
+  return generateTimeSlots(config, bookedCounts);
+};
+
+// Default turf configuration (kept for backwards compatibility)
 export const defaultTurfConfig: TurfConfig = {
   open_time: "07:00",
   close_time: "19:00",
@@ -124,7 +172,7 @@ export const defaultTurfConfig: TurfConfig = {
   ]
 };
 
-// Preset configurations for different venues
+// Preset configurations for different venues (kept for backwards compatibility)
 export const venueConfigs: Record<string, TurfConfig> = {
   football: {
     open_time: "06:00",

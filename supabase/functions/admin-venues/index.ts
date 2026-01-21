@@ -166,7 +166,17 @@ serve(async (req) => {
           opening_time: venueData.opening_time || "06:00",
           closing_time: venueData.closing_time || "22:00",
           is_active: venueData.is_active !== false,
-          owner_id: ownerId
+          owner_id: ownerId,
+          // New fields for complete venue management
+          phone_number: venueData.phone_number,
+          website_url: venueData.website_url,
+          instagram_handle: venueData.instagram_handle,
+          postal_code: venueData.postal_code,
+          country: venueData.country || "India",
+          min_booking_duration: venueData.min_booking_duration || 30,
+          peak_price: venueData.peak_price,
+          peak_hours: venueData.peak_hours || [],
+          day_schedules: venueData.day_schedules,
         })
         .select()
         .single();
