@@ -193,7 +193,7 @@ serve(async (req) => {
           );
         }
 
-        // Send notification to user
+        // Send in-app notification to user
         await supabase.from("notifications").insert({
           user_id: booking.user_id,
           type: "booking_cancelled",
@@ -206,10 +206,29 @@ serve(async (req) => {
           }
         });
 
+        // Send push notification
+        try {
+          await supabase.functions.invoke("send-push-notification", {
+            body: {
+              user_id: booking.user_id,
+              title: "Booking Cancelled",
+              body: `Your booking at ${booking.venue_name} on ${booking.slot_date} at ${booking.slot_time} has been cancelled by the venue.`,
+              data: {
+                type: "booking_cancelled",
+                bookingId: booking.id
+              }
+            }
+          });
+          console.log("Push notification sent for cancelled booking:", bookingId);
+        } catch (pushError) {
+          // Log but don't fail the cancellation
+          console.error("Push notification failed:", pushError);
+        }
+
         await logAdminAction(auth.userId!, "booking_cancelled", "booking", bookingId, { reason });
 
         return new Response(
-          JSON.stringify({ success: true, message: "Booking cancelled" }),
+          JSON.stringify({ success: true, message: "Booking cancelled and user notified" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
