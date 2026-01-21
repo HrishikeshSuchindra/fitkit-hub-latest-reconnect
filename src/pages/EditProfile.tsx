@@ -46,10 +46,15 @@ const EditProfile = () => {
       setUsername(profile.username || "");
       setBio(profile.bio || "");
       setAvatarUrl(profile.avatar_url || "");
+      // Use profile phone_number first, fall back to auth phone
+      setPhone((profile as any).phone_number || user?.phone || "");
     }
     if (user) {
       setEmail(user.email || "");
-      setPhone(user.phone || "");
+      // Only set phone from user if profile doesn't have it
+      if (!profile || !(profile as any).phone_number) {
+        setPhone(user.phone || "");
+      }
     }
   }, [profile, user]);
 
@@ -90,7 +95,7 @@ const EditProfile = () => {
     setSaving(true);
 
     try {
-      // Update profile
+      // Update profile including phone_number for admin access
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -98,12 +103,13 @@ const EditProfile = () => {
           username: username,
           bio: bio,
           avatar_url: avatarUrl,
+          phone_number: phone || null, // Store phone in profiles for admin access
         })
         .eq('user_id', user.id);
 
       if (profileError) throw profileError;
 
-      // Update email if changed
+      // Update email in auth if changed
       if (email && email !== user.email) {
         const { error: emailError } = await supabase.auth.updateUser({ email });
         if (emailError) {
@@ -113,11 +119,12 @@ const EditProfile = () => {
         }
       }
 
-      // Update phone if changed
+      // Update phone in auth if changed (for OTP login)
       if (phone && phone !== user.phone) {
         const { error: phoneError } = await supabase.auth.updateUser({ phone });
         if (phoneError) {
-          toast.error("Failed to update phone: " + phoneError.message);
+          // Don't show error for phone - profiles update is sufficient
+          console.log("Auth phone update skipped:", phoneError.message);
         }
       }
 

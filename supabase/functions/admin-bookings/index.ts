@@ -115,11 +115,11 @@ serve(async (req) => {
         );
       }
 
-      // Get user profiles for bookings
+      // Get user profiles for bookings (include phone_number for admin contact)
       const userIds = [...new Set(bookings?.map(b => b.user_id) || [])];
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, username, avatar_url")
+        .select("user_id, display_name, username, avatar_url, phone_number")
         .in("user_id", userIds);
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);

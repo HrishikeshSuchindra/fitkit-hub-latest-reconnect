@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Camera, Upload, Image as ImageIcon, Check, X, Loader2 } from "lucide-react";
+import { Camera, Upload, Image as ImageIcon, Check, X, Loader2, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useStorage } from "@/hooks/useStorage";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ interface EditProfileSheetProps {
     username: string | null;
     avatar_url: string | null;
     bio: string | null;
+    phone_number?: string | null;
   } | null;
 }
 
@@ -50,6 +51,8 @@ export function EditProfileSheet({ open, onOpenChange, profile }: EditProfileShe
   const [username, setUsername] = useState(profile?.username || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  const [phoneNumber, setPhoneNumber] = useState(profile?.phone_number || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -154,11 +157,22 @@ export function EditProfileSheet({ open, onOpenChange, profile }: EditProfileShe
           username: username,
           bio: bio,
           avatar_url: avatarUrl,
+          phone_number: phoneNumber || null, // Store phone in profiles for admin access
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
       
       if (error) throw error;
+      
+      // Update email in auth if changed
+      if (email && email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({ email });
+        if (emailError) {
+          toast.error("Failed to update email: " + emailError.message);
+        } else {
+          toast.success("Verification email sent to new address");
+        }
+      }
       
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
       toast.success("Profile updated!");
@@ -287,6 +301,38 @@ export function EditProfileSheet({ open, onOpenChange, profile }: EditProfileShe
             {usernameStatus === "taken" && (
               <p className="text-xs text-destructive">Username already exists</p>
             )}
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-muted-foreground" />
+              Email Address
+            </Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="bg-muted border-0"
+            />
+            <p className="text-xs text-muted-foreground">Changing email requires verification</p>
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-muted-foreground" />
+              Mobile Number
+            </Label>
+            <Input
+              type="tel"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              placeholder="+91 98765 43210"
+              className="bg-muted border-0"
+            />
+            <p className="text-xs text-muted-foreground">Used for booking communications</p>
           </div>
 
           {/* Bio */}

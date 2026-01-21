@@ -682,6 +682,7 @@ export type Database = {
           games_played: number | null
           id: string
           is_active: boolean | null
+          phone_number: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -697,6 +698,7 @@ export type Database = {
           games_played?: number | null
           id?: string
           is_active?: boolean | null
+          phone_number?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -712,6 +714,7 @@ export type Database = {
           games_played?: number | null
           id?: string
           is_active?: boolean | null
+          phone_number?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
