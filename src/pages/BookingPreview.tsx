@@ -71,7 +71,7 @@ const BookingPreview = () => {
           venue_name: venue.name,
           venue_image: venue.image,
           venue_address: venue.address,
-          sport: venue.name.includes("Tennis") ? "Tennis" : venue.name.includes("Football") ? "Football" : "Sports",
+          sport: venue.sport || "Sports",
           slot_date: slotDate,
           slot_time: slot.start_time,
           duration_minutes: slot.duration_minutes,
@@ -140,7 +140,7 @@ const BookingPreview = () => {
                     {formatTime(slot.start_time)} | {slot.duration_minutes} mins
                   </p>
                   <p className="text-primary/70 text-xs mt-0.5">
-                    {slot.available_courts}/{slot.total_courts} • ₹{slot.price}
+                    1 court • ₹{slot.price}
                   </p>
                 </div>
               ))
@@ -209,12 +209,6 @@ const BookingPreview = () => {
                 }
               </span>
             </div>
-            {isPublicGame && (
-              <div className="flex items-start gap-3">
-                <span className="text-xs text-text-tertiary w-24">Connection Goal</span>
-                <span className="text-sm font-medium text-foreground">Seeking New Connections</span>
-              </div>
-            )}
           </div>
         </div>
 
