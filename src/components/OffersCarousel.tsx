@@ -170,23 +170,8 @@ export function OffersCarousel() {
     startAutoScroll();
   }, [scrollToIndex, stopAutoScroll, startAutoScroll]);
 
-  // Calculate which 3 indicators to show (centered on active)
-  const getVisibleIndicators = () => {
-    const indicators: number[] = [];
-    
-    // Always show 3 indicators centered around active
-    for (let i = -1; i <= 1; i++) {
-      let idx = activeIndex + i;
-      // Wrap around
-      if (idx < 0) idx = totalSlides + idx;
-      if (idx >= totalSlides) idx = idx - totalSlides;
-      indicators.push(idx);
-    }
-    
-    return indicators;
-  };
-
-  const visibleIndicators = getVisibleIndicators();
+  // Show all indicators - active one is larger
+  const allIndicators = offers.map((_, index) => index);
 
   return (
     <section>
@@ -227,23 +212,20 @@ export function OffersCarousel() {
         ))}
       </div>
 
-      {/* Bubble Indicators - Always show 3 */}
-      <div className="flex justify-center items-center gap-2 mt-3">
-        {visibleIndicators.map((indicatorIndex, position) => {
+      {/* Bubble Indicators */}
+      <div className="flex justify-center items-center gap-1.5 mt-3">
+        {allIndicators.map((indicatorIndex) => {
           const isActive = indicatorIndex === activeIndex;
-          const isSide = position === 0 || position === 2;
           
           return (
             <button
-              key={`indicator-${indicatorIndex}-${position}`}
+              key={`indicator-${indicatorIndex}`}
               onClick={() => handleIndicatorClick(indicatorIndex)}
               className={cn(
                 "rounded-full transition-all duration-300 ease-out",
                 isActive
                   ? "w-2.5 h-2.5 bg-primary"
-                  : isSide
-                  ? "w-1.5 h-1.5 bg-muted-foreground/40"
-                  : "w-2 h-2 bg-muted-foreground/60"
+                  : "w-1.5 h-1.5 bg-muted-foreground/40"
               )}
               aria-label={`Go to slide ${indicatorIndex + 1}`}
             />
