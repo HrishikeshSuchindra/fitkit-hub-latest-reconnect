@@ -249,8 +249,16 @@ serve(async (req) => {
 
       if (error) {
         console.error("Error updating venue:", error);
+        console.error("Update data attempted:", JSON.stringify(cleanUpdateData));
+        console.error("Valid columns: name, slug, sport, category, description, address, city, postal_code, country, latitude, longitude, image_url, gallery_urls, amenities, total_courts, day_schedules, min_booking_duration, opening_time, closing_time, price_per_hour, peak_price, peak_hours, phone_number, website_url, instagram_handle, is_active");
         return new Response(
-          JSON.stringify({ error: "Failed to update venue" }),
+          JSON.stringify({ 
+            error: "Failed to update venue",
+            details: error.message,
+            code: error.code,
+            hint: error.hint,
+            invalidFields: Object.keys(cleanUpdateData)
+          }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
