@@ -384,7 +384,56 @@ serve(async (req) => {
     }
 
     if (req.method === "DELETE") {
-      const { block_id, venue_id, slot_date, slot_time } = await req.json();
+      const { block_id, venue_id, slot_date, slot_time, unblock_full_day } = await req.json();
+
+      // NEW: Handle full day unblocking
+      if (unblock_full_day) {
+        if (!venue_id || !slot_date) {
+          return new Response(
+            JSON.stringify({ error: "venue_id and slot_date are required for full day unblock" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Verify ownership (unless admin)
+        if (!isAdmin && !ownedVenueIds.includes(venue_id)) {
+          return new Response(
+            JSON.stringify({ error: "You can only unblock slots for venues you own" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Delete all blocks for this venue on this date
+        const { data: deleted, error } = await supabase
+          .from("slot_blocks")
+          .delete()
+          .eq("venue_id", venue_id)
+          .eq("slot_date", slot_date)
+          .select();
+        
+        if (error) {
+          console.error("Error unblocking full day:", error);
+          return new Response(
+            JSON.stringify({ error: "Failed to unblock full day", details: error.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        await logAdminAction(auth.userId!, "full_day_unblocked", "slot_block", venue_id, {
+          venue_id,
+          slot_date,
+          slots_count: deleted?.length || 0
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            count: deleted?.length || 0,
+            message: `Unblocked ${deleted?.length || 0} slots for the full day`
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       // Support deletion by ID or by venue/date/time combo
       let query = supabase.from("slot_blocks").delete();
@@ -426,7 +475,7 @@ serve(async (req) => {
           .eq("slot_time", slot_time);
       } else {
         return new Response(
-          JSON.stringify({ error: "Either block_id or venue_id/slot_date/slot_time are required" }),
+          JSON.stringify({ error: "Either block_id, venue_id/slot_date/slot_time, or unblock_full_day are required" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
