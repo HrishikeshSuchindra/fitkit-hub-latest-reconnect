@@ -102,6 +102,11 @@ export function useStorage() {
     return result?.url || null;
   };
 
+  const uploadVenueImage = async (file: File): Promise<string | null> => {
+    const result = await uploadFile(file, { bucket: 'venue-images' });
+    return result?.url || null;
+  };
+
   const deleteFile = async (bucket: BucketName, path: string): Promise<boolean> => {
     try {
       const { error } = await supabase.storage.from(bucket).remove([path]);
@@ -138,6 +143,7 @@ export function useStorage() {
     uploadAvatar,
     uploadPostMedia,
     uploadEventImage,
+    uploadVenueImage,
     deleteFile,
     listFiles,
     getPublicUrl,
