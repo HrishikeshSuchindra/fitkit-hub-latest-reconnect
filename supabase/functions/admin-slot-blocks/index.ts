@@ -1,5 +1,5 @@
 // Admin Slot Blocks API - Manage blocked time slots for venues
-// Endpoints: GET (list blocks), POST (create block), DELETE (remove block)
+// Endpoints: GET (list blocks, slot availability), POST (create block), DELETE (remove block)
 // Venue owners can only manage blocks for their own venues
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -9,6 +9,40 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+
+// Sport-based slot durations in minutes
+const SLOT_DURATIONS: Record<string, number> = {
+  football: 60,
+  cricket: 120,
+  tennis: 60,
+  badminton: 30,
+  squash: 30,
+  tabletennis: 30,
+  pickleball: 30,
+  basketball: 60,
+  default: 30
+};
+
+// Generate all time slots for a venue based on opening/closing times and sport
+function generateAllSlots(openTime: string, closeTime: string, sport: string): string[] {
+  const duration = SLOT_DURATIONS[sport?.toLowerCase()] || SLOT_DURATIONS.default;
+  const slots: string[] = [];
+  
+  const [openHour, openMin] = openTime.split(":").map(Number);
+  const [closeHour, closeMin] = closeTime.split(":").map(Number);
+  
+  let currentMinutes = openHour * 60 + openMin;
+  const endMinutes = closeHour * 60 + closeMin;
+  
+  while (currentMinutes + duration <= endMinutes) {
+    const hours = Math.floor(currentMinutes / 60);
+    const mins = currentMinutes % 60;
+    slots.push(`${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`);
+    currentMinutes += duration;
+  }
+  
+  return slots;
+}
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -50,7 +84,93 @@ serve(async (req) => {
 
   try {
     if (req.method === "GET") {
-      // List slot blocks for a venue
+      const action = url.searchParams.get("action");
+      
+      // NEW: Slot availability endpoint for Admin App
+      if (action === "slot_availability") {
+        const venueId = url.searchParams.get("venue_id");
+        const date = url.searchParams.get("date");
+        
+        if (!venueId || !date) {
+          return new Response(
+            JSON.stringify({ error: "venue_id and date are required for slot_availability" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Verify ownership (unless admin)
+        if (!isAdmin && !ownedVenueIds.includes(venueId)) {
+          return new Response(
+            JSON.stringify({ error: "You can only view availability for venues you own" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Fetch venue configuration
+        const { data: venue, error: venueError } = await supabase
+          .from("venues")
+          .select("opening_time, closing_time, total_courts, sport, name")
+          .eq("id", venueId)
+          .single();
+        
+        if (venueError || !venue) {
+          return new Response(
+            JSON.stringify({ error: "Venue not found" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Fetch bookings for this date
+        const { data: bookings } = await supabase
+          .from("bookings")
+          .select("slot_time, court_number")
+          .eq("venue_id", venueId)
+          .eq("slot_date", date)
+          .eq("status", "confirmed");
+        
+        // Fetch blocks for this date
+        const { data: blocks } = await supabase
+          .from("slot_blocks")
+          .select("slot_time, reason")
+          .eq("venue_id", venueId)
+          .eq("slot_date", date);
+        
+        // Generate all time slots based on venue config
+        const allSlots = generateAllSlots(
+          venue.opening_time || "06:00", 
+          venue.closing_time || "22:00", 
+          venue.sport
+        );
+        
+        // Merge booking counts and block status
+        const slotsWithStatus = allSlots.map(time => {
+          const bookedCourts = (bookings || []).filter(b => b.slot_time === time).length;
+          const block = (blocks || []).find(b => b.slot_time === time);
+          
+          return {
+            time,
+            booked_courts: bookedCourts,
+            is_blocked: !!block,
+            block_reason: block?.reason || null
+          };
+        });
+        
+        return new Response(
+          JSON.stringify({
+            slots: slotsWithStatus,
+            venue: {
+              name: venue.name,
+              total_courts: venue.total_courts || 1,
+              opening_time: venue.opening_time || "06:00",
+              closing_time: venue.closing_time || "22:00",
+              sport: venue.sport
+            }
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      // Existing: List slot blocks for a venue
       const venueId = url.searchParams.get("venue_id");
       const dateFrom = url.searchParams.get("date_from");
       const dateTo = url.searchParams.get("date_to");
@@ -118,9 +238,89 @@ serve(async (req) => {
     }
 
     if (req.method === "POST") {
-      const { venue_id, slot_date, slot_time, reason, slots } = await req.json();
+      const { venue_id, slot_date, slot_time, reason, slots, block_full_day } = await req.json();
 
-      // Support single block or multiple blocks
+      // NEW: Handle full day blocking
+      if (block_full_day) {
+        if (!venue_id || !slot_date) {
+          return new Response(
+            JSON.stringify({ error: "venue_id and slot_date are required for full day block" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Verify ownership (unless admin)
+        if (!isAdmin && !ownedVenueIds.includes(venue_id)) {
+          return new Response(
+            JSON.stringify({ error: "You can only block slots for venues you own" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Fetch venue config
+        const { data: venue, error: venueError } = await supabase
+          .from("venues")
+          .select("opening_time, closing_time, sport")
+          .eq("id", venue_id)
+          .single();
+        
+        if (venueError || !venue) {
+          return new Response(
+            JSON.stringify({ error: "Venue not found" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Generate all time slots for the day
+        const allSlots = generateAllSlots(
+          venue.opening_time || "06:00", 
+          venue.closing_time || "22:00", 
+          venue.sport
+        );
+        
+        // Create block entries for all slots
+        const blocksToCreate = allSlots.map(time => ({
+          venue_id,
+          slot_date,
+          slot_time: time,
+          reason: reason || "Full day block",
+          blocked_by: auth.userId
+        }));
+        
+        // Bulk upsert
+        const { data: createdBlocks, error } = await supabase
+          .from("slot_blocks")
+          .upsert(blocksToCreate, { onConflict: "venue_id,slot_date,slot_time" })
+          .select();
+        
+        if (error) {
+          console.error("Error creating full day block:", error);
+          return new Response(
+            JSON.stringify({ error: "Failed to create full day block", details: error.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        // Log action
+        await logAdminAction(auth.userId!, "full_day_blocked", "slot_block", venue_id, {
+          venue_id,
+          slot_date,
+          reason,
+          slots_count: createdBlocks?.length || 0
+        });
+        
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            blocks: createdBlocks,
+            count: createdBlocks?.length || 0,
+            message: `Blocked ${createdBlocks?.length || 0} slots for the full day`
+          }),
+          { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Existing: Support single block or multiple blocks
       const blocksToCreate = slots || [{ venue_id, slot_date, slot_time, reason }];
 
       // Validate all blocks
