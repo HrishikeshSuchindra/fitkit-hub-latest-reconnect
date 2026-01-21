@@ -10,6 +10,14 @@ import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
 import { generateVenueSlots } from "@/utils/slotGenerator";
 import { useVenueById, getVenueImageUrl } from "@/hooks/useVenues";
 import { toast } from "sonner";
+import { 
+  Carousel, 
+  CarouselContent, 
+  CarouselItem, 
+  CarouselNext, 
+  CarouselPrevious,
+  type CarouselApi 
+} from "@/components/ui/carousel";
 const VenueDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +50,39 @@ const VenueDetail = () => {
       setShowSlotSelection(true);
     }
   }, [shouldOpenSlots, returnState?.returnFromPreview]);
+
+  // Carousel state for tracking current slide
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Build image array: cover photo first, then gallery
+  const allImages = useMemo(() => {
+    if (!venue) return ["/placeholder.svg"];
+    const images: string[] = [];
+    if (venue.image_url) images.push(getVenueImageUrl(venue.image_url));
+    if (venue.gallery_urls?.length) {
+      venue.gallery_urls.forEach((url: string) => {
+        images.push(getVenueImageUrl(url));
+      });
+    }
+    // Fallback if no images
+    if (images.length === 0) images.push("/placeholder.svg");
+    return images;
+  }, [venue]);
+
+  // Track current slide index
+  useEffect(() => {
+    if (!carouselApi) return;
+    
+    const onSelect = () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    };
+    
+    carouselApi.on("select", onSelect);
+    return () => {
+      carouselApi.off("select", onSelect);
+    };
+  }, [carouselApi]);
 
   // Generate slots using venue data from database
   const allSlots = useMemo(() => {
@@ -191,16 +232,42 @@ const VenueDetail = () => {
       <AppHeader />
       
       <div className="px-5 py-4 space-y-4">
-        {/* Venue Image */}
+        {/* Venue Image Carousel */}
         <div className="relative rounded-2xl overflow-hidden">
           <Badge className="absolute top-3 left-3 bg-brand-green/90 text-white border-0 z-10 capitalize">
             {venue.category}
           </Badge>
-          <img 
-            src={getVenueImageUrl(venue.image_url)} 
-            alt={venue.name} 
-            className="w-full h-48 object-cover"
-          />
+          
+          {allImages.length > 1 ? (
+            <Carousel className="w-full" setApi={setCarouselApi}>
+              <CarouselContent>
+                {allImages.map((imageUrl, index) => (
+                  <CarouselItem key={index}>
+                    <img 
+                      src={imageUrl} 
+                      alt={`${venue.name} - ${index + 1}`}
+                      className="w-full h-48 object-cover"
+                    />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              
+              {/* Image counter badge */}
+              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full z-10">
+                {currentSlide + 1} of {allImages.length}
+              </div>
+              
+              {/* Navigation arrows */}
+              <CarouselPrevious className="left-2 h-8 w-8 opacity-70" />
+              <CarouselNext className="right-2 h-8 w-8 opacity-70" />
+            </Carousel>
+          ) : (
+            <img 
+              src={allImages[0]} 
+              alt={venue.name}
+              className="w-full h-48 object-cover"
+            />
+          )}
         </div>
 
         {/* Venue Info */}
