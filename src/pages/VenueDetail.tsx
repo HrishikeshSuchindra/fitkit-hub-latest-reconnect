@@ -66,13 +66,16 @@ const VenueDetail = () => {
   // Action handlers
   const handleOpenDirections = () => {
     if (venue?.latitude && venue?.longitude) {
+      // Use place search with coordinates for more accurate results
+      const query = encodeURIComponent(`${venue.name}, ${venue.address}, ${venue.city}`);
       window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}`,
+        `https://www.google.com/maps/search/?api=1&query=${query}`,
         '_blank'
       );
     } else if (venue?.address) {
+      const query = encodeURIComponent(`${venue.address}, ${venue.city}`);
       window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address + ', ' + venue.city)}`,
+        `https://www.google.com/maps/search/?api=1&query=${query}`,
         '_blank'
       );
     }
@@ -303,7 +306,7 @@ const VenueDetail = () => {
             <CheckCircle className="w-5 h-5 text-brand-green flex-shrink-0" />
             <div>
               <p className="font-medium text-foreground">Today - {venue.opening_time} – {venue.closing_time}</p>
-              <p className="text-sm text-text-secondary capitalize">{venue.sport} • {venue.total_courts || 1} court(s)</p>
+              <p className="text-sm text-text-secondary capitalize">{venue.sport} • {(venue.total_courts || 1) === 1 ? '1 court' : `${venue.total_courts} courts`}</p>
             </div>
           </div>
           
@@ -360,9 +363,9 @@ const VenueDetail = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="w-5 h-5 text-text-secondary text-center">₹</span>
-              <span className="text-foreground">Price per hour</span>
+              <span className="text-foreground">Price per slot</span>
             </div>
-            <span className="text-brand-green font-medium">₹{venue.price_per_hour}/hr</span>
+            <span className="text-brand-green font-medium">₹{venue.price_per_hour}/slot</span>
           </div>
         </div>
 
