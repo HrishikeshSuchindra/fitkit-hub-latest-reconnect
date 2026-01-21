@@ -27,7 +27,10 @@ export const useVenues = (category?: string, sport?: string) => {
   return useQuery({
     queryKey: ["venues", category, sport],
     queryFn: async () => {
-      let query = supabase.from("venues").select("*");
+      let query = supabase
+        .from("venues")
+        .select("*")
+        .eq("is_active", true); // Only show active venues
 
       if (category) {
         query = query.eq("category", category);
@@ -53,7 +56,8 @@ export const useVenueCounts = (category: string) => {
       const { data, error } = await supabase
         .from("venues")
         .select("sport")
-        .eq("category", category);
+        .eq("category", category)
+        .eq("is_active", true); // Only count active venues
 
       if (error) throw error;
 
@@ -78,6 +82,7 @@ export const useVenueById = (idOrSlug: string) => {
         .from("venues")
         .select("*")
         .eq("id", idOrSlug)
+        .eq("is_active", true) // Only show active venues
         .maybeSingle();
 
       // If not found by ID, try by slug
@@ -86,6 +91,7 @@ export const useVenueById = (idOrSlug: string) => {
           .from("venues")
           .select("*")
           .eq("slug", idOrSlug)
+          .eq("is_active", true) // Only show active venues
           .maybeSingle();
         data = result.data;
         error = result.error;
@@ -106,6 +112,7 @@ export const useVenueSearch = (query: string) => {
       const { data, error } = await supabase
         .from("venues")
         .select("*")
+        .eq("is_active", true) // Only search active venues
         .ilike("name", `%${query}%`)
         .order("rating", { ascending: false })
         .limit(10);
