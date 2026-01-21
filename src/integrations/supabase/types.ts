@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           cancellation_reason: string | null
           cancelled_at: string | null
+          court_number: number | null
           created_at: string
           duration_minutes: number
           id: string
@@ -69,6 +70,7 @@ export type Database = {
         Insert: {
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          court_number?: number | null
           created_at?: string
           duration_minutes?: number
           id?: string
@@ -90,6 +92,7 @@ export type Database = {
         Update: {
           cancellation_reason?: string | null
           cancelled_at?: string | null
+          court_number?: number | null
           created_at?: string
           duration_minutes?: number
           id?: string
