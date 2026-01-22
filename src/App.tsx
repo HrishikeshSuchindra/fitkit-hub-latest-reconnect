@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +8,8 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { BookingReminderPopup } from "@/components/booking/BookingReminderPopup";
+import SplashScreen from "@/components/SplashScreen";
+import { supabase } from "@/integrations/supabase/client";
 import Home from "./pages/Home";
 import VenuesCourts from "./pages/VenuesCourts";
 import VenuesRecovery from "./pages/VenuesRecovery";
@@ -126,22 +128,43 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <RouteMemory />
-            <AnimatedRoutes />
-            <BookingReminderPopup />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const minDisplayTime = 1500; // Minimum splash display for brand impact
+    const startTime = Date.now();
+
+    supabase.auth.getSession().then(() => {
+      const elapsed = Date.now() - startTime;
+      const remainingTime = Math.max(0, minDisplayTime - elapsed);
+      
+      setTimeout(() => {
+        setIsInitializing(false);
+      }, remainingTime);
+    });
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SplashScreen isLoading={isInitializing} />
+        {!isInitializing && (
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <RouteMemory />
+                <AnimatedRoutes />
+                <BookingReminderPopup />
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        )}
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
