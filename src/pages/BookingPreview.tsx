@@ -11,11 +11,25 @@ import { toast } from "sonner";
 const BookingPreview = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const bookingData = location.state;
   const { user } = useAuth();
   const createBooking = useCreateBooking();
 
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  // Try to get booking data from location state first, then from sessionStorage (for post-auth redirect)
+  const getBookingData = () => {
+    if (location.state) {
+      return location.state;
+    }
+    const storedData = sessionStorage.getItem("pending_booking_data");
+    if (storedData) {
+      sessionStorage.removeItem("pending_booking_data"); // Clear after retrieving
+      return JSON.parse(storedData);
+    }
+    return null;
+  };
+
+  const [bookingData] = useState(getBookingData);
 
   if (!bookingData) {
     navigate("/venues/courts");
@@ -59,7 +73,9 @@ const BookingPreview = () => {
   const handleProceedToCheckout = async () => {
     if (!user) {
       toast.error("Please log in to book a slot");
-      navigate("/auth", { state: { from: `${location.pathname}${location.search}` } });
+      // Store booking data in sessionStorage before redirecting to auth
+      sessionStorage.setItem("pending_booking_data", JSON.stringify(bookingData));
+      navigate("/auth", { state: { from: location.pathname } });
       return;
     }
 
