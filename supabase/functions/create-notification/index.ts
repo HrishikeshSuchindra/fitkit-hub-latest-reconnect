@@ -63,7 +63,7 @@ serve(async (req) => {
 
     // For user calls, validate they can create this notification type
     if (!isServiceRoleCall) {
-      const allowedTypes = ['friend_request', 'friend_accepted'];
+      const allowedTypes = ['friend_request', 'friend_accepted', 'event_invite', 'tournament_invite'];
       if (!allowedTypes.includes(type)) {
         return new Response(
           JSON.stringify({ error: "Unauthorized notification type" }),
@@ -76,6 +76,55 @@ serve(async (req) => {
         if (data?.friend_id !== callerUserId) {
           return new Response(
             JSON.stringify({ error: "Cannot create notification for another user" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      // For event invites, verify the caller is the one inviting and is registered for the event
+      if (type === 'event_invite' || type === 'tournament_invite') {
+        if (data?.invited_by !== callerUserId) {
+          return new Response(
+            JSON.stringify({ error: "Cannot create invitation for another user" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Verify the caller is registered for this event
+        const eventId = data?.event_id;
+        if (!eventId) {
+          return new Response(
+            JSON.stringify({ error: "Event ID is required for invitations" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const { data: registration, error: regError } = await supabase
+          .from("event_registrations")
+          .select("id")
+          .eq("event_id", eventId)
+          .eq("user_id", callerUserId)
+          .eq("status", "registered")
+          .maybeSingle();
+
+        if (regError || !registration) {
+          return new Response(
+            JSON.stringify({ error: "You must be registered for the event to send invitations" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Verify the recipient is a friend of the caller
+        const { data: friendship, error: friendError } = await supabase
+          .from("friendships")
+          .select("id")
+          .eq("status", "accepted")
+          .or(`and(requester_id.eq.${callerUserId},addressee_id.eq.${recipientUserId}),and(requester_id.eq.${recipientUserId},addressee_id.eq.${callerUserId})`)
+          .maybeSingle();
+
+        if (friendError || !friendship) {
+          return new Response(
+            JSON.stringify({ error: "You can only invite friends to events" }),
             { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
