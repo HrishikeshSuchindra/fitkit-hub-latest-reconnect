@@ -140,24 +140,28 @@ const EventRegistrationConfirmation = () => {
   };
 
   const handleInviteFriend = async (friendId: string) => {
-    if (!eventData) return;
+    if (!eventData || !user) return;
     
     setInvitingFriends(prev => ({ ...prev, [friendId]: true }));
     
     try {
-      // Create a notification for the friend
-      await supabase.from("notifications").insert({
-        user_id: friendId,
-        type: "event_invite",
-        title: "Event Invitation",
-        body: `You've been invited to ${eventData.title}`,
-        data: {
-          event_id: eventId,
-          event_title: eventData.title,
-          event_date: eventData.event_date,
-          invited_by: user?.id,
+      // Create a notification for the friend via secure edge function
+      const { error } = await supabase.functions.invoke("create-notification", {
+        body: {
+          recipientUserId: friendId,
+          type: "event_invite",
+          title: "Event Invitation",
+          body: `You've been invited to ${eventData.title}`,
+          data: {
+            event_id: eventId,
+            event_title: eventData.title,
+            event_date: eventData.event_date,
+            invited_by: user.id,
+          },
         },
       });
+      
+      if (error) throw error;
       
       toast.success("Invitation sent!");
     } catch (error) {
