@@ -1,19 +1,42 @@
 import { Heart, Star, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface VenueCardProps {
   image: string;
   name: string;
   rating: number;
-  distance: string;
+  distance?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   amenities: string[];
   price: string;
   onBook?: () => void;
 }
 
-export const VenueCard = ({ image, name, rating, distance, amenities, price, onBook }: VenueCardProps) => {
+export const VenueCard = ({ 
+  image, 
+  name, 
+  rating, 
+  distance: fallbackDistance, 
+  latitude, 
+  longitude, 
+  amenities, 
+  price, 
+  onBook 
+}: VenueCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
+  const { calculateDistance, userLocation } = useLocation();
+  
+  // Calculate real distance if coordinates are available
+  const displayDistance = (() => {
+    if (latitude && longitude && userLocation) {
+      const realDistance = calculateDistance(latitude, longitude);
+      if (realDistance) return realDistance;
+    }
+    return fallbackDistance || "—";
+  })();
 
   return (
     <div className="bg-card rounded-xl shadow-soft overflow-hidden flex flex-col h-full min-h-[340px]">
@@ -39,7 +62,7 @@ export const VenueCard = ({ image, name, rating, distance, amenities, price, onB
           </div>
           <div className="flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 text-text-tertiary" />
-            <span className="text-text-secondary">{distance}</span>
+            <span className="text-text-secondary">{displayDistance}</span>
           </div>
         </div>
         
