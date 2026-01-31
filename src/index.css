@@ -148,9 +148,30 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html, body, #root {
+    @apply min-h-screen;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Mobile/Tablet container - centers app on larger screens */
+  #root {
+    @apply mx-auto;
+    max-width: 768px; /* Tablet max-width */
+  }
+
+  /* Optional: Add subtle shadow on desktop to frame the app */
+  @media (min-width: 769px) {
+    body {
+      @apply bg-muted;
+    }
+    #root {
+      @apply bg-background shadow-xl;
+      min-height: 100vh;
+    }
   }
   
   /* Custom shadows - Refined and subtle */
