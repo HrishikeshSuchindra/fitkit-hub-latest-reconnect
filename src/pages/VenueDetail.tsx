@@ -9,6 +9,7 @@ import { Star, MapPin, Navigation, Phone, Heart, Share2, CheckCircle, Globe, Ins
 import SlotSelectionSheet from "@/components/booking/SlotSelectionSheet";
 import { generateVenueSlots } from "@/utils/slotGenerator";
 import { useVenueById, getVenueImageUrl } from "@/hooks/useVenues";
+import { VenueReviewsSection } from "@/components/venue/VenueReviewsSection";
 import { toast } from "sonner";
 import { 
   Carousel, 
@@ -435,6 +436,14 @@ const VenueDetail = () => {
             <span className="text-brand-green font-medium">₹{venue.price_per_hour}/slot</span>
           </div>
         </div>
+
+        {/* Reviews Section */}
+        <VenueReviewsSection
+          venueId={venue.id}
+          venueName={venue.name}
+          rating={venue.rating}
+          reviewsCount={venue.reviews_count}
+        />
 
         {/* Total Amount & Preview Button */}
         {selectedSlots.length > 0 && (
