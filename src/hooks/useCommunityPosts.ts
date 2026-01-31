@@ -170,6 +170,140 @@ export const useCreatePost = () => {
   });
 };
 
+export const useDeletePost = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      if (!user) throw new Error("Must be logged in");
+      
+      const { error } = await supabase
+        .from("posts")
+        .delete()
+        .eq("id", postId)
+        .eq("author_id", user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      toast.success("Post deleted");
+    },
+    onError: (error) => {
+      console.error("Failed to delete post:", error);
+      toast.error("Failed to delete post");
+    },
+  });
+};
+
+// Comments
+export interface PostComment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  content: string;
+  created_at: string;
+  author?: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+
+export const usePostComments = (postId: string | null) => {
+  return useQuery({
+    queryKey: ["post-comments", postId],
+    queryFn: async (): Promise<PostComment[]> => {
+      if (!postId) return [];
+      
+      const { data: comments, error } = await supabase
+        .from("post_comments")
+        .select("id, post_id, author_id, content, created_at")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
+      
+      if (error) throw error;
+      if (!comments || comments.length === 0) return [];
+      
+      // Fetch author profiles
+      const authorIds = [...new Set(comments.map(c => c.author_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, display_name, username, avatar_url")
+        .in("user_id", authorIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      return comments.map(comment => ({
+        ...comment,
+        author: profileMap.get(comment.author_id) || undefined,
+      }));
+    },
+    enabled: !!postId,
+  });
+};
+
+export const useAddComment = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
+      if (!user) throw new Error("Must be logged in");
+      
+      const { data, error } = await supabase
+        .from("post_comments")
+        .insert({
+          post_id: postId,
+          author_id: user.id,
+          content,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    },
+    onError: (error) => {
+      console.error("Failed to add comment:", error);
+      toast.error("Failed to add comment");
+    },
+  });
+};
+
+export const useDeleteComment = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ commentId, postId }: { commentId: string; postId: string }) => {
+      if (!user) throw new Error("Must be logged in");
+      
+      const { error } = await supabase
+        .from("post_comments")
+        .delete()
+        .eq("id", commentId)
+        .eq("author_id", user.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["post-comments", variables.postId] });
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      toast.success("Comment deleted");
+    },
+    onError: (error) => {
+      console.error("Failed to delete comment:", error);
+      toast.error("Failed to delete comment");
+    },
+  });
+};
+
 export const useUserRole = () => {
   const { user } = useAuth();
   
