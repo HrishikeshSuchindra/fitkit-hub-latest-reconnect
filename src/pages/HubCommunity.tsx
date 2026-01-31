@@ -4,13 +4,26 @@ import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { StoriesBar } from "@/components/stories/StoriesBar";
 import { CreatePostSheet } from "@/components/community/CreatePostSheet";
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, MapPin, Calendar, Users } from "lucide-react";
+import { CommentsSheet } from "@/components/community/CommentsSheet";
+import { PostOptionsSheet } from "@/components/community/PostOptionsSheet";
+import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCommunityPosts, useTogglePostLike, useUserRole, CommunityPost } from "@/hooks/useCommunityPosts";
+import { useCommunityPosts, useTogglePostLike, useUserRole, useDeletePost, CommunityPost } from "@/hooks/useCommunityPosts";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface MockPost {
   id: string;
@@ -39,6 +52,7 @@ interface MockPost {
 
 interface DisplayPost {
   id: string;
+  authorId?: string;
   user: {
     name: string;
     username: string;
@@ -157,6 +171,7 @@ const HubCommunity = () => {
   const { data: userRole } = useUserRole();
   const { data: realPosts, isLoading } = useCommunityPosts();
   const toggleLike = useTogglePostLike();
+  const deletePost = useDeletePost();
   
   // Mock post state for local interactions
   const [mockPostState, setMockPostState] = useState<Record<string, { isLiked: boolean; likes: number; isSaved: boolean }>>({});
@@ -165,6 +180,12 @@ const HubCommunity = () => {
   const lastTapRef = useRef<{ postId: string; time: number } | null>(null);
   const [showHeartAnimation, setShowHeartAnimation] = useState<string | null>(null);
 
+  // Sheet states
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [commentsPostUsername, setCommentsPostUsername] = useState<string>("");
+  const [optionsPost, setOptionsPost] = useState<DisplayPost | null>(null);
+  const [deleteConfirmPost, setDeleteConfirmPost] = useState<DisplayPost | null>(null);
+
   // Check if user can create posts (admin or venue_owner)
   const canCreatePosts = userRole === 'admin' || userRole === 'venue_owner';
 
@@ -172,6 +193,7 @@ const HubCommunity = () => {
   const allPosts: DisplayPost[] = useMemo(() => {
     const convertedRealPosts: DisplayPost[] = (realPosts || []).map(post => ({
       id: post.id,
+      authorId: post.author_id,
       user: {
         name: post.author?.display_name || 'User',
         username: post.author?.username || 'user',
@@ -256,6 +278,43 @@ const HubCommunity = () => {
           }
         };
       });
+      toast.success(mockPostState[postId]?.isSaved ? "Removed from saved" : "Post saved");
+    } else {
+      toast.success("Post saved");
+    }
+  };
+
+  const handleShare = async (post: DisplayPost) => {
+    const shareData = {
+      title: `Post by ${post.user.username}`,
+      text: post.content.substring(0, 100) + (post.content.length > 100 ? "..." : ""),
+      url: window.location.href,
+    };
+
+    if (navigator.share && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        // User cancelled or error
+        if ((err as Error).name !== "AbortError") {
+          navigator.clipboard.writeText(window.location.href);
+          toast.success("Link copied to clipboard");
+        }
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard");
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!deleteConfirmPost || deleteConfirmPost.isMock) return;
+    
+    try {
+      await deletePost.mutateAsync(deleteConfirmPost.id);
+      setDeleteConfirmPost(null);
+    } catch (error) {
+      // Error handled in hook
     }
   };
 
@@ -289,6 +348,11 @@ const HubCommunity = () => {
         {badge.label}
       </span>
     );
+  };
+
+  const isOwnPost = (post: DisplayPost) => {
+    if (post.isMock) return false;
+    return user?.id === post.authorId;
   };
 
   return (
@@ -331,7 +395,12 @@ const HubCommunity = () => {
                         )}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-text-tertiary h-8 w-8">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-text-tertiary h-8 w-8"
+                      onClick={() => setOptionsPost(post)}
+                    >
                       <MoreHorizontal className="w-5 h-5" />
                     </Button>
                   </div>
@@ -378,10 +447,19 @@ const HubCommunity = () => {
                           }`} 
                         />
                       </button>
-                      <button className="active:scale-90 transition-transform">
+                      <button 
+                        onClick={() => {
+                          setCommentsPostId(post.id);
+                          setCommentsPostUsername(post.user.username);
+                        }}
+                        className="active:scale-90 transition-transform"
+                      >
                         <MessageCircle className="w-6 h-6 text-foreground" />
                       </button>
-                      <button className="active:scale-90 transition-transform">
+                      <button 
+                        onClick={() => handleShare(post)}
+                        className="active:scale-90 transition-transform"
+                      >
                         <Share2 className="w-6 h-6 text-foreground" />
                       </button>
                     </div>
@@ -437,7 +515,13 @@ const HubCommunity = () => {
                   {/* View Comments */}
                   {post.comments > 0 && (
                     <div className="px-4 pb-1">
-                      <button className="text-sm text-text-secondary">
+                      <button 
+                        onClick={() => {
+                          setCommentsPostId(post.id);
+                          setCommentsPostUsername(post.user.username);
+                        }}
+                        className="text-sm text-text-secondary"
+                      >
                         View all {post.comments} comments
                       </button>
                     </div>
@@ -456,6 +540,62 @@ const HubCommunity = () => {
       
       {/* Create Post FAB - Only for admins/venue owners */}
       {canCreatePosts && <CreatePostSheet />}
+
+      {/* Comments Sheet */}
+      <CommentsSheet
+        open={!!commentsPostId}
+        onOpenChange={(open) => {
+          if (!open) setCommentsPostId(null);
+        }}
+        postId={commentsPostId}
+        postAuthorUsername={commentsPostUsername}
+      />
+
+      {/* Post Options Sheet */}
+      <PostOptionsSheet
+        open={!!optionsPost}
+        onOpenChange={(open) => {
+          if (!open) setOptionsPost(null);
+        }}
+        isOwnPost={optionsPost ? isOwnPost(optionsPost) : false}
+        isSaved={optionsPost ? getPostState(optionsPost).isSaved : false}
+        onDelete={() => {
+          if (optionsPost) {
+            setDeleteConfirmPost(optionsPost);
+          }
+        }}
+        onToggleSave={() => {
+          if (optionsPost) {
+            toggleSave(optionsPost.id, optionsPost.isMock);
+          }
+        }}
+        onShare={() => {
+          if (optionsPost) {
+            handleShare(optionsPost);
+          }
+        }}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirmPost} onOpenChange={(open) => !open && setDeleteConfirmPost(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Post</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this post? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeletePost}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletePost.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <BottomNav mode="hub" />
     </div>
