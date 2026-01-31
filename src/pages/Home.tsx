@@ -257,7 +257,8 @@ const Home = () => {
                       image={getVenueImageUrl(venue.image_url)}
                       name={venue.name}
                       rating={venue.rating || 0}
-                      distance={venueCategory === "studio" ? "1.5 km" : "2.0 km"}
+                      latitude={venue.latitude}
+                      longitude={venue.longitude}
                       amenities={venue.amenities || []}
                       price={formatVenuePrice(venue)}
                       onBook={() => navigate(`/venue/${venue.slug}?openSlots=true`)}

@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { LocationProvider } from "@/contexts/LocationContext";
 import { BookingReminderPopup } from "@/components/booking/BookingReminderPopup";
+import { LocationPermissionPrompt } from "@/components/LocationPermissionPrompt";
 import SplashScreen from "@/components/SplashScreen";
 import { supabase } from "@/integrations/supabase/client";
 import Home from "./pages/Home";
@@ -148,20 +150,23 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <SplashScreen isLoading={isInitializing} />
-        {!isInitializing && (
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <RouteMemory />
-                <AnimatedRoutes />
-                <BookingReminderPopup />
-              </BrowserRouter>
-            </TooltipProvider>
-          </AuthProvider>
-        )}
+        <LocationProvider>
+          <SplashScreen isLoading={isInitializing} />
+          {!isInitializing && (
+            <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <RouteMemory />
+                  <AnimatedRoutes />
+                  <BookingReminderPopup />
+                  <LocationPermissionPrompt />
+                </BrowserRouter>
+              </TooltipProvider>
+            </AuthProvider>
+          )}
+        </LocationProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -150,7 +150,8 @@ const VenuesRecovery = () => {
                     image={getVenueImageUrl(venue.image_url)}
                     name={venue.name}
                     rating={venue.rating || 0}
-                    distance="2.0 km"
+                    latitude={venue.latitude}
+                    longitude={venue.longitude}
                     amenities={venue.amenities || []}
                     price={`₹${venue.price_per_hour}/session`}
                     onBook={() => navigate(`/venue/${venue.slug}`)}
