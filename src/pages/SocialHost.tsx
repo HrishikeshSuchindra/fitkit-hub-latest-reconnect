@@ -76,14 +76,28 @@ const SocialHost = () => {
       return;
     }
 
+    // Check if user is logged in
+    if (!user) {
+      toast.error("Please log in to submit a host request");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
+      // Refresh the session to ensure we have a valid token
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        toast.error("Your session has expired. Please log in again.");
+        return;
+      }
+
       // Get user profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("display_name")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .single();
 
       // Send approval request email
