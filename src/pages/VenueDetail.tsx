@@ -370,71 +370,87 @@ const VenueDetail = () => {
 
         {/* Venue Details */}
         <div className="space-y-3 py-3 border-t border-border">
+          {/* Sport & Courts Info */}
           <div className="flex items-center gap-3">
             <CheckCircle className="w-5 h-5 text-brand-green flex-shrink-0" />
-            <div>
-              <p className="font-medium text-foreground">Today - {venue.opening_time} – {venue.closing_time}</p>
-              <p className="text-sm text-text-secondary capitalize">{venue.sport} • {(venue.total_courts || 1) === 1 ? '1 court' : `${venue.total_courts} courts`}</p>
-            </div>
+            <p className="text-foreground capitalize">
+              {venue.sport} • {(venue.total_courts || 1) === 1 ? '1 court' : `${venue.total_courts} courts`}
+            </p>
           </div>
           
-          {venue.phone_number && (
-            <button 
-              onClick={handleCall}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-text-secondary" />
-                <span className="text-foreground">{venue.phone_number}</span>
-              </div>
+          {/* Price per slot */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="w-5 h-5 text-brand-green text-center font-semibold">₹</span>
+              <span className="text-foreground">Price per slot</span>
+            </div>
+            <span className="text-brand-green font-semibold">₹{venue.price_per_hour}/slot</span>
+          </div>
+
+          {/* Contact Number */}
+          <button 
+            onClick={venue.phone_number ? handleCall : undefined}
+            disabled={!venue.phone_number}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-3">
+              <Phone className="w-5 h-5 text-text-secondary" />
+              <span className={venue.phone_number ? "text-foreground" : "text-text-tertiary"}>
+                {venue.phone_number || "Contact not available"}
+              </span>
+            </div>
+            {venue.phone_number && (
               <span className="text-brand-green font-medium">Call</span>
-            </button>
-          )}
+            )}
+          </button>
           
+          {/* Address */}
           <button 
             onClick={handleOpenDirections}
             className="flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-3">
               <MapPin className="w-5 h-5 text-text-secondary" />
-              <span className="text-foreground truncate max-w-[200px]">{venue.address}</span>
+              <span className="text-foreground truncate max-w-[220px]">
+                {venue.address}{venue.city ? `, ${venue.city}` : ''}
+              </span>
             </div>
-            <span className="text-brand-green font-medium">View on map</span>
+            <span className="text-brand-green font-medium">Map</span>
           </button>
           
-          {venue.instagram_handle && (
-            <button 
-              onClick={handleOpenInstagram}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-3">
-                <Instagram className="w-5 h-5 text-text-secondary" />
-                <span className="text-foreground">@{venue.instagram_handle.replace('@', '')}</span>
-              </div>
-              <span className="text-brand-green font-medium">Open</span>
-            </button>
-          )}
-
-          {venue.website_url && (
-            <button 
-              onClick={handleOpenWebsite}
-              className="flex items-center justify-between w-full"
-            >
-              <div className="flex items-center gap-3">
-                <Globe className="w-5 h-5 text-text-secondary" />
-                <span className="text-foreground truncate max-w-[200px]">{venue.website_url.replace(/^https?:\/\//, '')}</span>
-              </div>
-              <span className="text-brand-green font-medium">Visit</span>
-            </button>
-          )}
-          
-          <div className="flex items-center justify-between">
+          {/* Instagram Handle */}
+          <button 
+            onClick={venue.instagram_handle ? handleOpenInstagram : undefined}
+            disabled={!venue.instagram_handle}
+            className="flex items-center justify-between w-full"
+          >
             <div className="flex items-center gap-3">
-              <span className="w-5 h-5 text-text-secondary text-center">₹</span>
-              <span className="text-foreground">Price per slot</span>
+              <Instagram className="w-5 h-5 text-text-secondary" />
+              <span className={venue.instagram_handle ? "text-foreground" : "text-text-tertiary"}>
+                {venue.instagram_handle ? `@${venue.instagram_handle.replace('@', '')}` : "Instagram not available"}
+              </span>
             </div>
-            <span className="text-brand-green font-medium">₹{venue.price_per_hour}/slot</span>
-          </div>
+            {venue.instagram_handle && (
+              <span className="text-brand-green font-medium">Open</span>
+            )}
+          </button>
+
+          {/* Website */}
+          <button 
+            onClick={venue.website_url ? handleOpenWebsite : undefined}
+            disabled={!venue.website_url}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5 text-text-secondary" />
+              <span className={venue.website_url ? "text-foreground truncate max-w-[200px]" : "text-text-tertiary"}>
+                {venue.website_url ? venue.website_url.replace(/^https?:\/\//, '') : "Website not available"}
+              </span>
+            </div>
+            {venue.website_url && (
+              <span className="text-brand-green font-medium">Visit</span>
+            )}
+          </button>
         </div>
 
         {/* Reviews Section */}
