@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { openRazorpayCheckout, verifyPayment } from "@/lib/razorpay";
 
 const EventRegistrationPreview = () => {
   const { eventId } = useParams();
@@ -48,7 +49,7 @@ const EventRegistrationPreview = () => {
     
     setIsRegistering(true);
     
-    try {
+    const doRegistration = async (paymentId?: string) => {
       // 1. Create event registration with ticket count
       const { error: regError } = await supabase
         .from("event_registrations")
@@ -91,7 +92,6 @@ const EventRegistrationPreview = () => {
 
       // 4. Add user to chat room if room exists
       if (chatRoomId) {
-        // Check if already a member
         const { data: existingMember } = await supabase
           .from("chat_room_members")
           .select("id")
@@ -134,16 +134,56 @@ const EventRegistrationPreview = () => {
         });
       } catch (emailError) {
         console.error("Failed to send confirmation email:", emailError);
-        // Don't fail the registration if email fails
       }
 
-      // Navigate to confirmation
       navigate(`/social/event/${eventId}/confirmation`, {
         state: { eventData: event, ticketCount }
       });
+    };
+
+    try {
+      if (totalAmount > 0) {
+        // Paid event — open Razorpay checkout
+        await openRazorpayCheckout({
+          amount: totalAmount,
+          name: "FitKits",
+          description: `${event?.title || "Event"} - ${ticketCount} ticket(s)`,
+          receipt: `event_${eventId}_${Date.now()}`,
+          notes: { event: event?.title || "", event_id: eventId },
+          prefill: {
+            email: user.email || "",
+            name: user.user_metadata?.display_name || "",
+          },
+          onSuccess: async (paymentResponse) => {
+            try {
+              await doRegistration(paymentResponse.razorpay_payment_id);
+              // Verify payment after registration
+              await verifyPayment({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                amount: totalAmount * 100,
+                event_id: eventId,
+              });
+            } catch (err: any) {
+              toast.error(err.message || "Registration failed after payment");
+              setIsRegistering(false);
+            }
+          },
+          onDismiss: () => {
+            toast.info("Payment cancelled");
+            setIsRegistering(false);
+          },
+        });
+      } else {
+        // Free event — register directly
+        await doRegistration();
+      }
     } catch (error) {
-      console.error("Registration error:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to register");
+      if ((error as Error).message !== "Payment dismissed") {
+        console.error("Registration error:", error);
+        toast.error(error instanceof Error ? error.message : "Failed to register");
+      }
     } finally {
       setIsRegistering(false);
     }
