@@ -14,8 +14,11 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID")!;
-    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")!;
+    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID")?.trim();
+    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
+
+    console.log("Razorpay Key ID prefix:", razorpayKeyId?.substring(0, 8), "| length:", razorpayKeyId?.length);
+    console.log("Razorpay Secret present:", !!razorpayKeySecret, "| length:", razorpayKeySecret?.length);
 
     if (!razorpayKeyId || !razorpayKeySecret) {
       return new Response(
