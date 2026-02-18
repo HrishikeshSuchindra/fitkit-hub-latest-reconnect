@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { useCreateBooking } from "@/hooks/useBookings";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { openRazorpayCheckout, verifyPayment } from "@/lib/razorpay";
 
 const BookingPreview = () => {
   const navigate = useNavigate();
@@ -73,13 +74,12 @@ const BookingPreview = () => {
   const handleProceedToCheckout = async () => {
     if (!user) {
       toast.error("Please log in to book a slot");
-      // Store booking data in sessionStorage before redirecting to auth
       sessionStorage.setItem("pending_booking_data", JSON.stringify(bookingData));
       navigate("/auth", { state: { from: location.pathname } });
       return;
     }
 
-    try {
+    const proceedWithBooking = async () => {
       // Create bookings for each selected slot
       const bookingPromises = selectedSlotData.map((slot: any) =>
         createBooking.mutateAsync({
@@ -97,19 +97,63 @@ const BookingPreview = () => {
           visibility: visibility,
         })
       );
+      const bookings = await Promise.all(bookingPromises);
+      return bookings;
+    };
 
-      await Promise.all(bookingPromises);
+    try {
+      if (totalAmount > 0) {
+        // Open Razorpay checkout first
+        await openRazorpayCheckout({
+          amount: totalAmount,
+          name: "FitKits",
+          description: `${venue.name} - ${selectedSlots.length} slot(s)`,
+          receipt: `booking_${Date.now()}`,
+          notes: { venue: venue.name, sport: venue.sport || "Sports" },
+          prefill: {
+            email: user.email || "",
+            name: user.user_metadata?.display_name || "",
+          },
+          onSuccess: async (paymentResponse) => {
+            try {
+              // Create bookings after successful payment
+              const bookings = await proceedWithBooking();
+              const firstBookingId = bookings?.[0]?.id;
 
-      toast.success("Booking confirmed!");
-      navigate("/booking/confirmation", { 
-        state: { 
-          ...bookingData, 
-          bookingId: `booking-${Date.now()}` 
-        } 
-      });
+              // Verify payment and record it
+              await verifyPayment({
+                razorpay_order_id: paymentResponse.razorpay_order_id,
+                razorpay_payment_id: paymentResponse.razorpay_payment_id,
+                razorpay_signature: paymentResponse.razorpay_signature,
+                amount: totalAmount * 100,
+                booking_id: firstBookingId,
+              });
+
+              toast.success("Payment successful! Booking confirmed.");
+              navigate("/booking/confirmation", {
+                state: { ...bookingData, bookingId: firstBookingId || `booking-${Date.now()}` },
+              });
+            } catch (err: any) {
+              toast.error(err.message || "Booking failed after payment");
+            }
+          },
+          onDismiss: () => {
+            toast.info("Payment cancelled");
+          },
+        });
+      } else {
+        // Free booking — skip payment
+        const bookings = await proceedWithBooking();
+        toast.success("Booking confirmed!");
+        navigate("/booking/confirmation", {
+          state: { ...bookingData, bookingId: bookings?.[0]?.id || `booking-${Date.now()}` },
+        });
+      }
     } catch (error: any) {
-      console.error("Booking error:", error);
-      toast.error(error.message || "Failed to create booking");
+      if (error.message !== "Payment dismissed") {
+        console.error("Booking error:", error);
+        toast.error(error.message || "Failed to process booking");
+      }
     }
   };
 
