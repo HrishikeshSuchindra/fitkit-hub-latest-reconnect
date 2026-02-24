@@ -14,11 +14,13 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID")?.trim();
-    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim();
+    // Strip quotes, newlines, carriage returns, and whitespace from credentials
+    const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID")?.trim().replace(/^["']|["']$/g, '').replace(/[\r\n]/g, '').trim();
+    const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET")?.trim().replace(/^["']|["']$/g, '').replace(/[\r\n]/g, '').trim();
 
-    console.log("Razorpay Key ID prefix:", razorpayKeyId?.substring(0, 8), "| length:", razorpayKeyId?.length);
-    console.log("Razorpay Secret present:", !!razorpayKeySecret, "| length:", razorpayKeySecret?.length);
+    console.log("Razorpay Key ID:", JSON.stringify(razorpayKeyId));
+    console.log("Razorpay Key ID length:", razorpayKeyId?.length, "| starts with rzp_:", razorpayKeyId?.startsWith("rzp_"));
+    console.log("Razorpay Secret length:", razorpayKeySecret?.length);
 
     if (!razorpayKeyId || !razorpayKeySecret) {
       return new Response(
