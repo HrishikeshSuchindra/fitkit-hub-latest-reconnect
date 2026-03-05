@@ -144,10 +144,19 @@ export const generateVenueSlots = (
   // Parse peak_hours if it's a valid array
   const peakHours = Array.isArray(venue.peak_hours) ? venue.peak_hours as { start: number; end: number }[] : undefined;
   
+  // Require opening/closing time from venue data — no hardcoded defaults
+  const openTime = daySchedule?.open || venue.opening_time;
+  const closeTime = daySchedule?.close || venue.closing_time;
+  
+  if (!openTime || !closeTime) {
+    // If venue hasn't set operating hours, return empty slots
+    return [];
+  }
+  
   // Build config from venue data
   const config: TurfConfig = {
-    open_time: daySchedule?.open || venue.opening_time || "06:00",
-    close_time: daySchedule?.close || venue.closing_time || "22:00",
+    open_time: openTime,
+    close_time: closeTime,
     slot_duration: venue.min_booking_duration || 30,
     total_courts: venue.total_courts || 1,
     base_price: venue.price_per_hour || venue.price || 500,
