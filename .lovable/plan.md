@@ -1,54 +1,91 @@
 
-# Plan: Allow Venue Owners With No Venues to See Empty Bookings
 
-## Problem
-When a user has the `venue_owner` role in the `user_roles` table but hasn't been assigned any venues yet (e.g., a newly approved owner), the admin-bookings edge function returns a 403 "Access denied" error instead of showing an empty bookings list.
+# Implementation Plan
 
-## Solution
-Update the `admin-bookings` edge function to check for the `venue_owner` role in the `user_roles` table, similar to how `admin-venues` handles it. This allows venue owners with no venues to access the bookings dashboard and see an empty state instead of an error.
+This plan covers three distinct workstreams: Google Sign-In setup, Admin Event Logger, and "Coming Soon" empty states.
 
-## Changes Required
+---
 
-### 1. Update admin-bookings Edge Function
-**File:** `supabase/functions/admin-bookings/index.ts`
+## 1. Google Sign-In
 
-**Current logic (lines 27-48):**
-- Only checks if user has `admin` role
-- Only considers someone a "venue owner" if they have venues in the `venues` table
-- Denies access if neither condition is met
+The current `useAuth.tsx` uses `supabase.auth.signInWithOAuth({ provider: 'google' })` directly. Since this project runs on Lovable Cloud, Google OAuth is managed automatically, but the code must use the Lovable Cloud auth module instead.
 
-**New logic:**
-- Check for `admin` role (unchanged)
-- Check for `venue_owner` role in `user_roles` table (new)
-- Check for owned venues (unchanged)
-- Allow access if ANY of these conditions are true
-- When querying bookings for a venue owner with no venues, return empty array
+**Steps:**
+- Run the **Configure Social Login** tool to generate the `src/integrations/lovable/` module and install `@lovable.dev/cloud-auth-js`
+- Update `useAuth.tsx` → replace `supabase.auth.signInWithOAuth({ provider: 'google' })` with `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
+- Same for Apple sign-in if desired
+- No Razorpay changes needed (separate issue)
 
-**Specific changes:**
-```typescript
-// Add venue_owner role check (similar to admin-venues)
-const hasVenueOwnerRole = userRoles?.some(r => r.role === "venue_owner");
+---
 
-// Update access control logic
-if (!isAdmin && !hasVenueOwnerRole && !isVenueOwner) {
-  return new Response(
-    JSON.stringify({ error: "Access denied..." }),
-    { status: 403, ... }
-  );
-}
+## 2. Admin Event Logger (Master Admin Only)
 
-// For GET requests: handle empty ownedVenueIds gracefully
-// When a venue owner has no venues, the .in() query with an empty array
-// will return no results - this is the desired "no bookings" behavior
-```
+Create a comprehensive event logging system that records all significant platform events into a new `event_logs` table, viewable only by the master admin in the Admin App.
 
-## Technical Details
-- The change aligns `admin-bookings` with the existing pattern in `admin-venues` 
-- When `ownedVenueIds` is empty for a venue owner, the query `query.in("venue_id", [])` returns no results
-- This produces an empty bookings array with proper pagination, which the frontend can display as "No bookings found"
-- No frontend changes required - it will naturally show the empty state
+### Database
 
-## Impact
-- Venue owners awaiting venue assignment can access the admin dashboard
-- They see a clean "no bookings" state instead of an error
-- Existing admins and venue owners with venues are unaffected
+**New table: `event_logs`**
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid | PK, default gen_random_uuid() |
+| event_type | text | e.g. `booking_confirmed`, `booking_cancelled_user`, `booking_cancelled_admin`, `payment_completed`, `payment_failed`, `event_registration`, `event_cancelled`, `user_signup`, `user_deactivated`, `venue_created`, `venue_updated`, `slot_blocked`, `slot_unblocked`, `owner_application_submitted`, `owner_application_approved`, `owner_application_rejected` |
+| actor_id | uuid | User who triggered the event |
+| target_id | uuid | nullable, related entity ID |
+| target_type | text | e.g. `booking`, `payment`, `event`, `venue`, `user` |
+| metadata | jsonb | Full event details (booking details, payment amounts, cancellation reasons, etc.) |
+| created_at | timestamptz | default now() |
+
+**RLS:** SELECT only for users with `admin` role. INSERT via service role (edge functions).
+
+### Edge Function: `log-event`
+
+A small backend function that accepts event data and inserts into `event_logs` using the service role key. Called from existing edge functions (`validate-and-create-booking`, `verify-razorpay-payment`, `admin-bookings` cancellation flow, etc.).
+
+### Integration Points
+
+Add `log-event` calls to these existing edge functions:
+- **`validate-and-create-booking`** → log `booking_confirmed` with booking details
+- **`verify-razorpay-payment`** → log `payment_completed` with payment details
+- **`admin-bookings`** (cancellation) → log `booking_cancelled_admin`
+- **`create-razorpay-order`** → log `payment_initiated`
+- **`admin-venues`** (create/update) → log `venue_created` / `venue_updated`
+- **`admin-events`** → log event CRUD operations
+- **`admin-users`** (deactivation) → log `user_deactivated`
+- **`admin-slot-blocks`** → log `slot_blocked` / `slot_unblocked`
+
+For user-side cancellations, add logging in the booking cancellation client code (or create a small wrapper function).
+
+### Admin App Consumption
+
+The Admin App (separate project) will query `event_logs` via the existing Supabase client, filtered by the admin role. This plan only sets up the backend infrastructure; the Admin App UI is in the other project.
+
+---
+
+## 3. "Coming Soon" Empty States
+
+For pages that display lists of venues, events, games, etc., replace the bare "No venues found" / empty content with a styled "Coming Soon" placeholder.
+
+**Create a reusable component: `src/components/ComingSoon.tsx`**
+- Displays an icon, "We're Coming Soon!" heading, and a short subtitle
+- Accepts optional `message` prop for context-specific text
+
+**Pages to update:**
+- `VenuesCourts.tsx` — when venues list is empty
+- `VenuesRecovery.tsx` — when venues list is empty
+- `VenuesStudio.tsx` — when venues list is empty
+- `Social.tsx` — when events list is empty
+- `HubGames.tsx` — when public games and tournaments are empty
+- `HubCommunity.tsx` — when posts are empty
+
+Replace existing `"No venues found"` / empty-list checks with the `<ComingSoon />` component.
+
+---
+
+## Execution Order
+
+1. Configure Google Social Login (tool + code update)
+2. Create `event_logs` table migration
+3. Create `log-event` edge function
+4. Integrate logging calls into existing edge functions
+5. Create `ComingSoon` component and update empty-state pages
+
