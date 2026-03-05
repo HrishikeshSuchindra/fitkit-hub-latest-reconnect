@@ -1,91 +1,92 @@
 
 
-# Implementation Plan
+# Event Logs: What the Admin App Needs
 
-This plan covers three distinct workstreams: Google Sign-In setup, Admin Event Logger, and "Coming Soon" empty states.
+## What's Already Done (This Project)
 
----
+Everything is fully built on the backend. No additional APIs or edge functions are needed.
 
-## 1. Google Sign-In
+### Infrastructure in place:
+1. **`event_logs` table** -- stores all platform events with columns: `id`, `event_type`, `actor_id`, `target_id`, `target_type`, `metadata` (JSONB), `created_at`
+2. **RLS** -- SELECT restricted to users with `admin` role via `has_role(auth.uid(), 'admin')`
+3. **Shared logger** (`_shared/event-logger.ts`) -- inserts logs using service role key
+4. **`log-event` edge function** -- standalone endpoint (not needed by admin app, used internally)
 
-The current `useAuth.tsx` uses `supabase.auth.signInWithOAuth({ provider: 'google' })` directly. Since this project runs on Lovable Cloud, Google OAuth is managed automatically, but the code must use the Lovable Cloud auth module instead.
+### Events currently being logged:
 
-**Steps:**
-- Run the **Configure Social Login** tool to generate the `src/integrations/lovable/` module and install `@lovable.dev/cloud-auth-js`
-- Update `useAuth.tsx` → replace `supabase.auth.signInWithOAuth({ provider: 'google' })` with `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`
-- Same for Apple sign-in if desired
-- No Razorpay changes needed (separate issue)
-
----
-
-## 2. Admin Event Logger (Master Admin Only)
-
-Create a comprehensive event logging system that records all significant platform events into a new `event_logs` table, viewable only by the master admin in the Admin App.
-
-### Database
-
-**New table: `event_logs`**
-| Column | Type | Notes |
+| Event Type | Source Function | Metadata |
 |---|---|---|
-| id | uuid | PK, default gen_random_uuid() |
-| event_type | text | e.g. `booking_confirmed`, `booking_cancelled_user`, `booking_cancelled_admin`, `payment_completed`, `payment_failed`, `event_registration`, `event_cancelled`, `user_signup`, `user_deactivated`, `venue_created`, `venue_updated`, `slot_blocked`, `slot_unblocked`, `owner_application_submitted`, `owner_application_approved`, `owner_application_rejected` |
-| actor_id | uuid | User who triggered the event |
-| target_id | uuid | nullable, related entity ID |
-| target_type | text | e.g. `booking`, `payment`, `event`, `venue`, `user` |
-| metadata | jsonb | Full event details (booking details, payment amounts, cancellation reasons, etc.) |
-| created_at | timestamptz | default now() |
+| `booking_confirmed` | `validate-and-create-booking` | venue_name, venue_id, sport, slot_date, slot_time, duration, price, court_number |
+| `payment_initiated` | `create-razorpay-order` | amount, currency, booking_id, event_id |
+| `payment_completed` | `verify-razorpay-payment` | amount, currency, booking_id, event_id, gateway_payment_id, payment_method |
+| `booking_cancelled_admin` | `admin-bookings` | venue_name, venue_id, sport, slot_date, slot_time, reason, cancelled_by_user_id |
+| `venue_created` | `admin-venues` | name, sport, city |
+| `venue_updated` | `admin-venues` | changed field names |
+| `event_cancelled` | `admin-events` | reason |
+| `event_deleted` | `admin-events` | -- |
+| `user_deactivated` | `admin-users` | reason |
+| `slot_blocked` | `admin-slot-blocks` | venue_id, slot_date, slot_time, reason |
+| `slot_unblocked` | `admin-slot-blocks` | venue_id, slot_date, slot_time |
 
-**RLS:** SELECT only for users with `admin` role. INSERT via service role (edge functions).
+## What the Admin App Needs to Implement
 
-### Edge Function: `log-event`
+### Data Access -- Direct table query (no API needed)
 
-A small backend function that accepts event data and inserts into `event_logs` using the service role key. Called from existing edge functions (`validate-and-create-booking`, `verify-razorpay-payment`, `admin-bookings` cancellation flow, etc.).
+The admin app already uses the same Supabase client. Simply query the `event_logs` table directly:
 
-### Integration Points
+```typescript
+const { data, error } = await supabase
+  .from("event_logs")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .limit(100);
+```
 
-Add `log-event` calls to these existing edge functions:
-- **`validate-and-create-booking`** → log `booking_confirmed` with booking details
-- **`verify-razorpay-payment`** → log `payment_completed` with payment details
-- **`admin-bookings`** (cancellation) → log `booking_cancelled_admin`
-- **`create-razorpay-order`** → log `payment_initiated`
-- **`admin-venues`** (create/update) → log `venue_created` / `venue_updated`
-- **`admin-events`** → log event CRUD operations
-- **`admin-users`** (deactivation) → log `user_deactivated`
-- **`admin-slot-blocks`** → log `slot_blocked` / `slot_unblocked`
+The RLS policy ensures only admin-role users get results. No edge function call required.
 
-For user-side cancellations, add logging in the booking cancellation client code (or create a small wrapper function).
+### Useful query patterns for the UI:
 
-### Admin App Consumption
+```typescript
+// Filter by event type
+.eq("event_type", "booking_confirmed")
 
-The Admin App (separate project) will query `event_logs` via the existing Supabase client, filtered by the admin role. This plan only sets up the backend infrastructure; the Admin App UI is in the other project.
+// Filter by date range
+.gte("created_at", startDate)
+.lte("created_at", endDate)
 
----
+// Filter by target type
+.eq("target_type", "booking")
 
-## 3. "Coming Soon" Empty States
+// Search in metadata (JSONB)
+.contains("metadata", { venue_id: "some-uuid" })
+```
 
-For pages that display lists of venues, events, games, etc., replace the bare "No venues found" / empty content with a styled "Coming Soon" placeholder.
+### Suggested Admin App UI
 
-**Create a reusable component: `src/components/ComingSoon.tsx`**
-- Displays an icon, "We're Coming Soon!" heading, and a short subtitle
-- Accepts optional `message` prop for context-specific text
+Build an "Event Logs" page with:
+1. **Table/list** showing: timestamp, event type (badge), actor (resolve via profiles table join or separate lookup), target type, and a expandable metadata viewer
+2. **Filters**: event type dropdown, date range picker, target type dropdown
+3. **Auto-refresh** or pagination for real-time monitoring
 
-**Pages to update:**
-- `VenuesCourts.tsx` — when venues list is empty
-- `VenuesRecovery.tsx` — when venues list is empty
-- `VenuesStudio.tsx` — when venues list is empty
-- `Social.tsx` — when events list is empty
-- `HubGames.tsx` — when public games and tournaments are empty
-- `HubCommunity.tsx` — when posts are empty
+### Actor name resolution
 
-Replace existing `"No venues found"` / empty-list checks with the `<ComingSoon />` component.
+The `actor_id` is a UUID. To show display names, do a secondary lookup:
+```typescript
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("display_name, username")
+  .eq("user_id", actorId)
+  .single();
+```
 
----
+## Not Yet Logged (Gaps to Consider)
 
-## Execution Order
+These events are NOT currently logged and would need additional work in this project if you want them:
 
-1. Configure Google Social Login (tool + code update)
-2. Create `event_logs` table migration
-3. Create `log-event` edge function
-4. Integrate logging calls into existing edge functions
-5. Create `ComingSoon` component and update empty-state pages
+- **`booking_cancelled_user`** -- user-side cancellations happen client-side in `BookingCancellation.tsx`, not through an edge function
+- **`user_signup`** -- new user registration (would need a database trigger on `auth.users` insert)
+- **`event_registration`** -- event sign-ups happen via client-side insert
+- **`owner_application_submitted/approved/rejected`** -- owner application flow
+
+Adding these would require either wrapping the client-side operations in edge functions or adding database triggers.
 
