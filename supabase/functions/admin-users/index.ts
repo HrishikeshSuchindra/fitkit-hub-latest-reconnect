@@ -8,6 +8,7 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -132,6 +133,7 @@ serve(async (req) => {
         }
 
         await logAdminAction(auth.userId!, "user_deactivated", "user", userId, { reason });
+        await logEvent("user_deactivated", auth.userId!, userId, "user", { reason });
 
         return new Response(
           JSON.stringify({ success: true, message: "User deactivated" }),

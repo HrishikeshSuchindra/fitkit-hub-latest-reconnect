@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
+import ComingSoon from "@/components/ComingSoon";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { SocialEventCard } from "@/components/SocialEventCard";
@@ -140,9 +141,7 @@ const Social = () => {
 
             {/* Empty State */}
             {!isLoading && eventCategories.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-text-secondary">No {activeTab} events found</p>
-              </div>
+              <ComingSoon message={`No ${activeTab} social events yet. Exciting experiences are on the way!`} />
             )}
             
             {/* Event Categories */}

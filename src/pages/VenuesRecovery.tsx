@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
+import ComingSoon from "@/components/ComingSoon";
 import { SearchBar } from "@/components/SearchBar";
 import { BottomNav } from "@/components/BottomNav";
 import { VenueCard } from "@/components/VenueCard";
@@ -142,7 +143,7 @@ const VenuesRecovery = () => {
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {section.venues.length === 0 && (
-                <p className="text-text-secondary text-sm">No venues found</p>
+                <ComingSoon message="Recovery centers coming soon to your area!" />
               )}
               {section.venues.map((venue) => (
                 <div key={venue.id} className="min-w-[280px]">

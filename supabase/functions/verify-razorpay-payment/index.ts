@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,6 +132,16 @@ serve(async (req) => {
         .eq("event_id", event_id)
         .eq("user_id", user.id);
     }
+
+    // Log event
+    await logEvent("payment_completed", user.id, payment?.id || null, "payment", {
+      amount: amount / 100,
+      currency,
+      booking_id: booking_id || null,
+      event_id: event_id || null,
+      gateway_payment_id: razorpay_payment_id,
+      payment_method: payment_method || "razorpay",
+    });
 
     return new Response(
       JSON.stringify({

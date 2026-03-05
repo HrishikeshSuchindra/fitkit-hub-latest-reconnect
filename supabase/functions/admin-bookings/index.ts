@@ -9,6 +9,7 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -227,6 +228,15 @@ serve(async (req) => {
         }
 
         await logAdminAction(auth.userId!, "booking_cancelled", "booking", bookingId, { reason });
+        await logEvent("booking_cancelled_admin", auth.userId!, bookingId, "booking", {
+          venue_name: booking.venue_name,
+          venue_id: booking.venue_id,
+          user_id: booking.user_id,
+          slot_date: booking.slot_date,
+          slot_time: booking.slot_time,
+          price: booking.price,
+          reason: reason || "Cancelled by venue owner",
+        });
 
         return new Response(
           JSON.stringify({ success: true, message: "Booking cancelled and user notified" }),

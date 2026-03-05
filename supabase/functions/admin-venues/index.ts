@@ -9,6 +9,7 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -190,6 +191,7 @@ serve(async (req) => {
       }
 
       await logAdminAction(auth.userId!, "venue_created", "venue", venue.id, { name: venue.name });
+      await logEvent("venue_created", auth.userId!, venue.id, "venue", { name: venue.name, sport: venue.sport, city: venue.city });
 
       return new Response(
         JSON.stringify({ success: true, venue }),
@@ -264,6 +266,7 @@ serve(async (req) => {
       }
 
       await logAdminAction(auth.userId!, "venue_updated", "venue", venueId, { changes: Object.keys(cleanUpdateData) });
+      await logEvent("venue_updated", auth.userId!, venueId, "venue", { changes: Object.keys(cleanUpdateData) });
 
       return new Response(
         JSON.stringify({ success: true, venue }),

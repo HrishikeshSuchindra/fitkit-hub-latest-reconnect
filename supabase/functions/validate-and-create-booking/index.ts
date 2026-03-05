@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -152,6 +153,19 @@ serve(async (req) => {
     }
 
     console.log("Booking created successfully:", booking.id);
+
+    // Log event
+    await logEvent("booking_confirmed", user.id, booking.id, "booking", {
+      venue_name: bookingData.venue_name,
+      venue_id: bookingData.venue_id,
+      sport: bookingData.sport,
+      slot_date: bookingData.slot_date,
+      slot_time: bookingData.slot_time,
+      price: bookingData.price,
+      duration_minutes: bookingData.duration_minutes,
+      player_count: bookingData.player_count,
+      visibility: bookingData.visibility,
+    });
 
     // If booking is public, create a group chat room
     if (bookingData.visibility === "public") {
