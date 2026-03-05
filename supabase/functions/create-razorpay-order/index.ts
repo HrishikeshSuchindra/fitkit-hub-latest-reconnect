@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEvent } from "../_shared/event-logger.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -89,6 +90,12 @@ serve(async (req) => {
 
     const order = await razorpayResponse.json();
     console.log("Razorpay order created:", order.id);
+
+    await logEvent("payment_initiated", user.id, order.id, "payment", {
+      amount,
+      currency,
+      razorpay_order_id: order.id,
+    });
 
     return new Response(
       JSON.stringify({

@@ -8,6 +8,7 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -151,6 +152,7 @@ serve(async (req) => {
           .eq("event_id", eventId);
 
         await logAdminAction(auth.userId!, "event_cancelled", "event", eventId, { reason });
+        await logEvent("event_cancelled", auth.userId!, eventId, "event", { reason });
 
         return new Response(
           JSON.stringify({ success: true, message: "Event cancelled" }),
@@ -247,6 +249,7 @@ serve(async (req) => {
       }
 
       await logAdminAction(auth.userId!, "event_deleted", "event", eventId, {});
+      await logEvent("event_deleted", auth.userId!, eventId, "event", {});
 
       return new Response(
         JSON.stringify({ success: true, message: "Event deleted" }),

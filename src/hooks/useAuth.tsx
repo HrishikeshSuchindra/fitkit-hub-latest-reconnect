@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -178,23 +179,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      }
+    const { error } = await lovable.auth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin,
     });
-    return { error };
+    return { error: error || null };
   };
 
   const signInWithApple = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      }
+    const { error } = await lovable.auth.signInWithOAuth('apple', {
+      redirect_uri: window.location.origin,
     });
-    return { error };
+    return { error: error || null };
   };
 
   const resetPasswordForEmail = async (email: string) => {

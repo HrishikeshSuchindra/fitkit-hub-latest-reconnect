@@ -9,6 +9,7 @@ import {
   logAdminAction,
   corsHeaders 
 } from "../_shared/auth-middleware.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 // Sport-based slot durations in minutes
 const SLOT_DURATIONS: Record<string, number> = {
@@ -371,6 +372,12 @@ serve(async (req) => {
           slot_time: block.slot_time,
           reason: block.reason
         });
+        await logEvent("slot_blocked", auth.userId!, block.id, "slot_block", {
+          venue_id: block.venue_id,
+          slot_date: block.slot_date,
+          slot_time: block.slot_time,
+          reason: block.reason
+        });
       }
 
       return new Response(
@@ -491,6 +498,11 @@ serve(async (req) => {
       }
 
       await logAdminAction(auth.userId!, "slot_unblocked", "slot_block", block_id || `${venue_id}/${slot_date}/${slot_time}`, {
+        venue_id,
+        slot_date,
+        slot_time
+      });
+      await logEvent("slot_unblocked", auth.userId!, block_id || null, "slot_block", {
         venue_id,
         slot_date,
         slot_time
