@@ -79,14 +79,12 @@ const { data: profile } = await supabase
   .single();
 ```
 
-## Not Yet Logged (Gaps to Consider)
+## Previously Missing Events (Now Logged)
 
-These events are NOT currently logged and would need additional work in this project if you want them:
+These gaps have been filled:
 
-- **`booking_cancelled_user`** -- user-side cancellations happen client-side in `BookingCancellation.tsx`, not through an edge function
-- **`user_signup`** -- new user registration (would need a database trigger on `auth.users` insert)
-- **`event_registration`** -- event sign-ups happen via client-side insert
-- **`owner_application_submitted/approved/rejected`** -- owner application flow
-
-Adding these would require either wrapping the client-side operations in edge functions or adding database triggers.
+- **`booking_cancelled_user`** -- now logged from `useCancelBooking` in `useBookings.ts` via `log-event` edge function call. Metadata: venue_name, venue_id, sport, slot_date, slot_time, price, reason, refund_percentage, refund_amount
+- **`user_signup`** -- now logged automatically via a database trigger (`on_profile_created_log_signup`) that fires when a new profile row is inserted. Metadata: display_name, username
+- **`event_registration`** -- now logged from `EventRegistrationPreview.tsx` via `log-event` edge function call. Metadata: event_title, sport, event_date, tickets_count, total_amount, registration_id
+- **`host_event_request_submitted`** -- now logged from `send-host-approval-request` edge function. Metadata: title, category, date, location, host_name, host_email
 

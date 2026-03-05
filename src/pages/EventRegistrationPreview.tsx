@@ -136,6 +136,28 @@ const EventRegistrationPreview = () => {
         console.error("Failed to send confirmation email:", emailError);
       }
 
+      // Log event registration
+      try {
+        await supabase.functions.invoke("log-event", {
+          body: {
+            event_type: "event_registration",
+            actor_id: user.id,
+            target_id: eventId,
+            target_type: "event",
+            metadata: {
+              event_title: event.title,
+              sport: event.sport,
+              event_date: event.event_date,
+              tickets_count: ticketCount,
+              total_amount: totalAmount,
+              registration_id: regData?.id || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to log event registration:", logError);
+      }
+
       navigate(`/social/event/${eventId}/confirmation`, {
         state: { eventData: event, ticketCount }
       });

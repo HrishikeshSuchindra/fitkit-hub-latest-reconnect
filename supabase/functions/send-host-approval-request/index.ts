@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createRateLimiter, RATE_LIMITS } from "../_shared/rate-limiter.ts";
+import { logEvent } from "../_shared/event-logger.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
@@ -215,6 +216,16 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     console.log("Email sent successfully:", emailResponse);
+
+    // Log event
+    await logEvent("host_event_request_submitted", user.id, null, "event_request", {
+      title: data.title,
+      category: data.category,
+      date: data.date,
+      location: data.location,
+      host_name: data.hostName,
+      host_email: data.hostEmail,
+    });
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
