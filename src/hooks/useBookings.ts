@@ -241,6 +241,31 @@ export const useCancelBooking = () => {
         },
       });
 
+      // Log user-side cancellation event
+      try {
+        await supabase.functions.invoke("log-event", {
+          body: {
+            event_type: "booking_cancelled_user",
+            actor_id: user.id,
+            target_id: booking.id,
+            target_type: "booking",
+            metadata: {
+              venue_name: booking.venue_name,
+              venue_id: booking.venue_id,
+              sport: booking.sport,
+              slot_date: booking.slot_date,
+              slot_time: booking.slot_time,
+              price: booking.price,
+              reason: reason || "User requested cancellation",
+              refund_percentage: refundPercentage,
+              refund_amount: refundAmount,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Failed to log cancellation event:", logError);
+      }
+
       return { 
         success: true, 
         refundAmount, 
