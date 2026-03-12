@@ -102,11 +102,49 @@ const BookingPreview = () => {
     };
 
     try {
+      // Create bookings first
       const bookings = await proceedWithBooking();
-      toast.success("Booking confirmed!");
-      navigate("/booking/confirmation", {
-        state: { ...bookingData, bookingId: bookings?.[0]?.id || `booking-${Date.now()}` },
-      });
+      const bookingId = bookings?.[0]?.id || `booking-${Date.now()}`;
+
+      if (totalAmount > 0) {
+        // Initiate Razorpay payment
+        await openRazorpayCheckout({
+          amount: totalAmount,
+          name: "FitKits",
+          description: `Court Booking - ${venue.name}`,
+          receipt: `booking_${bookingId}`,
+          notes: { booking_id: bookingId, venue: venue.name },
+          prefill: {
+            name: user.user_metadata?.display_name || "",
+            email: user.email || "",
+          },
+          onSuccess: async (response) => {
+            try {
+              await verifyPayment({
+                ...response,
+                amount: totalAmount * 100,
+                booking_id: bookingId,
+                payment_method: "razorpay",
+              });
+              toast.success("Payment successful! Booking confirmed.");
+              navigate("/booking/confirmation", {
+                state: { ...bookingData, bookingId },
+              });
+            } catch (verifyError: any) {
+              console.error("Payment verification failed:", verifyError);
+              toast.error("Payment verification failed. Contact support.");
+            }
+          },
+          onDismiss: () => {
+            toast.info("Payment cancelled. Your booking is pending payment.");
+          },
+        });
+      } else {
+        toast.success("Booking confirmed!");
+        navigate("/booking/confirmation", {
+          state: { ...bookingData, bookingId },
+        });
+      }
     } catch (error: any) {
       console.error("Booking error:", error);
       toast.error(error.message || "Failed to process booking");
