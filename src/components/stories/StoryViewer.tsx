@@ -37,7 +37,7 @@ export const StoryViewer = ({
   const [isPaused, setIsPaused] = useState(false);
   const [viewers, setViewers] = useState<any[]>([]);
   const [showViewers, setShowViewers] = useState(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const touchStartX = useRef<number>(0);
   const touchStartY = useRef<number>(0);
 
