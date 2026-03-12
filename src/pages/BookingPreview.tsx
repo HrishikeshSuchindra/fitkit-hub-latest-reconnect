@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { useCreateBooking } from "@/hooks/useBookings";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { openRazorpayCheckout, verifyPayment } from "@/lib/razorpay";
 
 const BookingPreview = () => {
   const navigate = useNavigate();
