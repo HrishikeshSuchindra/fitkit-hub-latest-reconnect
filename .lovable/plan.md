@@ -1,90 +1,37 @@
 
 
-# Event Logs: What the Admin App Needs
+## Diagnosis: Razorpay "Authentication failed" Root Cause
 
-## What's Already Done (This Project)
+### What the logs tell us (facts)
 
-Everything is fully built on the backend. No additional APIs or edge functions are needed.
+From the edge function logs, every single call shows the same pattern:
 
-### Infrastructure in place:
-1. **`event_logs` table** -- stores all platform events with columns: `id`, `event_type`, `actor_id`, `target_id`, `target_type`, `metadata` (JSONB), `created_at`
-2. **RLS** -- SELECT restricted to users with `admin` role via `has_role(auth.uid(), 'admin')`
-3. **Shared logger** (`_shared/event-logger.ts`) -- inserts logs using service role key
-4. **`log-event` edge function** -- standalone endpoint (not needed by admin app, used internally)
-
-### Events currently being logged:
-
-| Event Type | Source Function | Metadata |
-|---|---|---|
-| `booking_confirmed` | `validate-and-create-booking` | venue_name, venue_id, sport, slot_date, slot_time, duration, price, court_number |
-| `payment_initiated` | `create-razorpay-order` | amount, currency, booking_id, event_id |
-| `payment_completed` | `verify-razorpay-payment` | amount, currency, booking_id, event_id, gateway_payment_id, payment_method |
-| `booking_cancelled_admin` | `admin-bookings` | venue_name, venue_id, sport, slot_date, slot_time, reason, cancelled_by_user_id |
-| `venue_created` | `admin-venues` | name, sport, city |
-| `venue_updated` | `admin-venues` | changed field names |
-| `event_cancelled` | `admin-events` | reason |
-| `event_deleted` | `admin-events` | -- |
-| `user_deactivated` | `admin-users` | reason |
-| `slot_blocked` | `admin-slot-blocks` | venue_id, slot_date, slot_time, reason |
-| `slot_unblocked` | `admin-slot-blocks` | venue_id, slot_date, slot_time |
-
-## What the Admin App Needs to Implement
-
-### Data Access -- Direct table query (no API needed)
-
-The admin app already uses the same Supabase client. Simply query the `event_logs` table directly:
-
-```typescript
-const { data, error } = await supabase
-  .from("event_logs")
-  .select("*")
-  .order("created_at", { ascending: false })
-  .limit(100);
+```text
+Key ID:       "rzp_live_ZBOck5uozUhzKh"  (length 23, starts with rzp_live_)
+Secret:       length 24, starts "HqTt", ends "Xxjl"
+Razorpay API: { code: "BAD_REQUEST_ERROR", description: "Authentication failed" }
 ```
 
-The RLS policy ensures only admin-role users get results. No edge function call required.
+The code itself is **correct** -- it uses `btoa(key_id:key_secret)` for Basic Auth, which is the standard Razorpay pattern. The payload is valid (amount in paise, currency INR). CORS is fine. Auth token passes. The 500 comes specifically from Razorpay rejecting the credentials.
 
-### Useful query patterns for the UI:
+### Why it's failing (two possible causes)
 
-```typescript
-// Filter by event type
-.eq("event_type", "booking_confirmed")
+**Cause 1 (most likely): The Key Secret value is wrong or truncated.**  
+When secrets are pasted into the input field, it's common for characters to be cut off, or for invisible whitespace/newline characters to be included. The current stripping logic handles quotes and newlines, but if the secret itself was truncated during entry, no amount of trimming will fix it. A Razorpay key secret is typically ~20-30 characters, so 24 is plausible but could still be wrong.
 
-// Filter by date range
-.gte("created_at", startDate)
-.lte("created_at", endDate)
+**Cause 2: Razorpay Live mode is not activated.**  
+You're using `rzp_live_` keys. Razorpay requires full KYC verification and account activation before live API keys will work. If your Razorpay account hasn't completed activation, live keys will fail with "Authentication failed" even if they're correct. You can verify this in your Razorpay Dashboard under Account & Settings.
 
-// Filter by target type
-.eq("target_type", "booking")
+### Plan to fix
 
-// Search in metadata (JSONB)
-.contains("metadata", { venue_id: "some-uuid" })
-```
+1. **Verify your Razorpay account is activated for Live mode** -- Go to Razorpay Dashboard. If you see a banner saying "Complete KYC" or "Activate Live Mode", that's the problem. Switch to Test keys (`rzp_test_...`) for now.
 
-### Suggested Admin App UI
+2. **Re-enter BOTH secrets fresh** -- Go to Razorpay Dashboard > Settings > API Keys. Copy the Key ID and Key Secret carefully (no extra spaces, no partial selection). I'll prompt you to re-enter them.
 
-Build an "Event Logs" page with:
-1. **Table/list** showing: timestamp, event type (badge), actor (resolve via profiles table join or separate lookup), target type, and a expandable metadata viewer
-2. **Filters**: event type dropdown, date range picker, target type dropdown
-3. **Auto-refresh** or pagination for real-time monitoring
+3. **Add a diagnostic log** that prints the exact Base64 credential string length being sent, so we can confirm it matches what Razorpay expects.
 
-### Actor name resolution
+4. **Test with Test mode keys first** -- If Test keys work but Live keys don't, the issue is account activation, not code.
 
-The `actor_id` is a UUID. To show display names, do a secondary lookup:
-```typescript
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("display_name, username")
-  .eq("user_id", actorId)
-  .single();
-```
-
-## Previously Missing Events (Now Logged)
-
-These gaps have been filled:
-
-- **`booking_cancelled_user`** -- now logged from `useCancelBooking` in `useBookings.ts` via `log-event` edge function call. Metadata: venue_name, venue_id, sport, slot_date, slot_time, price, reason, refund_percentage, refund_amount
-- **`user_signup`** -- now logged automatically via a database trigger (`on_profile_created_log_signup`) that fires when a new profile row is inserted. Metadata: display_name, username
-- **`event_registration`** -- now logged from `EventRegistrationPreview.tsx` via `log-event` edge function call. Metadata: event_title, sport, event_date, tickets_count, total_amount, registration_id
-- **`host_event_request_submitted`** -- now logged from `send-host-approval-request` edge function. Metadata: title, category, date, location, host_name, host_email
+### No code changes needed
+The edge function code is correct. This is purely a credentials/account activation issue.
 
