@@ -22,6 +22,8 @@ serve(async (req) => {
     console.log("Razorpay Key ID:", JSON.stringify(razorpayKeyId));
     console.log("Razorpay Key ID length:", razorpayKeyId?.length, "| starts with rzp_:", razorpayKeyId?.startsWith("rzp_"));
     console.log("Razorpay Secret length:", razorpayKeySecret?.length);
+    console.log("Razorpay Secret first 4 chars:", razorpayKeySecret?.substring(0, 4));
+    console.log("Razorpay Secret last 4 chars:", razorpayKeySecret?.substring((razorpayKeySecret?.length || 0) - 4));
 
     if (!razorpayKeyId || !razorpayKeySecret) {
       return new Response(
