@@ -71,7 +71,11 @@ serve(async (req) => {
       notes: notes || {},
     };
 
-    const credentials = btoa(`${razorpayKeyId}:${razorpayKeySecret}`);
+    const credentialString = `${razorpayKeyId}:${razorpayKeySecret}`;
+    const credentials = btoa(credentialString);
+    console.log("Credential string length:", credentialString.length, "| Base64 length:", credentials.length);
+    console.log("Key ID char codes (last 3):", Array.from(razorpayKeyId!.slice(-3)).map(c => c.charCodeAt(0)));
+    console.log("Secret char codes (last 3):", Array.from(razorpayKeySecret!.slice(-3)).map(c => c.charCodeAt(0)));
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
       headers: {
