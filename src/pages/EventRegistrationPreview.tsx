@@ -165,7 +165,40 @@ const EventRegistrationPreview = () => {
     };
 
     try {
-      await doRegistration();
+      if (totalAmount > 0) {
+        // Paid event — use Razorpay
+        await openRazorpayCheckout({
+          amount: totalAmount,
+          name: "FitKits",
+          description: `Event Registration - ${event.title}`,
+          receipt: `event_${eventId}_${Date.now()}`,
+          notes: { event_id: eventId!, event_title: event.title },
+          prefill: {
+            name: user.user_metadata?.display_name || "",
+            email: user.email || "",
+          },
+          onSuccess: async (response) => {
+            try {
+              await verifyPayment({
+                ...response,
+                amount: totalAmount * 100,
+                event_id: eventId,
+                payment_method: "razorpay",
+              });
+              await doRegistration(response.razorpay_payment_id);
+              toast.success("Payment successful! Registration confirmed.");
+            } catch (verifyError: any) {
+              console.error("Payment verification failed:", verifyError);
+              toast.error("Payment verification failed. Contact support.");
+            }
+          },
+          onDismiss: () => {
+            toast.info("Payment cancelled.");
+          },
+        });
+      } else {
+        await doRegistration();
+      }
     } catch (error) {
       console.error("Registration error:", error);
       toast.error(error instanceof Error ? error.message : "Failed to register");
