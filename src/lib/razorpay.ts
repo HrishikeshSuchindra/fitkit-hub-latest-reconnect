@@ -31,7 +31,7 @@ export async function openRazorpayCheckout(options: RazorpayOptions): Promise<vo
     body: {
       amount: options.amount,
       currency: options.currency || "INR",
-      receipt: options.receipt || `receipt_${Date.now()}`,
+      receipt: options.receipt || `rcpt_${Date.now()}`,
       notes: options.notes || {},
     },
   });

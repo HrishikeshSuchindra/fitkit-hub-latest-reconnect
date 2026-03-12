@@ -67,7 +67,7 @@ serve(async (req) => {
     const orderPayload = {
       amount: amountInPaise,
       currency,
-      receipt: receipt || `receipt_${Date.now()}`,
+      receipt: (receipt || `rcpt_${Date.now()}`).substring(0, 40),
       notes: notes || {},
     };
 
