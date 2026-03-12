@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { openRazorpayCheckout, verifyPayment } from "@/lib/razorpay";
 
 
 const EventRegistrationPreview = () => {
